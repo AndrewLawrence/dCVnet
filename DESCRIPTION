@@ -1,0 +1,23 @@
+Package: dCVnet
+Type: Package
+Title: Doubly Cross-Validated Elastic-Net Regularised (Generalised) Linear Models
+Version: 0.7.0
+Authors@R: c(person("Andrew J.", "Lawrence", 
+                    email = "lawrenceajl@gmail.com",
+                    role = c("aut", "cre")))
+Description: A wrapper for glmnet (currently two-class logistic regresion only)
+    selects alpha and lambda hyperparameters by (inner) cross-validation and
+    produces rigorous estimates of out-of-sample accuracy via an independent
+    (outer) cross-validation.
+License: GPL (>=3)
+Encoding: UTF-8
+LazyData: true
+Imports: glmnet,
+    caret,
+    ggplot2,
+    mgcv,
+    ModelMetrics,
+    parallel,
+    psych,
+    ROCR,
+    openxlsx
