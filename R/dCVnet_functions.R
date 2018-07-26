@@ -3,8 +3,8 @@
 # dCVnet_functions.R
 #
 # Author          : Andrew J. Lawrence
-# Version Number  : 0.6.1
-# Date            : 26/07/2018
+# Version Number  : 0.7.0
+# Version Date    : 26/07/2018
 
 # ---------------------------------------------------------------------------- #
 # Parallel Processing -------------------------------------------------------
@@ -14,8 +14,7 @@
 #   (if running on an linux/posix environment)
 # to set:     options(mc.cores=3)
 # to check:   getOption("mc.cores")
-# to check with default 2L if not set:
-#             getOption("mc.cores", 2L)
+# to check with default 2L if not set: getOption("mc.cores", 2L)
 
 # ---------------------------------------------------------------------------- #
 # Utility Functions -------------------------------------------------------
@@ -23,27 +22,27 @@
 
 # Utility function to check packages, install those missing and then attach.
 #   this function has no return and is employed for side effects.
-# .initialise.dCVreg <- function() {
-#   # Checks system packages and install any missing ones
-#   wants <- c("caret",        # cross-validation functions; confusion matrices
-#              "ggplot2",      # plotting
-#              "glmnet",       # fit the glm with elasticnet regularisation
-#              "mgcv",         # GAM smoother for summary of GoF over repeated CV
-#              "ModelMetrics", # efficient AUC
-#              "parallel",     # mclapply for parallel on linux.
-#              "psych",        # used for psych::describe
-#              "ROCR",         # used for ROC plots
-#              "openxlsx"      # write results to logfile.
-#   )
-#   has <- wants %in% rownames(installed.packages())
-#   if (any(!has)) install.packages(wants[!has])
-#
-#   # Attach the required packages.
-#   suppressPackageStartupMessages(
-#     lapply(wants, function(x) { library(x, character.only = TRUE) })
-#   )
-#   invisible()
-# }
+initialise.dCVreg <- function() {
+  # Checks system packages and install any missing ones
+  wants <- c("caret",        # cross-validation functions; confusion matrices
+             "ggplot2",      # plotting
+             "glmnet",       # fit the glm with elasticnet regularisation
+             "mgcv",         # GAM smoother for summary of GoF over repeated CV
+             "ModelMetrics", # efficient AUC
+             "parallel",     # mclapply for parallel on linux.
+             "psych",        # used for psych::describe
+             "ROCR",         # used for ROC plots
+             "openxlsx"      # write results to logfile.
+  )
+  has <- wants %in% rownames(installed.packages())
+  if (any(!has)) install.packages(wants[!has])
+
+  # Attach the required packages.
+  suppressPackageStartupMessages(
+    lapply(wants, function(x) { library(x, character.only = TRUE) })
+  )
+  invisible()
+}
 
 
 # Given a formula and dataframe:
@@ -57,9 +56,11 @@
 parse_input <- function(f, data) {
   df <- model.frame(f, data = data,
                     drop.unused.levels = T) # does not include interaction.
-  if (identical(nrow(df), 0L)) { stop("Error: no complete cases found.") }
-  y <- df[,1] # extract y variable.
-  x_mat <- model.matrix(f, data = data)[,-1] # drop intercept.
+  if (identical(nrow(df), 0L)) {
+    stop("Error: no complete cases found.")
+  }
+  y <- df[, 1] # extract y variable.
+  x_mat <- model.matrix(f, data = data)[, -1] # drop intercept.
   f0.string <- paste(f[[2]],
                      "~",
                      paste(colnames(x_mat),
@@ -74,7 +75,7 @@ parse_input <- function(f, data) {
 get_lambdalist <- function(x, y, alpha, nlambdas, min_lambda_ratio) {
   # Internal utility function. Given a dataset and alpha level
   #                     Return the maximum lambda value.
-  .get_maxlambda <- function(x,y, alpha) {
+  .get_maxlambda <- function(x, y, alpha) {
     # https://stats.stackexchange.com/questions/166630/glmnet-compute-maximal-lambda-value
     # y must be 0/1 coded.
     # x must be a matrix.
@@ -82,17 +83,19 @@ get_lambdalist <- function(x, y, alpha, nlambdas, min_lambda_ratio) {
     n <- length(y) # number of subjects.
 
     # Alternative standardisation for the data:
-    sdn <- function(kk) { sqrt(sum((kk-mean(kk))^2)/length(kk)) }
+    sdn <- function(kk) {
+      sqrt( sum( (kk - mean(kk)) ^ 2 ) / length(kk) )
+    }
     x_sds <- apply(x, 2, sdn)
 
     # Scale x and y:
     x <- scale(x, scale = x_sds)
-    y <- y - mean(y)*(1 - mean(y))
+    y <- y - mean(y) * (1 - mean(y))
 
     # calculate the maximum lambda.
     max(abs(t(y) %*% x )) / (alpha * n)
   }
-  maxl <- .get_maxlambda(x,y,alpha)
+  maxl <- .get_maxlambda(x, y, alpha)
   lambdas <- exp(seq(from = log(maxl),
                  to = log(maxl * min_lambda_ratio),
                  length.out = nlambdas))
@@ -102,7 +105,7 @@ get_lambdalist <- function(x, y, alpha, nlambdas, min_lambda_ratio) {
 
 # utility function to provide coefficients for the best fitting
 #     repeated.cv.alpha.glmnet object
-describe_best_rcag <- function(obj, option.selection = 'default') {
+describe_best_rcag <- function(obj, option.selection = "default") {
   # a result2 object (i.e. from repeated.cv.alpha.glmnet)
   mods <- obj$models
   alpharef <- mods$Rep1$alphalist
@@ -157,23 +160,23 @@ get_best_hyperparams <- function(y, y_se, x, alpha, maximise = FALSE,
     # df has y, x and y_se -- ALPHA MUST BE CONSTANT.
 
     # arrange the df vars:
-    df <- df[, c("y","y_se","x")]
+    df <- df[, c("y", "y_se", "x")]
 
     # select the functions to be used depending on minimising or maximising:
     # optimise (min / max):
     optf <- match.fun(
-      ifelse(identical(maximise,TRUE), "which.max", "which.min"))
+      ifelse(identical(maximise, TRUE), "which.max", "which.min"))
     # create the 1se boundary value:
-    boundf <- match.fun(ifelse(identical(maximise,TRUE), "-", "+"))
+    boundf <- match.fun(ifelse(identical(maximise, TRUE), "-", "+"))
     # compare the values with the boundary:
-    compf <- match.fun(ifelse(identical(maximise,TRUE), ">=", "<="))
+    compf <- match.fun(ifelse(identical(maximise, TRUE), ">=", "<="))
 
     # Which is the 'greedy' best result:
     optrow <- optf(df$y)
     if ( is.na(optrow) ) { "Error: no optimum..." }
 
     # What are the contents of the optimum row:
-    best <- df[optrow,]
+    best <- df[optrow, ]
     # what is the largest lambda assessed?
     max_x <- max(df$x)
 
@@ -181,16 +184,16 @@ get_best_hyperparams <- function(y, y_se, x, alpha, maximise = FALSE,
     #   if so we are at the edge of parameter space and
     #   1se should just return the 'best':
     if ( abs(best$x - max_x) < tol ) {
-      R <- best[,c("y","x")]
-      names(R) <- c("fit","lambda")
+      R <- best[, c("y", "x")]
+      names(R) <- c("fit", "lambda")
       R$alpha <- alpha
-      return(R[,c("lambda","alpha","fit")])
+      return(R[, c("lambda", "alpha", "fit")])
     }
 
     # filter to lambdas at least as penalised as the best:
     sefilter1 <- (df$x >= best$x)
     #   with model fits within 1se of the best fit
-    sefilter2 <- compf(df$y, boundf(best$y,best$y_se))
+    sefilter2 <- compf(df$y, boundf(best$y, best$y_se))
 
     sefilter <- sefilter1 & sefilter2
 
@@ -198,27 +201,27 @@ get_best_hyperparams <- function(y, y_se, x, alpha, maximise = FALSE,
       # this code runs where the sefilter is empty.
       #   an empty sefilter occurs when there are
       #   no models penalised worse than the best fitting model.
-      R <- best[,c("y","x")]
-      names(R) <- c("fit","lambda")
+      R <- best[, c("y", "x")]
+      names(R) <- c("fit", "lambda")
       R$alpha <- alpha
       # warning("ropey filters...") debug.
-      return(R[,c("lambda","alpha","fit")])
+      return(R[, c("lambda", "alpha", "fit")])
     }
 
     # apply the filter:
     df <- df[sefilter, ]
 
     # return the largest lambda in the remaining dataset:
-    R <- df[which.max(df$x),c("y","x")]
-    names(R) <- c("fit","lambda")
+    R <- df[which.max(df$x), c("y", "x")]
+    names(R) <- c("fit", "lambda")
     R$alpha <- alpha
-    return(R[,c("lambda","alpha","fit")])
+    return(R[, c("lambda", "alpha", "fit")])
   }
 
   # get_best_hyperparameters - main:
   type <- match.arg(type, c("default", "lambda.1se", "lambda.3pc"))
   bestfun <- match.fun(
-    ifelse(identical(maximise,TRUE), "which.max", "which.min"))
+    ifelse(identical(maximise, TRUE), "which.max", "which.min"))
 
   df <- data.frame(y = y, y_se = y_se, x = x, alpha = alpha)
 
@@ -226,11 +229,11 @@ get_best_hyperparams <- function(y, y_se, x, alpha, maximise = FALSE,
   #     a linear xfm of the minumum:
   if ( type != "lambda.1se" ) {
     # do default and 3% here:
-    R <- df[,c("x","alpha","y")]
+    R <- df[, c("x", "alpha", "y")]
     names(R) <- c("lambda", "alpha", "fit")
     # can just add 3% to lambda values and take the best fit:
-    if ( type == "lambda.3pc" ) { R$lambda <- R$lambda*1.03 }
-    return(R[bestfun(R$fit),])
+    if ( type == "lambda.3pc" ) { R$lambda <- R$lambda * 1.03 }
+    return(R[bestfun(R$fit), ])
   }
 
   # The last case is more complex:
@@ -246,7 +249,7 @@ get_best_hyperparams <- function(y, y_se, x, alpha, maximise = FALSE,
                           maximise = maximise)
                }))
   # return the best fitting 1se between the alphas:
-  return(R[bestfun(R$fit),])
+  return(R[bestfun(R$fit), ])
 }
 
 
@@ -257,15 +260,15 @@ get_uni_fits <- function(f, df) {
   yname <- as.character(f[[2]]) # what is the outcome name.
 
   df <- model.frame(f, df)
-  Y <- df[,yname]
+  Y <- df[, yname]
 
   M <- model.matrix(f, df)
-  M[,-1] <- scale(M[,-1]) # standardise the design matrix (not intercept)
+  M[, -1] <- scale(M[, -1]) # standardise the design matrix (not intercept)
 
   Mnames <- colnames(M)
 
   Ms <- lapply(Mnames, function(X) {
-    xdf <- data.frame(y = Y, x = M[,X])
+    xdf <- data.frame(y = Y, x = M[, X])
     return(glm( y ~ x, data = xdf, family = "binomial" ))
   } )
   result <- sapply(Ms, function(X) coef(X)[2])
@@ -319,7 +322,7 @@ collate_results_over_reps <- function(obj) {
     # names(example.results$outers)[RES[[1]]] then gives
     #     the FoldIDs of a given rep.
     N <- data.frame(FoldID = names(obj), stringsAsFactors = F)
-    N$RepID <- sapply(strsplit(N$FoldID, split = ".", fixed = T), '[',2)
+    N$RepID <- sapply(strsplit(N$FoldID, split = ".", fixed = T), "[", 2)
     Reps <- unique(N$RepID)
     N$Index <- 1:nrow(N)
     RES <- lapply(Reps, function(x) { N$Index[N$RepID == x] } )
@@ -348,12 +351,12 @@ collate_results_over_reps <- function(obj) {
 #   for a list of caret::ConfusionMatrices
 summarise_cms <- function(cmlist, digits = 3) {
   # Input is a list of confusion matrices and a precision value
-  c.t <- sapply(cmlist, function(x) as.data.frame(x$table)[,3])
+  c.t <- sapply(cmlist, function(x) as.data.frame(x$table)[, 3])
   c.t.s <- apply(c.t, 1, sum, na.rm = T)
 
   # a classification table showing outer loop predicted and actual labels:
   classification.table <- data.frame(
-    as.data.frame(cmlist[[1]]$table)[,1:2],
+    as.data.frame(cmlist[[1]]$table)[, 1:2],
     Proportion = round(c.t.s / sum(c.t.s), digits),
     OuterRuns = rep("-"),
     c.t)
@@ -432,7 +435,7 @@ auc.dCVreg <- function(x) {
   rownames(outer_test) <- "AUC"
   # extract auc for final model:
   .get_final_auc <- function(obj) {
-    ModelMetrics::auc(actual = obj$log$data[,as.character(obj$log$f[[2]])],
+    ModelMetrics::auc(actual = obj$log$data[, as.character(obj$log$f[[2]])],
                       predicted = obj$final.model$best_probs)
   }
   final_all <- .get_final_auc(x)
@@ -480,8 +483,8 @@ log.dCVreg <- function(X, fileroot) {
   #           e.g. 'path/to/example' gives: 'path/to/example_log.xlsx'
   logfile <- paste0(fileroot, "_log.xlsx")
 
-  nit_inner <- X$log$nrep_inner*X$log$k_inner*X$log$tuning_searchsize_alpha
-  nit_outer <- X$log$nrep_outer*X$log$k_outer
+  nit_inner <- X$log$nrep_inner * X$log$k_inner * X$log$tuning_searchsize_alpha
+  nit_outer <- X$log$nrep_outer * X$log$k_outer
   nit_total <- nit_inner * nit_outer
 
   # First: write the run notes:
@@ -494,7 +497,7 @@ log.dCVreg <- function(X, fileroot) {
     paste("Runtime(mins):",
           round(as.numeric(difftime(X$log$stop.time,
                                     X$log$start.time,
-                                    units = "mins")),1)),
+                                    units = "mins")), 1)),
     "",
     paste("Data:", X$log$cmd$data),
     #paste("Output (Results):", example.outfile),
@@ -505,7 +508,8 @@ log.dCVreg <- function(X, fileroot) {
     "",
     paste("Tuning metric: ", X$log$type.measure),
     paste("Hyperparameter Selection Method:", X$log$option.selection),
-    paste("Use Empirical Cutoff for Classification?:", X$log$option.empirical_cutoff),
+    paste("Use Empirical Cutoff for Classification?:",
+          X$log$option.empirical_cutoff),
     "",
     paste("Outer # Folds:", X$log$k_outer),
     paste("Outer # Repetitions:", X$log$nrep_outer),
@@ -536,7 +540,7 @@ log.dCVreg <- function(X, fileroot) {
                                  } ))
   colnames(out.xfactors) <- "Factor Summary"
 
-  out.cont <- psych::describe(X$log$data[,cont.vars])
+  out.cont <- psych::describe(X$log$data[, cont.vars])
 
   out.key <- data.frame(Sheets = c(
     "Notes - Analysis parameters timestamps etc",
@@ -599,16 +603,17 @@ log.dCVreg <- function(X, fileroot) {
   # Write all this out:
   wb <- openxlsx::createWorkbook()
 
-  Map(function(x,RN,Name) {
+  Map(function(x, RN, Name) {
     openxlsx::addWorksheet(wb, sheetName = Name)
     openxlsx::writeData(wb, sheet = Name, x = x, rowNames = RN)
     # Hack: RN is logical and coerced to 0/1 in sum for column indices:
-    openxlsx::setColWidths(wb, sheet = Name, widths = "auto", cols = 1:(ncol(x) + RN))
-    #print(Name)
+    openxlsx::setColWidths(wb, sheet = Name,
+                           widths = "auto",
+                           cols = 1:(ncol(x) + RN))
     return(NULL)
   }, x = log, RN = log.opts, Name = names(log))
 
-  saveWorkbook(wb, file = logfile, overwrite = T)
+  openxlsx::saveWorkbook(wb, file = logfile, overwrite = T)
 
   invisible()
 }
@@ -620,6 +625,8 @@ log.dCVreg <- function(X, fileroot) {
 
 # Make a multipage pdf showing inner loop performance
 #   and selected hyperparameters per each outer loop.
+#' @importFrom grDevices dev.off pdf
+#' @export
 plot.hp.dCVreg <- function(X, fileroot) {
   # X == a dCVreg results object
   # fileroot == a path / root to write to:
@@ -637,21 +644,21 @@ plot.hp.dCVreg <- function(X, fileroot) {
 
   # Get global limits for the plots:
   tsearch_lambdarange <- t(sapply(tsearch, function(x) range(x$lambda)))
-  tsearch_lambdarange <- c(min(tsearch_lambdarange[,1]),
-                           max(tsearch_lambdarange[,2]))
+  tsearch_lambdarange <- c(min(tsearch_lambdarange[, 1]),
+                           max(tsearch_lambdarange[, 2]))
   tsearch_cvmrange <- t(sapply(tsearch, function(x) {
-    range(c(x$cvm + x$cvsd,x$cvm - x$cvsd))
+    range(c(x$cvm + x$cvsd, x$cvm - x$cvsd))
   }))
-  tsearch_cvmrange <- c(min(tsearch_cvmrange[,1]),max(tsearch_cvmrange[,2]))
+  tsearch_cvmrange <- c(min(tsearch_cvmrange[, 1]), max(tsearch_cvmrange[, 2]))
 
   tbests <- lapply(X$outers, function(x) {
     tbest <- x$best_params
     tbest$lab_cvm <- tsearch_cvmrange[2] # put lab at max.
     tbest$lab_lambda <- tsearch_lambdarange[2]
     tbest$label <- paste0("Chosen Param.\nfit: ",
-                          round(tbest$fit,3), "\nalpha: ",
+                          round(tbest$fit, 3), "\nalpha: ",
                           tbest$alpha, "\nlambda: ",
-                          round(tbest$lambda,3))
+                          round(tbest$lambda, 3))
     return(tbest)
   })
   names(tbests) <- names(X$outers)
@@ -697,6 +704,8 @@ plot.hp.dCVreg <- function(X, fileroot) {
 # make a multipage pdf showing ROC curves for:
 #   1) final model all data (train + test)
 #   2) outer loops test data.
+#' @importFrom grDevices dev.off pdf
+#' @export
 plot.roc.dCVreg <- function(X, fileroot, dumpraw = F) {
   # Utility subfunction convert a ROC performance object to a dataframe.
   .performance_to_data_frame <- function(perf, names) {
@@ -712,24 +721,25 @@ plot.roc.dCVreg <- function(X, fileroot, dumpraw = F) {
   Collated <- collate_results_over_reps(X)
   # multipred object:
   outer.pred <- ROCR::prediction(
-    predictions = lapply(Collated, '[[', "probs"),
-    labels = lapply(Collated, '[[', "labs"))
-  outer.perf <- performance(outer.pred, "tpr", "fpr")
+    predictions = lapply(Collated, "[[", "probs"),
+    labels = lapply(Collated, "[[", "labs"))
+  outer.perf <- ROCR::performance(outer.pred, "tpr", "fpr")
   # single for final performance:
   final.pred <- ROCR::prediction(
     predictions = X$final.model$best_probs,
-    labels = X$log$data[,as.character(X$log$f[[2]])])
-  final.perf <- performance(final.pred, "tpr", "fpr")
+    labels = X$log$data[, as.character(X$log$f[[2]])])
+  final.perf <- ROCR::performance(final.pred, "tpr", "fpr")
 
   outer.df <- .performance_to_data_frame(outer.perf, names(Collated))
   final.df <- .performance_to_data_frame(final.perf, "FinalModel")
 
   # Plot the outer results:
-  p <- ggplot2::ggplot(outer.df, aes(y = y,
-                                     x = x,
-                                     group = run,
-                                     colour = run)) +
-    ggplot2::geom_abline(slope = 1, intercept = 0, colour = "black", size = 1.1) +
+  p <- ggplot2::ggplot(outer.df, ggplot2::aes(y = y,
+                                              x = x,
+                                              group = run,
+                                              colour = run)) +
+    ggplot2::geom_abline(slope = 1, intercept = 0,
+                         colour = "black", size = 1.1) +
     ggplot2::geom_line() +
     ggplot2::xlab("False positive rate") +
     ggplot2::ylab("True positive rate") +
@@ -738,11 +748,12 @@ plot.roc.dCVreg <- function(X, fileroot, dumpraw = F) {
   ggplot2::ggsave(filename = paste0(fileroot, "_ROC_outers_test.pdf"))
 
   # Plot the final results:
-  p <- ggplot2::ggplot(final.df, aes(y = y,
-                                     x = x,
-                                     group = run,
-                                     colour = run)) +
-    ggplot2::geom_abline(slope = 1, intercept = 0, colour = "black", size = 1.1) +
+  p <- ggplot2::ggplot(final.df, ggplot2::aes(y = y,
+                                              x = x,
+                                              group = run,
+                                              colour = run)) +
+    ggplot2::geom_abline(slope = 1, intercept = 0,
+                         colour = "black", size = 1.1) +
     ggplot2::geom_line(alpha = 0.5) +
     ggplot2::xlab("False positive rate") +
     ggplot2::ylab("True positive rate") +
@@ -760,6 +771,7 @@ plot.roc.dCVreg <- function(X, fileroot, dumpraw = F) {
 # 3 nested subfunctions which do the main body of work behind dCVreg
 
 # Lowest layer runs cv.glmnet over a number of alphas (not repeated)
+#' @export
 cv.alpha.glmnet <- function(alphalist,
                             foldids,
                             y,
@@ -773,15 +785,16 @@ cv.alpha.glmnet <- function(alphalist,
   # function is a wrapper to cv.glmnet
   #  now *have* to specify previously optional nfolds and foldids
   #  dots (...) pass rest to cv.glmnet
-  names(alphalist) <- paste0("Alpha",seq(along = alphalist))
+  names(alphalist) <- paste0("Alpha", seq(along = alphalist))
 
   # Create a per-alpha list of lambda values to use
   #       - this will be the same over repetitions.
   lambdalist <- lapply(alphalist, function(aa) {
     # for each alpha calculate the maximum lambda
-    # return a list of lambda geometrically progressing to maxlambda * minlambdaratio.
+    # return a list of lambda
+    #   geometrically progressing to maxlambda * minlambdaratio.
     get_lambdalist(x = x,
-                   y = as.numeric(y)-1,
+                   y = as.numeric(y) - 1,
                    alpha = aa,
                    nlambdas = nlambda,
                    min_lambda_ratio = min.lambda.ratio)
@@ -818,6 +831,7 @@ cv.alpha.glmnet <- function(alphalist,
 
 # Middle function repeats application of cv.alpha.glmnet and pools
 #   results to give a repeated k-fold crossvlalidation.
+#' @export
 repeated.cv.alpha.glmnet <- function(nreps,
                                      nfolds,
                                      y,
@@ -834,7 +848,7 @@ repeated.cv.alpha.glmnet <- function(nreps,
     cv.alpha.glmnet(y = y, rep = i,
                     type.measure = type.measure, foldids = f, ...)
   })
-  names(blob) <- paste0("Rep",1:nreps)
+  names(blob) <- paste0("Rep", 1:nreps)
 
   # extract the full table:
   pooledresults <- do.call(rbind, lapply(blob, '[[', "result"))
@@ -850,12 +864,6 @@ repeated.cv.alpha.glmnet <- function(nreps,
     by = list(alpha = pooledresults$alpha,
               lambda = pooledresults$lambda),
     FUN = mean)
-
-  # Are we minimising or maximising:
-  optfun <- "which.min"
-  if ( type.measure %in% c("auc") ) {
-    optfun <- "which.max"
-  }
 
   # what are the best hyperparameters
   #       (generate all 3 methods and choose in the outer loop.):
@@ -899,6 +907,7 @@ repeated.cv.alpha.glmnet <- function(nreps,
 
 # This is the manager of the outer loop.
 #   it runs the outer loop and evaluates the results.
+#' @export
 nested.repeated.cv.alpha.glmnet <- function(
   nrep_outer = 5,
   k_outer = 10,
@@ -929,8 +938,8 @@ nested.repeated.cv.alpha.glmnet <- function(
     seq(along = outfolds),
     mc.cores = getOption("mc.cores", 1L),
     function(i) {
-      cat(paste0("Outerloop:",i," of ", imax, "\n"))
-      of = outfolds[[i]]
+      cat(paste0("Outerloop:", i, " of ", imax, "\n"))
+      of <- outfolds[[i]]
       # first generate the train and test data from the fold:
       sel_train <- 1:nrow(x) %in% of
       sel_test <- !sel_train
@@ -1102,25 +1111,71 @@ nested.repeated.cv.alpha.glmnet <- function(
 # ---------------------------------------------------------------------------- #
 #   runs a regularised logistic regression with
 #     nested crossvalidation of elasticnet parameters alpha/lambda.
+
+
+#' Fit a doubly cross-validated elastic-net regularised (generalised) linear model
+#'
+#' repeated k-fold cross-validation used to:
+#'     \itemize{
+#'     \item{Produce unbiased estimates of out-of-sample classification performance (outer CV).}
+#'     \item{Select optimal hyperparameters for the elasticnet (inner CV).}}
+#'     Elasticnet hyperparameters are
+#'     \bold{lambda} (the total regularisation penalty)
+#'     and \bold{alpha} (the balance of L1 and L2 regularisation types).
+#'
+#' @param f a two sided formula. LHS must be binary and formula must include an intercept.
+#' @param data data.frame containing all terms in f.
+#' @param k_inner an integer, the k in the inner k-fold CV.
+#' @param k_outer an integer, the k in the outer k-fold CV.
+#' @param nrep_inner an integer, the number of repetitions (k-fold outer CV)
+#' @param nrep_outer an integer, the number of repetitions (k-fold outer CV)
+#' @param tuning_searchsize_lambda an integer, number of gradations between
+#'     lambda.min and lambda.max to search.
+#'     See \code{glmnet} argument \code{nlambda}.
+#' @param alphalist a numeric vector of values in [0,1].
+#'     Values of alpha to evaluate in inner cross-validation.
+#' @param type.measure passed to \code{cv.glmnet}.
+#'     The loss to use for hyperparameter selection in the inner cross-validation.
+#'     Options: \code{"deviance"}, \code{"class"}, \code{"mse"}, \code{"mae"}
+#' @param option.selection Method for hyperparameter selection in the inner cross-validation.
+#'     One of \code{"default"} (lambda at best loss), \code{"lambda.3pc"} (add 3% to the default lambda),
+#'     \code{"lambda.1se"} (add 1SE to the default lambda).
+#'     Selection between alpha values is not affected by \code{option.selection}.
+#' @param option.empirical_cutoff Boolian.
+#'     Use the empirical proportion of cases as the cutoff for outer CV classification
+#'     (affects outer CV performance only). Otherwise classify at 50\% probability.
+#' @param debug Boolian.
+#'     In 'debug' mode inner loop models are retained. This can produce very large return sizes.
+#' @param speedup Boolian.
+#'     Requests the faster \code{"modified.Newton"} method for logistic \code{glmnet}.
+#'     See: \code{glmnet}'s \code{type.logistic} argument.
+#' @return a dCVnet object.
+#' @examples
+#' \dontrun{
+#' iris_class <- dCVreg(f = Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width,
+#'                      data = subset(iris, iris$Species != c("versicolor")),
+#'                      alphalist = 0.5)}
+#' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
+#' @importFrom stats predict sd terms var
+#' @export
 dCVreg <- function(f,
                     data,
                     nrep_outer = 5,
                     k_outer = 10,
                     nrep_inner = 5,
                     k_inner = 10,
+                    tuning_searchsize_lambda = 1000,
+                    alphalist = seq(from = 0, to = 1.0, by = 0.1),
                     type.measure = "deviance",
                     option.selection = 'default',
                     option.empirical_cutoff = FALSE,
-                    tuning_searchsize_lambda = 1000,
-                    alphalist = seq(from = 0, to = 1.0, by = 0.1),
                     debug = FALSE,
                     speedup = FALSE
                    ) {
-  # FUNCTION NOTES.
+  # Additional FUNCTION NOTES.
   #
   # Required arguments:
-  #   f - an r formula
-  #     Note: this must include an intercept as per R default behaviour.
+  #   f - formula must include an intercept
   #           if you specify y ~ 0 + x1 + x2 or y ~ x1 + x2 - 1
   #           then results will be unpredictable.
   #           This is true even if a variable (e.g. x1) is a hard-coded
@@ -1131,40 +1186,12 @@ dCVreg <- function(f,
   #     Note1: only complete cases for terms of f in data will be analysed.
   #     Note2: after removing incomplete cases unused factor levels of both
   #            outcome and predictors will be dropped.
-  #
-  # Optional arguments:
-  #   k (outer + inner)     - the number of folds for k-fold cv
-  #   nrep (outer + inner)  - number of times to repeat k-fold cv
-  #   type.measure          - which metric to use to select hyperparameters
-  #                           (inner loop).
-  #   option.selection      - how to choose the best hyperparameters
-  #                           (default, lambda.1se, lambda.3pc)
-  #
+  #  #
   #   tuning_searchsize_lambda
-  #     - determines the number of values of lambda to consider
-  #       (per alpha value).
-  #       lambda is the amount of regularisation of coefficients
-  #       and lambda values are selected automatically between
+  #     - lambda values are selected automatically between
   #       (high to low): lambda.max to (0.0001 * lambda.max)
   #       [or 0.01 if more vars than cases].
   #
-  #       high to low with the largest lambda being
-  #       the smallest lambda to produce a model
-  #         - This script tunes 2 parameters: alpha & lambda
-  #               lambda = the amount of regularisation penalty which
-  #                         scales between zero (no penalty) and
-  #                         the smallest lambda which results in all
-  #                         coefficients being zero (set to 1).
-  #               alpha  = the elastic net mixing paramter between the
-  #                         L2 (ridge) and L1 (lasso) penalties.
-  #                         alpha = 0 is ridge, alpha = 1 is lasso.
-  #       tuning_searchsize_lambda determines the number of parameter values
-  #         to consider per parameter.
-  #
-  #   tuning_metric
-  #               - on what basis do we choose the best tuning parameters.
-  #   debug - if true, we will keep all the inner results.
-
   ## Internal functions to wrap cv.glmnet and format results:
   ##  1. cv.alpha.glmnet
   ##        run glmnet over a list of alphas
@@ -1187,7 +1214,7 @@ dCVreg <- function(f,
 
   # Check input 1: formula is formula and has intercept.
   f <- as.formula(f) # attempt to coerce in case of character string.
-  if ( !identical(attr(terms(f),"intercept"), 1L) ) {
+  if ( !identical(attr(terms(f), "intercept"), 1L) ) {
     stop("Error: formula must have an intercept. See terms(f)")
   }
 
@@ -1198,7 +1225,8 @@ dCVreg <- function(f,
 
   parsed <- parse_input(f, data)
 
-  min_lambda_ratio <- ifelse(ncol(parsed$x_mat) > nrow(parsed$x_mat), 0.01, 0.0001)
+  min_lambda_ratio <- ifelse(ncol(parsed$x_mat) > nrow(parsed$x_mat),
+                             0.01, 0.0001)
 
   # extract outcome and xvars from the input:
   #   NOTE: as a result only complete cases are included...
@@ -1228,7 +1256,7 @@ dCVreg <- function(f,
   if ( type.measure == "auc" ) {
     # magic number for innerloop is:
     #   Ncases * outer train proportion * inner test proportion
-    auc_magic <- (nrow(parsed$x_mat) * (1 - (1/k_outer)) * (1 / k_inner))
+    auc_magic <- (nrow(parsed$x_mat) * (1 - (1 / k_outer)) * (1 / k_inner))
     if (auc_magic < 11) {
       warning(
         paste("Warning: using model deviance - not AUC - as sample size small!
@@ -1238,7 +1266,7 @@ dCVreg <- function(f,
   }
 
   # how many alphas did we feed in:
-  tuning_searchsize_alpha = length(alphalist)
+  tuning_searchsize_alpha <- length(alphalist)
   # Check alpha values are OK:
   if ( any(is.na(alphalist)) ) { stop("Error: missing value(s) in alphalist") }
   if ( min(alphalist) < 0.0 ) { stop("Error: alphas must be positive") }
@@ -1267,14 +1295,14 @@ dCVreg <- function(f,
   # Note: often low values of alpha (<0.1) are very slow to fit.
 
   # Print some general run info to screen.
-  nit_inner <- k_inner*nrep_inner*tuning_searchsize_alpha
-  nit_outer <- k_outer*nrep_outer
+  nit_inner <- k_inner * nrep_inner * tuning_searchsize_alpha
+  nit_outer <- k_outer * nrep_outer
   nit_total <- nit_inner * nit_outer
 
-  cat(paste0("Analysing n=",nrow(df)," subjects\n"))
+  cat(paste0("Analysing n=", nrow(df), " subjects\n"))
   cat(paste0(table(parsed$y)[1], " of outcome: ", levels(parsed$y)[1], "\n"))
   cat(paste0(table(parsed$y)[2], " of outcome: ", levels(parsed$y)[2], "\n"))
-  cat(paste0("running ", nit_inner , " inner runs\n"))
+  cat(paste0("running ", nit_inner, " inner runs\n"))
   cat(paste0("running ", nit_outer, " outer runs\n"))
   cat(paste0("total: ", nit_total, " runs\n"))
 
@@ -1367,17 +1395,37 @@ dCVreg <- function(f,
 
 # Todo list ---------------------------------------------------------------
 
-# Version 0.6.1
-#   - averaging of the ROC curves
-#   - develop a plot of per-subject test-group membership vs. performance.
-#   - separate documentation from script.
-#   - tests/evaluation of data where p>>n.
-#   - write up and submit bug to glmnet package authors.
-#       It turns out this has been done:
-#         https://github.com/lmweber/glmnet-error-example/blob/master/glmnet_error_example.R
-#   - add report of performance within the hyperparameter optimisation loops,
-#       arguably this allows diagnosis of overfitting.
-#   - currently the preprocessing (scaling) is performed at the level of the
+# Version 0.7.0
+#   - Refactor Subfunctions.
+#     The current behaviour is to run cv.glmnet for a number of different alphas
+#     then repeat as required followed by averaging.
+#     It would be cleaner to have the innermost function repeat the k-fold CV
+#     for a single alpha and then average the results.
+#     The middle function can then repeat the innermost function over the
+#     range of alphas.
+#
+#   - Add balanced sampling options for train/test folds (inner and/or outer).
+#       either  for y (class imbalance)
+#               or for x (e.g. representative proportion of M/F)
+#
+#   - Principled averaging of ROC curves
+#
+#   - develop a plot/diagnostic which shows (per-subject) the outer-loop fold
+#       performance for when that subject is test vs. when they are train.
+#       This may help identify hard to predict participants.
+#
+#   - separate fitting of comparison models (glm, univariate) from dCVreg.
+#       make fitting functions which act on a dCVreg object and only
+#       call them when the log is requested.
+#
+#   - tests for / evaluation of data where p>>n.
+#
+#   - add report of performance within the inner CV,
+#       (this may help with diagnosis of:
+#           underfitting / overfitting / too few iterations)
+#
+#   - Standardisation of Variables.
+#       currently the preprocessing (scaling) is performed at the level of the
 #       outer loop before entering the inner loop.
 #       Thus there is some theoretical leakage between the test/train data
 #       for the inner loop.
@@ -1385,7 +1433,21 @@ dCVreg <- function(f,
 #       However, any fix will result in a additional processing overhead as
 #       quadratically more calls to caret::preProcess will be required.
 #       Investigate this and potentially change the implmentation.
-#   - make a dCVnet S3/S4 class (which?), add print, predict, summary methods
-#       and convert existing log, plot functions to methods.
-#   - rename helper functions from helper() to _helper().
-#   - convert to package.
+#       UPDATE: 27/07/2018
+#         standardise argument is not being set.
+#         So inner loop is being standardised prior to running.
+#         (returning coefficients in original scale.)
+#         There is no leakage here, but standardisation happens 2x!
+#
+#   - make a some S3 classes:
+#         dCVnet (print, predict, summary)
+#         hyperparam.dCVnet (plot)
+#         ROC.dCVnet (plot)
+#     and convert existing log, plot functions to make use of methods.
+#
+#   - convert to package (in progress).
+#
+#   # Not needed:
+#   - write up and submit bug to glmnet package authors.
+#         It turns out this has been done:
+# https://github.com/lmweber/glmnet-error-example/blob/master/glmnet_error_example.R
