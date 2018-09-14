@@ -22,4 +22,5 @@ Imports: glmnet (>= 2.0-1),
     psych,
     ROCR,
     openxlsx
-RoxygenNote: 6.0.1
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 6.1.0

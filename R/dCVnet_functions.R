@@ -22,6 +22,7 @@
 
 # Utility function to check packages, install those missing and then attach.
 #   this function has no return and is employed for side effects.
+#   Now deprecated. This code will be removed.
 initialise.dCVreg <- function() {
   # Checks system packages and install any missing ones
   wants <- c("caret",        # cross-validation functions; confusion matrices
@@ -53,6 +54,7 @@ initialise.dCVreg <- function() {
 #                   also strip intercept.
 #     - make f0     a flattened formula (with intercept)
 #                   based on the regressands in x_mat
+
 parse_input <- function(f, data) {
   df <- model.frame(f, data = data,
                     drop.unused.levels = T) # does not include interaction.
@@ -71,31 +73,35 @@ parse_input <- function(f, data) {
               f0 = f0))
 }
 
+# Utility function calculate the maximum lambda.
+
+get_maxlambda <- function(x, y, alpha) {
+  # https://stats.stackexchange.com/questions/166630/glmnet-compute-maximal-lambda-value
+  # y must be 0/1 coded.
+  # x must be a matrix.
+  # If a zero alpha is fed in maxlambda is infinity - because of maths!
+  n <- length(y) # number of subjects.
+
+  # Alternative standardisation for the data:
+  sdn <- function(kk) {
+    sqrt( sum( (kk - mean(kk)) ^ 2 ) / length(kk) )
+  }
+  x_sds <- apply(x, 2, sdn)
+
+  # Scale x and y:
+  x <- scale(x, scale = x_sds)
+  y <- y - mean(y) * (1 - mean(y))
+
+  # calculate the maximum lambda.
+  max(abs(t(y) %*% x )) / (alpha * n)
+}
+
 # Utility function: calculate a list of lambdas given the data + alpha.
-get_lambdalist <- function(x, y, alpha, nlambdas, min_lambda_ratio) {
+
+lambdaseq <- function(x, y, alpha, nlambdas, min_lambda_ratio) {
   # Internal utility function. Given a dataset and alpha level
   #                     Return the maximum lambda value.
-  .get_maxlambda <- function(x, y, alpha) {
-    # https://stats.stackexchange.com/questions/166630/glmnet-compute-maximal-lambda-value
-    # y must be 0/1 coded.
-    # x must be a matrix.
-    # If a zero alpha is fed in maxlambda is infinity - because of maths!
-    n <- length(y) # number of subjects.
-
-    # Alternative standardisation for the data:
-    sdn <- function(kk) {
-      sqrt( sum( (kk - mean(kk)) ^ 2 ) / length(kk) )
-    }
-    x_sds <- apply(x, 2, sdn)
-
-    # Scale x and y:
-    x <- scale(x, scale = x_sds)
-    y <- y - mean(y) * (1 - mean(y))
-
-    # calculate the maximum lambda.
-    max(abs(t(y) %*% x )) / (alpha * n)
-  }
-  maxl <- .get_maxlambda(x, y, alpha)
+  maxl <- get_maxlambda(x, y, alpha)
   lambdas <- exp(seq(from = log(maxl),
                  to = log(maxl * min_lambda_ratio),
                  length.out = nlambdas))
@@ -133,14 +139,20 @@ describe_best_rcag <- function(obj, option.selection = "default") {
 
 
 # Utility function to extract cv.glmnet k-fold cross-validation information:
+
 cv.glmnet.modelsummary <- function(mod,      # a cv.glmnet model
                                    alpha=NA, # optional: label with alpha
                                    rep=NA) { # optional: label with rep
   return(data.frame(lambda = mod$lambda,
-                    cvm = mod$cvm,
-                    cvsd = mod$cvsd,
-                    alpha = alpha,
-                    rep = rep))
+                       cvm = mod$cvm,
+                       cvsd = mod$cvsd,
+                       cvup = mod$cvup,
+                       cvlo = mod$cvlo,
+                       nzero = mod$nzero,
+                       lambda.min = mod$lambda == mod$lambda.min,
+                       lambda.1se = mod$lambda == mod$lambda.1se,
+                       alpha = alpha,
+                       rep = rep))
 }
 
 
@@ -626,7 +638,6 @@ log.dCVreg <- function(X, fileroot) {
 # Make a multipage pdf showing inner loop performance
 #   and selected hyperparameters per each outer loop.
 #' @importFrom grDevices dev.off pdf
-#' @export
 plot.hp.dCVreg <- function(X, fileroot) {
   # X == a dCVreg results object
   # fileroot == a path / root to write to:
@@ -705,7 +716,6 @@ plot.hp.dCVreg <- function(X, fileroot) {
 #   1) final model all data (train + test)
 #   2) outer loops test data.
 #' @importFrom grDevices dev.off pdf
-#' @export
 plot.roc.dCVreg <- function(X, fileroot, dumpraw = F) {
   # Utility subfunction convert a ROC performance object to a dataframe.
   .performance_to_data_frame <- function(perf, names) {
@@ -771,7 +781,6 @@ plot.roc.dCVreg <- function(X, fileroot, dumpraw = F) {
 # 3 nested subfunctions which do the main body of work behind dCVreg
 
 # Lowest layer runs cv.glmnet over a number of alphas (not repeated)
-#' @export
 cv.alpha.glmnet <- function(alphalist,
                             foldids,
                             y,
@@ -793,7 +802,7 @@ cv.alpha.glmnet <- function(alphalist,
     # for each alpha calculate the maximum lambda
     # return a list of lambda
     #   geometrically progressing to maxlambda * minlambdaratio.
-    get_lambdalist(x = x,
+    lambdaseq(x = x,
                    y = as.numeric(y) - 1,
                    alpha = aa,
                    nlambdas = nlambda,
@@ -831,7 +840,6 @@ cv.alpha.glmnet <- function(alphalist,
 
 # Middle function repeats application of cv.alpha.glmnet and pools
 #   results to give a repeated k-fold crossvlalidation.
-#' @export
 repeated.cv.alpha.glmnet <- function(nreps,
                                      nfolds,
                                      y,
@@ -907,7 +915,6 @@ repeated.cv.alpha.glmnet <- function(nreps,
 
 # This is the manager of the outer loop.
 #   it runs the outer loop and evaluates the results.
-#' @export
 nested.repeated.cv.alpha.glmnet <- function(
   nrep_outer = 5,
   k_outer = 10,
@@ -1113,51 +1120,6 @@ nested.repeated.cv.alpha.glmnet <- function(
 #     nested crossvalidation of elasticnet parameters alpha/lambda.
 
 
-#' Fit a doubly cross-validated elastic-net regularised (generalised) linear model
-#'
-#' repeated k-fold cross-validation used to:
-#'     \itemize{
-#'     \item{Produce unbiased estimates of out-of-sample classification performance (outer CV).}
-#'     \item{Select optimal hyperparameters for the elasticnet (inner CV).}}
-#'     Elasticnet hyperparameters are
-#'     \bold{lambda} (the total regularisation penalty)
-#'     and \bold{alpha} (the balance of L1 and L2 regularisation types).
-#'
-#' @param f a two sided formula. LHS must be binary and formula must include an intercept.
-#' @param data data.frame containing all terms in f.
-#' @param k_inner an integer, the k in the inner k-fold CV.
-#' @param k_outer an integer, the k in the outer k-fold CV.
-#' @param nrep_inner an integer, the number of repetitions (k-fold outer CV)
-#' @param nrep_outer an integer, the number of repetitions (k-fold outer CV)
-#' @param tuning_searchsize_lambda an integer, number of gradations between
-#'     lambda.min and lambda.max to search.
-#'     See \code{glmnet} argument \code{nlambda}.
-#' @param alphalist a numeric vector of values in [0,1].
-#'     Values of alpha to evaluate in inner cross-validation.
-#' @param type.measure passed to \code{cv.glmnet}.
-#'     The loss to use for hyperparameter selection in the inner cross-validation.
-#'     Options: \code{"deviance"}, \code{"class"}, \code{"mse"}, \code{"mae"}
-#' @param option.selection Method for hyperparameter selection in the inner cross-validation.
-#'     One of \code{"default"} (lambda at best loss), \code{"lambda.3pc"} (add 3% to the default lambda),
-#'     \code{"lambda.1se"} (add 1SE to the default lambda).
-#'     Selection between alpha values is not affected by \code{option.selection}.
-#' @param option.empirical_cutoff Boolian.
-#'     Use the empirical proportion of cases as the cutoff for outer CV classification
-#'     (affects outer CV performance only). Otherwise classify at 50\% probability.
-#' @param debug Boolian.
-#'     In 'debug' mode inner loop models are retained. This can produce very large return sizes.
-#' @param speedup Boolian.
-#'     Requests the faster \code{"modified.Newton"} method for logistic \code{glmnet}.
-#'     See: \code{glmnet}'s \code{type.logistic} argument.
-#' @return a dCVnet object.
-#' @examples
-#' \dontrun{
-#' iris_class <- dCVreg(f = Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width,
-#'                      data = subset(iris, iris$Species != c("versicolor")),
-#'                      alphalist = 0.5)}
-#' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
-#' @importFrom stats predict sd terms var
-#' @export
 dCVreg <- function(f,
                     data,
                     nrep_outer = 5,
@@ -1258,8 +1220,8 @@ dCVreg <- function(f,
     #   Ncases * outer train proportion * inner test proportion
     auc_magic <- (nrow(parsed$x_mat) * (1 - (1 / k_outer)) * (1 / k_inner))
     if (auc_magic < 11) {
-      warning(
-        paste("Warning: using model deviance - not AUC - as sample size small!
+      stop(
+        paste("AUC is not possible due to small sample size!
                Estimated inner foldsize =", auc_magic))
       type.measure <- "deviance"
     }
