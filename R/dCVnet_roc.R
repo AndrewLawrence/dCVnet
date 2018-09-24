@@ -3,26 +3,45 @@
 # S3 class: rocdata --------
 #   acts on classperformance to produce data for a ROC.
 #   which is a table of:
-#     Sensitivity (tpr),
-#     1-Specificity (fpr)
+#     Sens : Sensitivity (tpr),
+#     InvSpec : 1 - Specificity (fpr)
 #   for assorted thresholds of the model class thresholds.
 # Uses ROCR.
 
 
-rocdata <- function(x, ...) {
-  UseMethod("rocdata", x)
-}
-
-rocdata.classperformance <- function(performance) {
+#' extract_rocdata
+#'
+#' Function converts a classperformance data.frame to the values required for
+#'     calculating a ROC curve. It does this by calculating sensitivity and
+#'     specificity at incrementing class probability thresholds.
+#'
+#' Uses \pkg{ROCR} functions: \code{\link[ROCR]{prediction}}, and
+#'     \code{\link[ROCR]{performance}}
+#'
+#' @name extract_rocdata
+#' @param classperformance a \code{\link{classperformance}} object.
+#'
+#' @return a data.frame object of class "rocdata" which can be plotted. Contents:
+#'     \itemize{
+#'     \item{\code{Sens} : Sensitivity}
+#'     \item{\code{InvSpec} : 1 - Specificity}
+#'     \item{\code{alpha} : threshold}
+#'     \item{\code{run} : label from \code{\link{classperformance}}}
+#'     }
+#'
+#' @seealso \code{\link{plot.rocdata}}
+#'
+#' @export
+extract_rocdata <- function(classperformance) {
   # First ensure it is in list format, not dataframe:
-  if ( "data.frame" %in% class(performance) ) {
-    lvls <- as.character(unique(performance$label))
-    performance <- lapply(lvls,
+  if ( "data.frame" %in% class(classperformance) ) {
+    lvls <- as.character(unique(classperformance$label))
+    classperformance <- lapply(lvls,
                           function(lab) {
-                            performance[performance$label == lab,]
+                            classperformance[classperformance$label == lab, ]
                           })
-    names(performance) <- lvls
-    performance <- structure(performance, class = c("classperformance", "list"))
+    names(classperformance) <- lvls
+    classperformance <- structure(classperformance, class = c("classperformance", "list"))
   }
 
   # Utility subfunction convert a ROC performance object to a dataframe.
@@ -38,13 +57,10 @@ rocdata.classperformance <- function(performance) {
   }
 
   outer.pred <- ROCR::prediction(
-    predictions = lapply(performance, "[[", "probability"),
-    labels = lapply(performance, "[[", "reference"))
+    predictions = lapply(classperformance, "[[", "probability"),
+    labels = lapply(classperformance, "[[", "reference"))
   outer.perf <- ROCR::performance(outer.pred, "tpr", "fpr")
 
-  R <- .performance_to_data_frame(outer.perf, names(performance))
+  R <- .performance_to_data_frame(outer.perf, names(classperformance))
   return(structure(R, class = c("rocdata", "data.frame")))
 }
-
-
-

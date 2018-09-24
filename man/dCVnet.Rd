@@ -2,62 +2,65 @@
 % Please edit documentation in R/dCVnet_main.R
 \name{dCVnet}
 \alias{dCVnet}
-\title{Fit a doubly cross-validated elastic-net regularised (generalised) linear model}
+\title{Fit a doubly cross-validated elastic-net regularised logistic regression}
 \usage{
 dCVnet(f, data, nrep_outer = 2, k_outer = 10, nrep_inner = 5,
-  k_inner = 10, alphalist, type.measure, positive = 1,
-  option.empirical_cutoff, nlambda, ...)
+  k_inner = 10, alphalist = c(0.2, 0.5, 0.8), nlambda = 100,
+  type.measure = "deviance", positive = 1,
+  option.empirical_cutoff = F, ...)
 }
 \arguments{
-\item{f}{a two sided formula. LHS must be binary and formula must include an intercept.}
+\item{f}{a two sided formula.
+The LHS must be a single binary variable.
+The RHS must refer to columns in \code{data}, but may include
+interactions, transformations or expansions (like \code{\link{poly}}, or
+\code{\link{log}}).
+The formula \emph{must} include an intercept.}
 
-\item{data}{data.frame containing all terms in f.}
+\item{data}{a data.frame containing all terms in f.}
 
 \item{nrep_outer}{an integer, the number of repetitions (k-fold outer CV)}
 
 \item{k_outer}{an integer, the k in the outer k-fold CV.}
 
-\item{nrep_inner}{an integer, the number of repetitions (k-fold outer CV)}
+\item{nrep_inner}{an integer, the number of repetitions (k-fold inner CV)}
 
 \item{k_inner}{an integer, the k in the inner k-fold CV.}
 
-\item{alphalist}{a numeric vector of values in \link{0,1}.
-Values of alpha to evaluate in inner cross-validation.}
+\item{alphalist}{a numeric vector of values in (0,1].
+This sets the search space for optimising hyperparameter alpha.}
 
-\item{type.measure}{passed to \code{cv.glmnet}.
-The loss to use for hyperparameter selection in the inner cross-validation.
-Options: \code{"deviance"}, \code{"class"}, \code{"mse"}, \code{"mae"}}
-
-\item{positive}{What level of the outcome is a 'positive' result
-(in the sense of a diagnostic test)}
-
-\item{option.empirical_cutoff}{Boolian.
-Use the empirical proportion of cases as the cutoff for outer CV classification
-(affects outer CV performance only). Otherwise classify at 50\% probability.}
-
-\item{tuning_searchsize_lambda}{an integer, number of gradations between
+\item{nlambda}{an integer, number of gradations between
 lambda.min and lambda.max to search.
 See \code{glmnet} argument \code{nlambda}.}
 
-\item{option.selection}{Method for hyperparameter selection in the inner cross-validation.
-One of \code{"default"} (lambda at best loss), \code{"lambda.3pc"} (add 3% to the default lambda),
-\code{"lambda.1se"} (add 1SE to the default lambda).
-Selection between alpha values is not affected by \code{option.selection}.}
+\item{type.measure}{passed to \code{\link[glmnet]{cv.glmnet}}.
+This sets the metric used for hyperparameter optimisation in the
+inner cross-validation. Options: \code{"deviance"}, \code{"class"},
+\code{"mse"}, \code{"mae"}}
 
-\item{debug}{Boolian.
-In 'debug' mode inner loop models are retained. This can produce very large return sizes.}
+\item{positive}{What level of the outcome is a 'positive' result
+(in the sense of a diagnostic test).
+Can be a numeric indicating which of \code{levels(y)} to use
+(i.e. 1 | 2). Alternatively a character specifying the exact level
+(e.g. \code{"patient"}).}
 
-\item{speedup}{Boolian.
-Requests the faster \code{"modified.Newton"} method for logistic \code{glmnet}.
-See: \code{glmnet}'s \code{type.logistic} argument.}
+\item{option.empirical_cutoff}{Boolian.
+Use the empirical proportion of cases as the cutoff for outer CV
+classification (affects outer CV performance only).
+Otherwise classify at 50\% probability.}
+
+\item{...}{Arguments to pass through to cv.glmnet
+(beware, this may break things).}
 }
 \value{
 a dCVnet object.
 }
 \description{
-repeated k-fold cross-validation used to:
+Double (nested) repeated k-fold cross-validation used to:
 \itemize{
-\item{Produce unbiased estimates of out-of-sample classification performance (outer CV).}
+\item{Produce unbiased estimates of out-of-sample
+classification performance (outer CV).}
 \item{Select optimal hyperparameters for the elasticnet (inner CV).}}
 Elasticnet hyperparameters are
 \bold{lambda} (the total regularisation penalty)
@@ -65,7 +68,8 @@ and \bold{alpha} (the balance of L1 and L2 regularisation types).
 }
 \examples{
 \dontrun{
-iris_class <- dCVreg(f = Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width,
-                     data = subset(iris, iris$Species != c("versicolor")),
+iris_class <- dCVreg(f = Species ~ Sepal.Length + Sepal.Width +
+                         Petal.Length + Petal.Width,
+                     data = subset(iris, iris$Species != "versicolor"),
                      alphalist = 0.5)}
 }

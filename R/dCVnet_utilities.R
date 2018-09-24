@@ -1,24 +1,50 @@
 
 # Utility Functions -------------------------------------------------------
 
-
-parse_input <- function(f, data, positive = 1) {
+#' parse_dCVnet_input
+#'
+#' Collate a formula and dataset into a standardised object ready for dCVnet
+#'
+#' The outcome is coerced to a binary factor which is releveled (if necessary)
+#' such that the test=positive level comes first.
+#' @name parse_dCVnet_input
+#' @param f a two sided formula.
+#'     The LHS must be a single binary variable.
+#'     The RHS must refer to columns in \code{data}, but may include
+#'     interactions, transformations or expansions (like \code{\link{poly}}, or
+#'     \code{\link{log}}).
+#'     The formula *must* include an intercept.
+#' @param data a data.frame containing all terms in f.
+#' @param positive What level of the outcome is a 'positive' result
+#'     (in the sense of a diagnostic test).
+#'     Can be a numeric indicating which of \code{levels(y)} to use
+#'     (i.e. 1 | 2). Alternatively a character specifying the exact level
+#'     (e.g. \code{"patient"}).
+#'
+#' @return \itemize{
+#'     \item{ \code{y} - outcome factor
+#'         with level ordered according to \code{positive}}
+#'     \item{ \code{x_mat} - predictor matrix
+#'         including expansions, interaction terms specified in \code{f}}
+#'     \item{ \code{f0} - a formula
+#'         flattened to refer to rownames in \code{x_mat}}
+#'     }
+#'
+#' @export
+parse_dCVnet_input <- function(f, data, positive = 1) {
   # Ordering levels of y for classification:
-  # We should follow convention that the condition we are aiming to
+  # We will follow a convention that the condition we are aiming to
   #   detect/diagnose ('i.e. the disease') should be the first
   #   level of the factor.
-  # If this is not the case then 'positive' can be used to specify.
-  #   if positive is numeric it will be used as the position of the
-  #     level of y to use as positive.
-  #   if positive is character then this level will be used as positive.
+  # If this is not the case for the input then 'positive'
+  #   can be used to specify.
 
-  # Check input 1: formula is formula and has intercept.
-  f <- as.formula(f) # attempt to coerce in case of character string.
-  if ( !identical(attr(terms(f, data = df), "intercept"), 1L) ) {
+  # Check input:
+  f <- as.formula(f)
+  if ( !identical(attr(terms(f, data = data), "intercept"), 1L) ) {
     stop("Error: formula must have an intercept. See terms(f)")
   }
 
-  # check input 2:
   if ( !"data.frame" %in% class(data) ) {
     stop("Error: data must be data.frame.")
   }
@@ -31,27 +57,28 @@ parse_input <- function(f, data, positive = 1) {
   # TODO:: missing data imputation?
   y <- as.factor(df[, 1]) # extract y variable & coerce to factor.
 
-  if ( length(levels(y)) != 2 ) { stop("LHS (y) must have 2 levels") }
+  if ( length(levels(y)) != 2 ) stop("LHS (i.e. outcome) must have 2 levels")
 
   # Make a model matrix of RHS variables
   #   i.e. parse dummy coding / interaction terms & drop intercept:
   x_mat <- model.matrix(f, data = data)[, -1]
 
   # produce a flattened formula based on x_mat:
-  f0.string <- paste(f[[2]],
+  f0_string <- paste(f[[2]],
                      "~",
                      paste(colnames(x_mat),
                            collapse = "+"))
-  f0 <- as.formula(f0.string)
+
+  f0 <- as.formula(f0_string)
 
   # Recode levels.
   lvl <- levels(y)
   if ( is.numeric(positive) ) {
-    positive = lvl[positive]
+    positive <- lvl[positive]
   } else {
-    positive = as.character(positive)
+    positive <- as.character(positive)
   }
-  if ( lvl[1] != positive ) { y <- relevel(y, positive) }
+  if ( lvl[1] != positive ) y <- relevel(y, positive)
 
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,
@@ -60,11 +87,35 @@ parse_input <- function(f, data, positive = 1) {
 }
 
 
+#
+#
+
+#' parse_alphalist
+#'
+#' Check and process a numeric of alpha values.
+#'
+#' \itemize{
+#' \item{Zero alphas (i.e. pure L2 / ridge penalty) do not currently work
+#'     due to a bug in glmnet. Zeros are replaced with a small non-zero value.
+#'     For a 'pure' L2/ridge regression use a different package.}
+#' \item{it is often the case that small alphas (<0.1) are slow to fit.}
+#' }
+#'
+#' @name parse_alphalist
+#' @param alphalist a numeric of alpha values.
+#'
+#' @return non-duplicated, non-missing alpha values between (0, 1] -
+#'     i.e. excluding zero.
+#'
+#' @export
 parse_alphalist <- function(alphalist) {
-  # Check alpha values are OK:
-  if ( any(is.na(alphalist)) ) { stop("Error: missing value(s) in alphalist") }
-  if ( min(alphalist) < 0.0 ) { stop("Error: alphas must be positive") }
-  if ( max(alphalist) > 1L ) { stop("Error: alphas must be <= 1") }
+  # no duplicates:
+  alphalist <- unique(alphalist)
+
+  # check no missing values & within [0,1]
+  if ( any(is.na(alphalist)) ) stop("Error: missing value(s) in alphalist")
+  if ( min(alphalist) < 0.0 ) stop("Error: alphas must be positive")
+  if ( max(alphalist) > 1L ) stop("Error: alphas must be <= 1")
 
   # substitute zero-length alphas due to bug.:
   if ( any(alphalist == 0.0) ) {
@@ -72,12 +123,31 @@ parse_alphalist <- function(alphalist) {
     alphalist[alphalist == 0.0] <- replacement_alpha
     warning(paste0("BUGFIX: alpha=0.0 replaced with: ", replacement_alpha))
   }
-  # Note: it is often the case that small alphas (<0.1)
-  #       are also slower to fit.
   return(alphalist)
 }
 
 
+#' lambda_rangefinder
+#'
+#' What range of lambda penalty amounts should we consider for a dataset?
+#'     The maximum for a given dataset is detemined by a simple formula,
+#'     but this can vary from subset to subset. This code bootstraps
+#'     the calculation of max-lambda for subsets of the input data.
+#'
+#' @name lambda_rangefinder
+#' @param y binary outcome (from \code{\link{parse_dCVnet_input}})
+#' @param x predictor matrix (from \code{\link{parse_dCVnet_input}})
+#' @param alphalist alphas to consider, e.g. \code{c(0.2, 0.5, 0.8)}
+#' @param prop proportion of the input to bootstrap. This should be the
+#'     fraction of observations remaining in the inner loop CV.
+#'     for example: if outer and inner loops are both 5-fold,
+#'     prop should be 0.8 * 0.8 = 0.64
+#' @param niter the number of times to bootstrap.
+#'
+#' @return \code{maxlambda} - the largest bootstrapped lambda value
+#'     for each alpha requested.
+#'
+#' @export
 lambda_rangefinder <- function(y, x,
                                alphalist,
                                prop,
@@ -110,11 +180,11 @@ lambda_rangefinder <- function(y, x,
     max(abs(t(y) %*% x )) / (alphalist * n)
   }
 
-  subsize <- round(length(y)*prop)
+  subsize <- round(length(y) * prop)
 
   result <- sapply(1:niter, function(i) {
     subsamp <- sample(1:length(y), size = subsize)
-    .get_maxlambda(x = x[subsamp,], y = y[subsamp], alphalist = alphalist)
+    .get_maxlambda(x = x[subsamp, ], y = y[subsamp], alphalist = alphalist)
   })
 
 
@@ -126,7 +196,21 @@ lambda_rangefinder <- function(y, x,
   }
 }
 
-
+#' lambda_seq_list
+#'
+#' produce descending lambda sequences given a maximum, minimum fraction and
+#'     the number of steps
+#'
+#' @name lambda_seq_list
+#'
+#' @param maxlambdas max lambdas vector,
+#'     output by \code{\link{lambda_rangefinder}}
+#' @param nlambda how many steps to take
+#' @param lambda_min_ratio what fraction of the maximum to take as the minimum.
+#'     no default is set, glmnet recommends
+#'     \code{ifelse(nobs<nvars,0.01,0.0001)}.
+#'
+#' @export
 lambda_seq_list <- function(maxlambdas, nlambda, lambda_min_ratio) {
   # Utility function, given one or more max_lambdas
   #     (possibily for a list of alphas)
@@ -170,9 +254,20 @@ startup_message <- function(k_inner, nrep_inner,
 }
 
 
-cv.glmnet.modelsummary <- function(mod,      # a cv.glmnet model
-                                   alpha=NA, # optional: add a label with alpha
-                                   rep=NA) { # optional: add a label with rep
+#' cv.glmnet.modelsummary
+#'
+#' return a dataframe of cv.glmnet results.
+#'
+#' @param mod a cv.glmnet object
+#' @param alpha an optional label
+#' @param rep an optional label
+#'
+#' @name cv.glmnet.modelsummary
+#'
+#' @export
+cv.glmnet.modelsummary <- function(mod,
+                                   alpha=NA,
+                                   rep=NA) {
   return(data.frame(lambda = mod$lambda,
                     cvm = mod$cvm,
                     cvsd = mod$cvsd,
@@ -182,20 +277,33 @@ cv.glmnet.modelsummary <- function(mod,      # a cv.glmnet model
                     lambda.min = mod$lambda == mod$lambda.min,
                     lambda.1se = mod$lambda == mod$lambda.1se,
                     alpha = alpha,
-                    rep = rep))
+                    rep = rep,
+                    stringsAsFactors = F))
 }
 
 
+#' tidy_confusionmatrix
+#'
+#' return contents of a \code{\link[caret]{confusionMatrix}} as a
+#'    'tidy' one column data.frame.
+#'
+#' @param mat output from \code{confusionMatrix.default}.
+#'
+#' @name tidy_confusionmatrix
+#' @return a one column data.frame
+#' @export
 tidy_confusionmatrix <- function(mat) {
   tab <- as.data.frame(mat$table)
-  tablabs <- paste("Predicted", tab[,1], "Actual", tab[,2])
-  tab <- data.frame(Measure = tablabs, Value = tab[,3])
+  tablabs <- paste("Predicted", tab[, 1], "Actual", tab[, 2])
+  tab <- data.frame(Measure = tablabs, Value = tab[, 3])
 
   overall <- data.frame(Measure = names(mat$overall),
-                        Value = mat$overall)
+                        Value = mat$overall,
+                        stringsAsFactors = F)
 
   byClass <- data.frame(Measure = names(mat$byClass),
-                        Value = mat$byClass)
+                        Value = mat$byClass,
+                        stringsAsFactors = F)
 
   tab <- rbind(tab, overall)
   tab <- rbind(tab, byClass)
@@ -203,12 +311,20 @@ tidy_confusionmatrix <- function(mat) {
   return(tab)
 }
 
-
+#' predict_cat.glm
+#'
+#' Category predictions from a binomial glm object.
+#' @param glm a binomial family glm object
+#' @param threshold the prediction threshold
 predict_cat.glm <- function(glm, threshold = 0.5) {
+  if ("binomial" %in% glm$family$family) stop("input glm must be binomial")
+
   # Return categorical predictions from a glm given a threshold (default = 0.5):
-  lvl <- levels(glm$data[,1])
-  R <- as.numeric(fitted(glm) > threshold) + 1
+  lvl <- levels(glm$data[, 1])
+
+  if (is.null(lvl)) stop("outcome is missing levels")
+
+  R <- as.numeric(stats::fitted(glm) > threshold) + 1
   R <- lvl[R]
   return(factor(R, levels = lvl))
 }
-

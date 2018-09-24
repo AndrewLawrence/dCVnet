@@ -21,6 +21,7 @@ Imports: glmnet (>= 2.0-1),
     parallel,
     psych,
     ROCR,
-    openxlsx
+    openxlsx,
+    scales
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.0

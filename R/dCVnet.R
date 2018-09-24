@@ -14,8 +14,13 @@
 #'
 #' dCVnet adds nested cross-validation functionality to \code{glmnet::cv.lognet}.
 #'
+#' @importFrom glmnet glmnet cv.glmnet predict.lognet
+#' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
+#' @importFrom stats predict fitted predict.glm
+#' @importFrom caret confusionMatrix
+#' @importFrom graphics plot
+#' @importFrom stats median prcomp relevel setNames
+#'
 #' @docType package
 #' @name dCVnet-package
 NULL
-
-
