@@ -2,14 +2,34 @@
 % Please edit documentation in R/dCVnet_classperformance.R
 \name{classperformance}
 \alias{classperformance}
+\alias{classperformance.list}
+\alias{classperformance.dCVnet}
+\alias{classperformance.glm}
+\alias{classperformance.glmlist}
 \title{classperformance}
 \usage{
 classperformance(x, ...)
+
+\method{classperformance}{list}(x, ...)
+
+\method{classperformance}{dCVnet}(x, as.data.frame = T, ...)
+
+\method{classperformance}{glm}(x, as.data.frame = T,
+  label = deparse(substitute(x)), threshold = 0.5, ...)
+
+\method{classperformance}{glmlist}(x, as.data.frame = T, ...)
 }
 \arguments{
 \item{x}{an object from which binary class performance can be extracted.}
 
 \item{...}{arguments to pass on}
+
+\item{as.data.frame}{return a data.frame instead of
+\code{\link{classperformance}} object.}
+
+\item{label}{specify a label for the output}
+
+\item{threshold}{for logistic regression use a threshold other than 0.5.}
 }
 \value{
 a classperformance object, is a dataframe (or list of dataframes)
@@ -26,3 +46,17 @@ one source, e.g. multiple reps}
 \description{
 extracts a standardised classification performance table for a model.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{list}: classperformance for \code{\link{list}} object
+(treats it as a \code{\link{dCVnet}} object)
+
+\item \code{dCVnet}: classperformance for \code{\link{dCVnet}} object
+
+\item \code{glm}: classperformance for \code{\link[stats]{glm}}
+object
+
+\item \code{glmlist}: classperformance for glmlist from
+\code{\link{dCVnet_refmodels}} object
+}}
+

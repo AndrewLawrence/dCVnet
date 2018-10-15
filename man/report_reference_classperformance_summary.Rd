@@ -14,5 +14,6 @@ report_reference_classperformance_summary(refobj)
 a data.frame of summarised and raw performance statistics.
 }
 \description{
-report_reference_classperformance_summary
+Returns a report of classperformance summary information for a set of dCVnet
+reference models.
 }

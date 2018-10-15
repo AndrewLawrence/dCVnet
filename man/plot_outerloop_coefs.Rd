@@ -7,10 +7,10 @@
 plot_outerloop_coefs(object)
 }
 \arguments{
-\item{object}{a dCVnet object}
+\item{object}{a \code{\link{dCVnet}} object}
 }
 \description{
-Plot showing standardised betas for model coefficients.
+Plot showing standardised betas for outer-loop model coefficients.
 coefficients are first mean-averaged over the k-folds,
 then displayed per-repetition.
 }

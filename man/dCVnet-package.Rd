@@ -5,15 +5,20 @@
 \alias{dCVnet-package}
 \title{dCVnet: Doubly Cross-Validated Elastic-Net Regularised (Generalised) Linear Models}
 \description{
-The dCVnet package provides functions to conduct and evaluate classification
-performance using binary logistic regression with elastic-net regulatisation.
+dCVnet runs binary logistic regression with elastic-net regulatisation.
+Optimal hyperparameters are selected by double (nested) cross-validation with
+model performance evaluated in an independent outer loop.
 }
 \details{
-The alpha and lambda hyperparameters of the elastic-net permit principled
-data-driven variable selection and dimensionality reduction in the
-predictors. While returning a model more readily interpretable than
-'black-box' techniques. The nested cross-validation keeps both hyperparameter
-selection and performance estimates 'honest' by reducing optimism bias.
+The lambda and alpha hyperparameters of the elastic-net permit models ranging
+from effectively unregularised to heavily-regularised models with a mixture
+of two types of regularisation. The amount and type of regularisation will be
+selected on the basis of what generalises best in the inner cross-validation.
+L2 (ridge) and L1 (LASSO) effectively produce dimensionality reduction and
+variable selection in the predictors.
 
-dCVnet adds nested cross-validation functionality to \code{glmnet::cv.lognet}.
+The fully nested cross-validation keeps the final performance estimates
+'honest' by reducing optimism bias.
+
+dCVnet is a wrapper around \code{glmnet::cv.lognet}.
 }

@@ -4,6 +4,35 @@
 #   pass back results along with selected best performing lambdas.
 #   as suggested by the name, only one alpha is present.
 
+
+#' repeated.cv.glmnet
+#'
+#' Repeatedly runs a \code{\link[glmnet]{cv.glmnet}} and returns averaged
+#'     results. *This is intended to be a dCVnet internal function*.
+#'
+#' @inheritParams glmnet::cv.glmnet
+#' @inheritParams glmnet::glmnet
+#' @param lambdas use a fixed, user supplied lambda sequence (descending)
+#'     see \code{\link[glmnet]{glmnet}}
+#' @param folds This is a list where each element is an integer vector
+#'     of length *n_cases*. The integer for each case labels it as belonging
+#'     to a fold *1:n_folds*. This argument implicitly sets the number of repeats
+#'     and the k in repeated k-fold cv.
+#' @param ... arguments passed to \code{\link[glmnet]{cv.glmnet}}
+#' @param debug if TRUE return models and unaveraged results (default: FALSE).
+#' @return a data.frame object of class \code{\link{repeated.cv.glmnet}}
+#'     containting averaged metrics. Has the following columns:
+#'     \itemize{
+#'     \item{lambda - the specified lambda value}
+#'     \item{cvm - the averaged performance metric}
+#'     \item{cvsd - the averaged sd of performance metric}
+#'     \item{cvup - the averaged cvm + cvsd}
+#'     \item{cvlo - the averaged cvm - cvsd}
+#'     \item{nzero - the number of nonzero predictors}
+#'     \item{lambda.min - logical indicating best performing lambda
+#'         (on average)}
+#'     }
+#' @export
 repeated.cv.glmnet <- function(folds,
                                lambdas,
                                alpha,
@@ -75,7 +104,13 @@ repeated.cv.glmnet <- function(folds,
 
 }
 
-
+#' summary.repeated.cv.glmnet
+#'
+#' a summary of key options and results for a \code{\link{repeated.cv.glmnet}}
+#'     object.
+#'
+#' @param object a a \code{\link{repeated.cv.glmnet}} object.
+#' @param ... NULL
 #' @export
 summary.repeated.cv.glmnet <- function(object, ...) {
   alpha <- unique(object$alpha)
@@ -106,6 +141,25 @@ summary.repeated.cv.glmnet <- function(object, ...) {
 
 # Multiple Alpha Functions: --------------------------------------------------
 
+
+
+#' multialpha.repeated.cv.glmnet
+#'
+#' Runs a \code{\link{repeated.cv.glmnet}} for a list of alpha values and
+#'     returns averaged results, selects the 'best' alpha.
+#'     *This is intended to be a dCVnet internal function*
+#' @inheritParams repeated.cv.glmnet
+#' @param alphalist a vector of alpha values to search.
+#' @param k the number of folds for k-fold cross-validation.
+#' @param nrep the number of repetitions
+#' @return an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
+#'     This is a 3 item list: \itemize{
+#'     \item{inner_results - merged \code{\link{repeated.cv.glmnet}} with
+#'         additional columns indicating *alpha* and logical for *best* overall.}
+#'     \item{inner_best - best selected row from inner_results}
+#'     \item{inner_folds - record of folds used}
+#'     }
+#' @export
 multialpha.repeated.cv.glmnet <- function(alphalist,
                                           lambdas,
                                           y,
@@ -156,6 +210,14 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                    class = "multialpha.repeated.cv.glmnet"))
 }
 
+#' summary.repeated.cv.glmnet
+#'
+#' a summary of key options and results for a
+#'     \code{\link{multialpha.repeated.cv.glmnet}} object.
+#'
+#' @param object a a \code{\link{multialpha.repeated.cv.glmnet}} object.
+#' @param print if FALSE silently returns the summary results table.
+#' @param ... NULL
 #' @export
 summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
   .get_nsimilar <- function(marc) {
@@ -250,10 +312,15 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
 #' @return a dCVnet object.
 #' @examples
 #' \dontrun{
-#' iris_class <- dCVreg(f = Species ~ Sepal.Length + Sepal.Width +
+#' iris_class <- dCVnet(f = Species ~ Sepal.Length + Sepal.Width +
 #'                          Petal.Length + Petal.Width,
 #'                      data = subset(iris, iris$Species != "versicolor"),
-#'                      alphalist = 0.5)}
+#'                      alphalist = 0.5)
+#' #Note: in most circumstances larger values of nrep_inner and nrep_outer
+#' #      will be required.
+#' summary(classperformance(iris_class))
+#' plot(iris_class)
+#' }
 #' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
 #' @importFrom stats predict sd terms var
 #' @export
@@ -286,7 +353,7 @@ dCVnet <- function(
     #   Ncases * outer train proportion * inner test proportion
     auc_magic <- (nrow(parsed$x_mat) * (1 - (1 / k_outer)) * (1 / k_inner))
     if (auc_magic < 11) {
-      stop(
+      warning(
         paste("AUC is not possible due to small sample size!\n
               Estimated inner foldsize =", auc_magic,
               "\nUsing 'class' instead."))
@@ -576,6 +643,15 @@ coef.dCVnet <- function(object, type = "all", ...) {
 coefficients.dCVnet <- function(object, ...) coef.dCVnet(object, ...)
 
 
+
+#' summary.dCVnet
+#'
+#' a summary of key options and results for a
+#'     \code{\link{dCVnet}} object.
+#'     *this function is not completely functional*
+#'
+#' @param object a a \code{\link{dCVnet}} object.
+#' @param ... NULL
 #' @export
 summary.dCVnet <- function(object, ...) {
 

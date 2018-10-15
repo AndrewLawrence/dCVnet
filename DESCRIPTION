@@ -25,3 +25,5 @@ Imports: glmnet (>= 2.0-1),
     scales
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.0
+Suggests: knitr,
+    rmarkdown

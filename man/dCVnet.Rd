@@ -68,8 +68,13 @@ and \bold{alpha} (the balance of L1 and L2 regularisation types).
 }
 \examples{
 \dontrun{
-iris_class <- dCVreg(f = Species ~ Sepal.Length + Sepal.Width +
+iris_class <- dCVnet(f = Species ~ Sepal.Length + Sepal.Width +
                          Petal.Length + Petal.Width,
                      data = subset(iris, iris$Species != "versicolor"),
-                     alphalist = 0.5)}
+                     alphalist = 0.5)
+#Note: in most circumstances larger values of nrep_inner and nrep_outer
+#      will be required.
+summary(classperformance(iris_class))
+plot(iris_class)
+}
 }

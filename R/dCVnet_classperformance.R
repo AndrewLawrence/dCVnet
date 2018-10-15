@@ -35,6 +35,10 @@ classperformance <- function(x, ...) {
   UseMethod("classperformance", x)
 }
 
+
+#' classperformance.dCVnet
+#' @describeIn classperformance classperformance for \code{\link{list}} object
+#'     (treats it as a \code{\link{dCVnet}} object)
 #' @export
 classperformance.list <- function(x, ...) {
   # if we are given a list, lets assume it is a dCVnet style object
@@ -49,6 +53,10 @@ classperformance.list <- function(x, ...) {
   classperformance.dCVnet(x, ...)
 }
 
+#' classperformance.dCVnet
+#' @describeIn classperformance classperformance for \code{\link{dCVnet}} object
+#' @param as.data.frame return a data.frame instead of
+#'     \code{\link{classperformance}} object.
 #' @export
 classperformance.dCVnet <- function(x, as.data.frame = T, ...) {
   if ( as.data.frame ) return(x$performance)
@@ -61,6 +69,11 @@ classperformance.dCVnet <- function(x, as.data.frame = T, ...) {
   return(structure(R, class = c("classperformance", "list")))
 }
 
+#' classperformance.glm
+#' @describeIn classperformance classperformance for \code{\link[stats]{glm}}
+#'     object
+#' @param label specify a label for the output
+#' @param threshold for logistic regression use a threshold other than 0.5.
 #' @export
 classperformance.glm <- function(x,
                                  as.data.frame = T,
@@ -88,6 +101,9 @@ classperformance.glm <- function(x,
   }
 }
 
+#' classperformance.glm
+#' @describeIn classperformance classperformance for glmlist from
+#'     \code{\link{dCVnet_refmodels}} object
 #' @export
 classperformance.glmlist <- function(x, as.data.frame = T, ...) {
   # applies pobj.glm to a list of glms.
@@ -109,9 +125,15 @@ classperformance.glmlist <- function(x, as.data.frame = T, ...) {
 }
 
 
-#  ~ using class performance ----------------------------------------------
+#  ~ utilising class performance ----------------------------------------------
 
-
+#' summary.classperformance
+#'
+#' Calculates performance table and two-class classification metrics for a
+#'     \code{\link{classperformance}} object.
+#' @param object a \code{\link{classperformance}} object.
+#' @param label a label can be assigned here.
+#' @param ... additional arguments (not currently used)
 #' @export
 summary.classperformance <- function(object, label = NA, ...) {
   # Function assigns a label if asked to (for multi performance mode.)

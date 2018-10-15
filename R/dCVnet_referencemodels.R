@@ -55,6 +55,9 @@ dCVnet_refmodels <- function(object) {
 
 #' report_reference_classperformance_summary
 #'
+#' Returns a report of classperformance summary information for a set of dCVnet
+#'     reference models.
+#'
 #' @param refobj a set of reference models provided by
 #'     \code{\link{dCVnet_refmodels}}
 #'

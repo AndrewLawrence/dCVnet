@@ -4,6 +4,13 @@
 
 #  ~ for S3 classes -------------------------------------------------------
 
+#' plot.repeated.cv.glmnet
+#'
+#' Plot averaged and best innerloop model performance for a (single alpha)
+#'     \code{\link{repeated.cv.glmnet}}
+#'
+#' @param x a \code{\link{repeated.cv.glmnet}} object.
+#' @param ... NULL
 #' @export
 plot.repeated.cv.glmnet <- function(x, ...) {
   x$lambda <- log10(x$lambda)
@@ -22,6 +29,14 @@ plot.repeated.cv.glmnet <- function(x, ...) {
   invisible(x)
 }
 
+#' plot.repeated.cv.glmnet
+#'
+#' Plot averaged and best innerloop model performance highlighting
+#'     the final selected alpha for a
+#'     \code{\link{multialpha.repeated.cv.glmnet}}
+#'
+#' @param x a \code{\link{multialpha.repeated.cv.glmnet}} object.
+#' @param ... NULL
 #' @export
 plot.multialpha.repeated.cv.glmnet <- function(x, ...) {
   x <- x$inner_results # only need the inner_results dataframe.
@@ -43,6 +58,24 @@ plot.multialpha.repeated.cv.glmnet <- function(x, ...) {
   invisible(x)
 }
 
+#' plot.dCVnet
+#'
+#' Produces either a plot of the tuning parameters and inner loop performance
+#'     per fold of the outer loop, or the final roc plots of the outer loop.
+#'     \itemize{
+#'     \item{\code{tuning} - selected tuning parameters over repeated folds of the
+#'           outerloop}
+#'     \item{\code{roc} - Sensitivity vs. (1 - Specificity) plot.}
+#'     }
+#'
+#' @name plot.dCVnet
+#' @param x a \code{\link{dCVnet}} object
+#' @param type one of
+#'     \itemize{
+#'     \item{\code{"tuning"} - outer tuning coefficients (\code{\link{plot_outerloop_coefs}})}
+#'     \item{\code{"roc"} - a roc plot (\code{\link{plot.rocdata}})}
+#'     }
+#' @param ... additional arguments passed to plot functions above.
 #' @export
 plot.dCVnet <- function(x, type = "tuning", ...) {
   # options:
@@ -106,6 +139,18 @@ plot.rocdata <- function(x, legend = F, ...) {
 #  ~ non-S3 plotters ------------------------------------------------------
 
 
+#' tuning_plot_dCVnet
+#'
+#' Display the tuning curves for the repeated k-folds of the outerloop of a
+#' dCVnet.
+#'
+#' requires \pkg{ggplot2}.
+#'
+#' @name tuning_plot_dCVnet
+#' @param object a \code{\link{dCVnet}} object
+#' @return a ROC plot, as above.
+#'
+#' @export
 tuning_plot_dCVnet <- function(object) {
   # Plotting function to show outer fold variability in the tuning curves
   #   at different alphas.
@@ -143,14 +188,13 @@ tuning_plot_dCVnet <- function(object) {
 }
 
 
-# Visualise:
 #' plot_outerloop_coefs
 #'
-#' Plot showing standardised betas for model coefficients.
+#' Plot showing standardised betas for outer-loop model coefficients.
 #'     coefficients are first mean-averaged over the k-folds,
 #'     then displayed per-repetition.
 #'
-#' @param object a dCVnet object
+#' @param object a \code{\link{dCVnet}} object
 #' @importFrom scales muted
 #' @export
 plot_outerloop_coefs <- function(object) {
