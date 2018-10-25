@@ -7,9 +7,10 @@
 repeated.cv.glmnet(folds, lambdas, alpha, x, y, ..., debug = F)
 }
 \arguments{
-\item{folds}{This is a list where each element is a vector of length n_cases
-with each case labelled as belonging to a fold 1:n_folds. This argument
-implicitly sets the number of repeats and the k in repeated k-fold cv.}
+\item{folds}{This is a list where each element is an integer vector
+of length \emph{n_cases}. The integer for each case labels it as belonging
+to a fold \emph{1:n_folds}. This argument implicitly sets the number of repeats
+and the k in repeated k-fold cv.}
 
 \item{lambdas}{use a fixed, user supplied lambda sequence (descending)
 see \code{\link[glmnet]{glmnet}}}
@@ -43,5 +44,5 @@ containting averaged metrics. Has the following columns:
 }
 \description{
 Repeatedly runs a \code{\link[glmnet]{cv.glmnet}} and returns averaged
-results. \emph{This is intended to be an internal function}.
+results. \emph{This is intended to be a dCVnet internal function}.
 }

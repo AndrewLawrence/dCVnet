@@ -4,20 +4,27 @@
 
 #' dCVnet_refmodels
 #'
-#' calculate some reference models to help interpret dCVnet performance
-#'     models calculated are:
+#' calculate some reference models to help interpret dCVnet performance.
+#'     models for \eqn{n} observations of \eqn{p} predictors calculated are:
 #'     \itemize{
-#'     \item{a logistic regression using all variables (if n>>k), otherwise
-#'         a logistic regression on the top n/5 principal compoments}
+#'     \item{a logistic regression using all variables (if \eqn{n > 5 * p}),
+#'         otherwise a logistic regression on the first \eqn{round(n / 5)}
+#'         principal compoments}
 #'     \item{a series of logistic regressions, one for each column in the
 #'         design matrix - a mass univariate approach}
 #'     }
+#'
+#' The univariate component has a class ('glmlist') used in some summary
+#'     functions. This is not currently correctly implemented.
 #'
 #' @name dCVnet_refmodels
 #'
 #' @param object a dCVnet object
 #'
-#' @return a list of \code{glm} and \code{univariate} models.
+#' @return a list containing: \itemize{
+#' \item{\code{glm} - the multiple-predictor model (possibly PCA-reduced)}
+#' \item{\code{univariate} - a \code{glmlist} of models, one for each predictor}
+#' }
 #'
 #' @export
 dCVnet_refmodels <- function(object) {

@@ -32,5 +32,5 @@ additional columns indicating \emph{alpha} and logical for \emph{best} overall.}
 \description{
 Runs a \code{\link{repeated.cv.glmnet}} for a list of alpha values and
 returns averaged results, selects the 'best' alpha.
-\emph{This is intended to be an internal function}.
+\emph{This is intended to be a dCVnet internal function}
 }
