@@ -81,11 +81,13 @@ classperformance.glm <- function(x,
                                  threshold = 0.5, ...) {
   # Return (labelled) prediction dataframe from a glm
   #     given a threshold (default = 0.5):
-  lvl <- levels(x$data[, 1])
+  outcome <- as.character(x$terms[[2]])
+
+  lvl <- levels(x$data[[outcome]])
   classification <- as.numeric(stats::fitted(x) > threshold) + 1
   classification <- factor(lvl[classification], levels = lvl)
 
-  reference <- x$data[, 1]
+  reference <- x$data[[outcome]]
   probability <- fitted(x)
 
   R <- data.frame(reference = reference,
@@ -101,7 +103,7 @@ classperformance.glm <- function(x,
   }
 }
 
-#' classperformance.glm
+#' classperformance.glmlist
 #' @describeIn classperformance classperformance for glmlist from
 #'     \code{\link{dCVnet_refmodels}} object
 #' @export
