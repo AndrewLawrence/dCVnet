@@ -103,7 +103,7 @@ classperformance.glm <- function(x,
   }
 }
 
-#' classperformance.glmlist
+#' classperformance.glm
 #' @describeIn classperformance classperformance for glmlist from
 #'     \code{\link{dCVnet_refmodels}} object
 #' @export
@@ -129,6 +129,32 @@ classperformance.glmlist <- function(x, as.data.frame = T, ...) {
 
 #  ~ utilising class performance ----------------------------------------------
 
+# Simple print function for class performance objects.
+#' @export
+print.classperformance <- function(x, ...) {
+  if ( "list" %in% class(x) ) {
+    type <- "list"
+    n_models <- length(x)
+    mod_labs <- names(x)
+    px <- x[[1]]
+  } else {
+    type <- "data.frame"
+    mod_labs <- unique(as.character(x$label))
+    n_models <- length(mod_labs)
+    sel <- as.character(x$label)
+    sel <- (sel == sel[1])
+    px <- subset(x, sel)
+  }
+  cat(paste("\nClassperformance object of type: ",type,"\n"))
+  cat(paste("\tcontains results of", n_models, "model(s)\n"))
+  cat(paste("\nOutcomes:"))
+  print(table(px$reference))
+  cat(paste("\nModels:\n\t"))
+  cat(mod_labs)
+  invisible(x)
+}
+
+
 #' summary.classperformance
 #'
 #' Calculates performance table and two-class classification metrics for a
@@ -143,7 +169,7 @@ summary.classperformance <- function(object, label = NA, ...) {
   # If label is 'None' then this column is removed.
 
   if ( "list" %in% class(object) ) {
-    # we merge any lists.
+    # convert lists to data.frames.
     object <- structure(data.frame(do.call(rbind, object)),
                              class = c("classperformance", "data.frame"))
   }

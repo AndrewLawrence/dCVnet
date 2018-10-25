@@ -28,5 +28,5 @@ design matrix - a mass univariate approach}
 }
 \details{
 The univariate component has a class ('glmlist') used in some summary
-functions.
+functions. This is not currently correctly implemented.
 }

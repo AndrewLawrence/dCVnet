@@ -12,7 +12,6 @@
 # FIXED (25/10/2018)
 # Currently code fails if factor labels don't produce legal column names.
 
-
 # OLD:
 #
 #
