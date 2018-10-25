@@ -26,8 +26,6 @@
 #'         with level ordered according to \code{positive}}
 #'     \item{ \code{x_mat} - predictor matrix
 #'         including expansions, interaction terms specified in \code{f}}
-#'     \item{ \code{f0} - a formula
-#'         flattened to refer to rownames in \code{x_mat}}
 #'     }
 #'
 #' @export
@@ -63,14 +61,6 @@ parse_dCVnet_input <- function(f, data, positive = 1) {
   #   i.e. parse dummy coding / interaction terms & drop intercept:
   x_mat <- model.matrix(f, data = data)[, -1]
 
-  # produce a flattened formula based on x_mat:
-  f0_string <- paste(f[[2]],
-                     "~",
-                     paste(colnames(x_mat),
-                           collapse = "+"))
-
-  f0 <- as.formula(f0_string)
-
   # Recode levels.
   lvl <- levels(y)
   if ( is.numeric(positive) ) {
@@ -82,13 +72,9 @@ parse_dCVnet_input <- function(f, data, positive = 1) {
 
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,
-              x_mat = x_mat,
-              f0 = f0))
+              x_mat = x_mat))
 }
 
-
-#
-#
 
 #' parse_alphalist
 #'

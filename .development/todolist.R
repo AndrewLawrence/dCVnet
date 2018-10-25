@@ -1,10 +1,16 @@
 
-# Currently code fails if factor labels don't produce legal column names.
+# Needs print functions for new S3 types.
 
+# Needs better summary function for dCVnet
+
+
+
+# FIXED (25/10/2018)
 # Currently dCVnet:::predict_cat.glm() fails if
 # the outcome is is not the first variable in the data.frame.
 
-# Needs print function.
+# FIXED (25/10/2018)
+# Currently code fails if factor labels don't produce legal column names.
 
 
 # OLD:

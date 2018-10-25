@@ -28,8 +28,6 @@ Can be a numeric indicating which of \code{levels(y)} to use
 with level ordered according to \code{positive}}
 \item{ \code{x_mat} - predictor matrix
 including expansions, interaction terms specified in \code{f}}
-\item{ \code{f0} - a formula
-flattened to refer to rownames in \code{x_mat}}
 }
 }
 \description{
