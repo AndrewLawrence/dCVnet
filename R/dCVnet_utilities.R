@@ -314,13 +314,22 @@ tidy_confusionmatrix <- function(mat) {
 #' predict_cat.glm
 #'
 #' Category predictions from a binomial glm object.
+#'
+#' Note: this is not implemented as an S3 generic despite the name.
+#'     It has no dispatch.
+#'
 #' @param glm a binomial family glm object
 #' @param threshold the prediction threshold
+#' @export
 predict_cat.glm <- function(glm, threshold = 0.5) {
-  if ("binomial" %in% glm$family$family) stop("input glm must be binomial")
+  if ( !("glm" %in% class(glm)) ) stop("input must be of class 'glm'")
+  if ( !("binomial" %in% glm$family$family) ) stop("input glm must be binomial")
+
+  # name of LHS:
+  outcome <- as.character(glm$terms[[2]])
 
   # Return categorical predictions from a glm given a threshold (default = 0.5):
-  lvl <- levels(glm$data[, 1])
+  lvl <- levels(glm$data[[outcome]])
 
   if (is.null(lvl)) stop("outcome is missing levels")
 

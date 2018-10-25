@@ -14,3 +14,7 @@ predict_cat.glm(glm, threshold = 0.5)
 \description{
 Category predictions from a binomial glm object.
 }
+\details{
+Note: this is not implemented as an S3 generic despite the name.
+It has no dispatch.
+}
