@@ -11,8 +11,21 @@
 
 \item{...}{NULL}
 }
+\value{
+a dataframe of tuning results for each outer fold/rep.
+[Note: this may change in future]
+}
 \description{
 a summary of key options and results for a
 \code{\link{dCVnet}} object.
-\emph{this function is not completely functional}
+}
+\details{
+Prints the following sections: \itemize{
+\item{Input descriptives}
+\item{Outer Loop classification performance}
+\item{Inner Loop model stability}
+\item{Inner Loop model performance}
+\item{Production model performance (fit to \emph{all} data)}
+}
+The outer loop tests generalisation of the model.
 }

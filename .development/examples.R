@@ -148,7 +148,6 @@ blarg2 <- dCVnet::dCVnet(f = y ~ .,
                          alphalist = c(0.2, 0.5, 0.8),
                          k_inner = 10, nrep_inner = 3,
                          k_outer = 10, nrep_outer = 2,
-                         option.empirical_cutoff = FALSE,
                          type.measure = "auc",
                          nlambda = 100)
 

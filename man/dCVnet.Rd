@@ -51,7 +51,7 @@ classification (affects outer CV performance only).
 Otherwise classify at 50\% probability.}
 
 \item{...}{Arguments to pass through to cv.glmnet
-(beware, this may break things).}
+(beware, making use of this may break things).}
 }
 \value{
 a dCVnet object.

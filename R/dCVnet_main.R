@@ -369,7 +369,7 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
 #'     classification (affects outer CV performance only).
 #'     Otherwise classify at 50\% probability.
 #' @param ... Arguments to pass through to cv.glmnet
-#'     (beware, this may break things).
+#'     (beware, making use of this may break things).
 #' @return a dCVnet object.
 #' @examples
 #' \dontrun{
@@ -596,29 +596,27 @@ dCVnet <- function(
                 performance = final_performance,
                 model = final_model)
 
-  # reference models are large and relatively fast to calculate:
-  #  so don't store them: reference <- reference_models.dCVnet(parsed)
+  time.stop <- Sys.time()
+  run.time.mins <- as.numeric(round((time.stop - time.start) / 60, 2))
 
   # The final object:
   obj <- structure(list(tuning = outers,
                         performance = performance,
                         folds = outfolds,
                         final = final,
-                        #reference = reference,
-                        input = list(parsed = parsed,
+                        input = list(call = thecall,
+                                     runtime.mins = run.time.mins,
+                                     parsed = parsed,
                                      lambdas = lambdas,
                                      alphas = alphalist)),
                    class = c("dCVnet", "list"))
-
-
-  time.stop <- Sys.time()
 
   cat("\n\n")
   print(thecall)
   cat("\n")
   cat(paste0("Finished.\n"))
   cat(paste0(time.stop, "\n"))
-  cat(paste0("Runtime: ", round((time.stop - time.start) / 60, 2), " mins\n"))
+  cat(paste0("Runtime: ", run.time.mins, " mins\n"))
   cat("------------")
 
   return(obj)
@@ -704,17 +702,116 @@ coef.dCVnet <- function(object, type = "all", ...) {
 coefficients.dCVnet <- function(object, ...) coef.dCVnet(object, ...)
 
 
+#' @export
+print.dCVnet <- function(x, ...) {
+
+  parsed <- x$input$parsed
+
+  stab <- table(parsed$y)
+
+  nalphas <- length(x$input$alphas)
+  nlambdas <- length(x$input$lambdas[[1]])
+
+  typemeas <- attr(x$final$tuning$inner_results, "type.measure")
+
+  outerfolds <- x$folds
+  innerfolds <- x$tuning[[1]]$tuning$inner_folds
+
+  outerkey <- data.frame(do.call(rbind,
+                                 strsplit(names(outerfolds),
+                                          split = ".", fixed = T)))
+  colnames(outerkey) <- c("Folds", "Reps")
+
+  outer_k <- length(unique(outerkey$Folds))
+  outer_nrep <- length(unique(outerkey$Reps))
+
+  inner_k <- max(innerfolds[[1]])
+  inner_nrep <- length(innerfolds)
+
+  opts.empirical <- x$input$call[["option.empirical_cutoff"]]
+  if ( is.null(opts.empirical) ) opts.empirical <- FALSE
+
+  cat("A dCVnet object, from the dCVnet Package\n\n")
+  print(x$input$call)
+  cat("\n")
+  cat(paste0("Runtime: ", as.numeric(x$input$runtime.mins), " mins\n\n"))
+
+  cat("Input\n-----\n")
+  cat("Features:\n")
+  cat(paste0("\t", ncol(parsed$x_mat), "\n"))
+
+  cat("Observations:\n")
+  cat(paste0("\t", nrow(parsed$x_mat), " subjects\n"))
+  cat(paste0("\t", stab[1], " of outcome: ", names(stab)[1], "\n"))
+  cat(paste0("\t", stab[2], " of outcome: ", names(stab)[2], "\n"))
+
+  cat("Hyperparameter Tuning:\n")
+  cat(paste("\tOptimising: ", typemeas,"\n"))
+  cat(paste0("\t", nalphas, " alpha values:\t"))
+  cat(x$input$alphas)
+  cat(paste0("\n\t", nlambdas, " lambda values\n"))
+
+  cat("Cross-validation:\n")
+  cat(paste("\tInner:\n"))
+  cat(paste("\t\tk =\t", inner_k, "\n"))
+  cat(paste("\t\tnrep =\t", inner_nrep, "\n"))
+  cat(paste("\tOuter:\n"))
+  cat(paste("\t\tk =\t", outer_k, "\n"))
+  cat(paste("\t\tnrep =\t", outer_nrep, "\n"))
+
+  cat("Options:\n")
+  cat(paste("\tUse Empirical Thresholding for LogReg Classification: ",
+            opts.empirical, "\n\n"))
+
+  invisible(x)
+}
+
+
 
 #' summary.dCVnet
 #'
 #' a summary of key options and results for a
 #'     \code{\link{dCVnet}} object.
-#'     *this function is not completely functional*
+#'
+#' Prints the following sections: \itemize{
+#' \item{Input descriptives}
+#' \item{Outer Loop classification performance}
+#' \item{Inner Loop model stability}
+#' \item{Inner Loop model performance}
+#' \item{Production model performance (fit to *all* data)}
+#' }
+#'     The outer loop tests generalisation of the model.
 #'
 #' @param object a a \code{\link{dCVnet}} object.
 #' @param ... NULL
+#'
+#' @return a dataframe of tuning results for each outer fold/rep.
+#'     \[Note: this may change in future\]
+#'
 #' @export
 summary.dCVnet <- function(object, ...) {
+  .titlecat <- function(title) {
+    n <- nchar(title)
+    divider <- paste0(rep("-", length.out = n), collapse = "")
+    cat(paste0(divider,"\n"))
+    cat(paste0(title,"\n"))
+    cat(paste0(divider,"\n"))
+  }
+  # Start with print.
+  cat("Summary of ")
+  print(object)
+  #tail(object, n = -1L)
+
+  # Outerloop CV results:
+  outCV <- report_classperformance_summary(object)
+
+  min_vars <- c("Accuracy", "Sensitivity",
+                "Specificity", "Balanced Accuracy",
+                "AUROC")
+  min_outCV <- outCV[outCV$Measure %in% min_vars,
+                     c("mean", "sd", "min", "max")]
+  min_outCV <- round(min_outCV, 3)
+  row.names(min_outCV) <- min_vars
 
   # What do the 'best-fitting' results of the inner loops look like:
   R <- lapply(object$tuning, function(x) {
@@ -724,6 +821,59 @@ summary.dCVnet <- function(object, ...) {
   R <- data.frame(do.call(rbind, R))
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
-  return(R)
 
+  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = T), '[', 2)
+
+  # summarise lambdas:
+  lambda_summary <- c(mean = mean(R$lambda),
+                      sd = sd(R$lambda),
+                      min = min(R$lambda),
+                      max = max(R$lambda))
+
+  # Summarise inner loop performances (i.e. best cvm)  by rep:
+  cvm_repmean <- aggregate(R$cvm, by = list(Rep = R$Rep), FUN = mean)
+
+  # summarise 'final' model performance:
+  fmp <- summary(object$final$performance)
+  min_fmp <- fmp$Value[fmp$Measure %in% min_vars]
+  min_fmp <- round(min_fmp, 3)
+  names(min_fmp) <- min_vars
+
+  # fInal model hyper parameters:
+  fmp_hp <- summary(object$final$tuning, print = F)
+  fmp_hp <- fmp_hp[fmp_hp$best,]
+
+  fmp_hp_str <- c(alpha = fmp_hp$alpha,
+                  lambda = formatC(fmp_hp$lambda),
+                  cvm = formatC(fmp_hp$cvm))
+
+  # Write this out:
+  cat("\n")
+  .titlecat("Outer Loop CV Performance")
+  print(min_outCV)
+  cat("\n")
+  .titlecat("Inner Loop Model Stability")
+  cat(paste0("Tuned alphas (table):"))
+  print(table(R$alpha))
+  cat("Tuned lambdas (descriptives):\n")
+  print(lambda_summary, digits = 3)
+  cat("\n")
+
+  .titlecat("Inner Loop Model Performance")
+  cat("[Note: inner-loop performance is not independently cross-validated]\n\n")
+  cat(paste0("metric (cvm): ",
+             attr(object$final$tuning$inner_best, "type.measure"), "\n\n"))
+  cat("cvm summary (per-rep, averaged over folds):\n")
+  print(summary(cvm_repmean$x))
+  cat("cvm summary (over folds):\n")
+  print(summary(R$cvm))
+  cat("\n")
+
+  .titlecat("'Production' Model")
+  cat("Production Performance (not cross-validated):\n")
+  print(min_fmp)
+  cat("Production Hyperparameter Tuning:\n")
+  print(fmp_hp_str, quote = F)
+
+  invisible(R)
 }
