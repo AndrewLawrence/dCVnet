@@ -495,6 +495,7 @@ dCVnet <- function(
                                               lambdas = lambdas,
                                               y = trainy, x = trainx,
                                               type.measure = type.measure,
+                                              standardize = F,
                                               ...)
 
       # extract the best alpha/lambda based on out of sample performance:
@@ -506,6 +507,7 @@ dCVnet <- function(
                               y = trainy,
                               family = "binomial",
                               alpha = fit_alpha,
+                              standardize = F,
                               lambda = lambdas[[which(alphalist == fit_alpha)]])
 
       # how well did it do?:
@@ -877,3 +879,4 @@ summary.dCVnet <- function(object, ...) {
 
   invisible(R)
 }
+
