@@ -41,7 +41,8 @@ extract_rocdata <- function(classperformance) {
                             classperformance[classperformance$label == lab, ]
                           })
     names(classperformance) <- lvls
-    classperformance <- structure(classperformance, class = c("classperformance", "list"))
+    classperformance <- structure(classperformance,
+                                  class = c("classperformance", "list"))
   }
 
   # Utility subfunction convert a ROC performance object to a dataframe.

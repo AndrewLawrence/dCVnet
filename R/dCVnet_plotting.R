@@ -199,12 +199,12 @@ tuning_plot_dCVnet <- function(object) {
 #' @export
 plot_outerloop_coefs <- function(object) {
   df <- coef.dCVnet(object, type = "rep")
-  df$StdBeta <-  df$Coef
+  df$stdbeta <-  df$Coef
 
   p <-  ggplot2::ggplot(df,
-                        ggplot2::aes_string(y = "StdBeta",
+                        ggplot2::aes_string(y = "stdbeta",
                                             x = "Predictor",
-                                            colour = "StdBeta")) +
+                                            colour = "stdbeta")) +
     ggplot2::geom_hline(yintercept = 0.0) +
     ggplot2::geom_point(alpha = 1) +
     ggplot2::scale_colour_gradient2(low = muted("blue"),

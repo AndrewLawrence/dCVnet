@@ -145,7 +145,7 @@ print.classperformance <- function(x, ...) {
     sel <- (sel == sel[1])
     px <- subset(x, sel)
   }
-  cat(paste("\nClassperformance object of type: ",type,"\n"))
+  cat(paste("\nClassperformance object of type: ", type, "\n"))
   cat(paste("\tcontains results of", n_models, "model(s)\n"))
   cat(paste("\nOutcomes:"))
   print(table(px$reference))

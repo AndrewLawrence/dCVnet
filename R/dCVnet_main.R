@@ -108,8 +108,6 @@ repeated.cv.glmnet <- function(folds,
 print.repeated.cv.glmnet <- function(x, ...) {
   alpha <- unique(x$alpha)
   lambda <- range(x$lambda)
-  best_up <- x$cvup[x$lambda.min]
-  best_lo <- x$cvlo[x$lambda.min]
 
   cat(paste("A repeated.cv.glmnet object from package dCVnet\n"))
   cat(paste("Tuning metric (cvm):", attr(x, "type.measure"), "\n"))
@@ -130,8 +128,7 @@ print.repeated.cv.glmnet <- function(x, ...) {
 #' @param ... NULL
 #' @export
 summary.repeated.cv.glmnet <- function(object, ...) {
-  alpha <- unique(object$alpha)
-  lambda <- range(object$lambda)
+
   best_up <- object$cvup[object$lambda.min]
   best_lo <- object$cvlo[object$lambda.min]
 
@@ -246,7 +243,8 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
   selected <- (R$alpha == best$alpha) & (R$lambda == best$lambda)
 
   cat("A multialpha.repeated.cv.glmnet object, from the dCVnet Package\n\n")
-  cat(paste0("\t", length(alpha), " alpha(s): ", paste(alpha, collapse = ", "), "\n\n"))
+  cat(paste0("\t", length(alpha), " alpha(s): ",
+             paste(alpha, collapse = ", "), "\n\n"))
   cat(paste0("\tLambda Counts:\n"))
   cat(paste0("\t", l_lengths))
   cat(paste0("\n\n\tLambda Ranges:\n"))
@@ -400,7 +398,7 @@ dCVnet <- function(
 
   thecall <- match.call()
 
-  time.start <- Sys.time() # for logging.
+  time_start <- Sys.time() # for logging.
 
   parsed <- parse_dCVnet_input(f = f, data = data, positive = positive)
   x <- parsed$x_mat
@@ -431,7 +429,7 @@ dCVnet <- function(
   startup_message(k_inner = k_inner, nrep_inner = nrep_inner,
                   k_outer = k_outer, nrep_outer = nrep_outer,
                   nalpha = nalpha, nlambda = nlambda,
-                  parsed = parsed, time.start = time.start)
+                  parsed = parsed, time.start = time_start)
   # Main work starts here:
 
   # Step 1: make repeated outer folds in x & y according to nrep_outer, k_outer.
@@ -598,8 +596,8 @@ dCVnet <- function(
                 performance = final_performance,
                 model = final_model)
 
-  time.stop <- Sys.time()
-  run.time.mins <- as.numeric(round((time.stop - time.start) / 60, 2))
+  time_stop <- Sys.time()
+  run_time_mins <- as.numeric(round( (time_stop - time_start) / 60, 2))
 
   # The final object:
   obj <- structure(list(tuning = outers,
@@ -607,7 +605,7 @@ dCVnet <- function(
                         folds = outfolds,
                         final = final,
                         input = list(call = thecall,
-                                     runtime.mins = run.time.mins,
+                                     runtime.mins = run_time_mins,
                                      parsed = parsed,
                                      lambdas = lambdas,
                                      alphas = alphalist)),
@@ -617,8 +615,8 @@ dCVnet <- function(
   print(thecall)
   cat("\n")
   cat(paste0("Finished.\n"))
-  cat(paste0(time.stop, "\n"))
-  cat(paste0("Runtime: ", run.time.mins, " mins\n"))
+  cat(paste0(time_stop, "\n"))
+  cat(paste0("Runtime: ", run_time_mins, " mins\n"))
   cat("------------")
 
   return(obj)
@@ -748,7 +746,7 @@ print.dCVnet <- function(x, ...) {
   cat(paste0("\t", stab[2], " of outcome: ", names(stab)[2], "\n"))
 
   cat("Hyperparameter Tuning:\n")
-  cat(paste("\tOptimising: ", typemeas,"\n"))
+  cat(paste("\tOptimising: ", typemeas, "\n"))
   cat(paste0("\t", nalphas, " alpha values:\t"))
   cat(x$input$alphas)
   cat(paste0("\n\t", nlambdas, " lambda values\n"))
@@ -795,25 +793,24 @@ summary.dCVnet <- function(object, ...) {
   .titlecat <- function(title) {
     n <- nchar(title)
     divider <- paste0(rep("-", length.out = n), collapse = "")
-    cat(paste0(divider,"\n"))
-    cat(paste0(title,"\n"))
-    cat(paste0(divider,"\n"))
+    cat(paste0(divider, "\n"))
+    cat(paste0(title, "\n"))
+    cat(paste0(divider, "\n"))
   }
   # Start with print.
   cat("Summary of ")
   print(object)
-  #tail(object, n = -1L)
 
   # Outerloop CV results:
-  outCV <- report_classperformance_summary(object)
+  outcv <- report_classperformance_summary(object)
 
   min_vars <- c("Accuracy", "Sensitivity",
                 "Specificity", "Balanced Accuracy",
                 "AUROC")
-  min_outCV <- outCV[outCV$Measure %in% min_vars,
+  min_outcv <- outcv[outcv$Measure %in% min_vars,
                      c("mean", "sd", "min", "max")]
-  min_outCV <- round(min_outCV, 3)
-  row.names(min_outCV) <- min_vars
+  min_outcv <- round(min_outcv, 3)
+  row.names(min_outcv) <- min_vars
 
   # What do the 'best-fitting' results of the inner loops look like:
   R <- lapply(object$tuning, function(x) {
@@ -824,7 +821,7 @@ summary.dCVnet <- function(object, ...) {
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
 
-  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = T), '[', 2)
+  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = T), "[", 2)
 
   # summarise lambdas:
   lambda_summary <- c(mean = mean(R$lambda),
@@ -843,7 +840,7 @@ summary.dCVnet <- function(object, ...) {
 
   # fInal model hyper parameters:
   fmp_hp <- summary(object$final$tuning, print = F)
-  fmp_hp <- fmp_hp[fmp_hp$best,]
+  fmp_hp <- fmp_hp[fmp_hp$best, ]
 
   fmp_hp_str <- c(alpha = fmp_hp$alpha,
                   lambda = formatC(fmp_hp$lambda),
@@ -852,7 +849,7 @@ summary.dCVnet <- function(object, ...) {
   # Write this out:
   cat("\n")
   .titlecat("Outer Loop CV Performance")
-  print(min_outCV)
+  print(min_outcv)
   cat("\n")
   .titlecat("Inner Loop Model Stability")
   cat(paste0("Tuned alphas (table):"))
@@ -879,4 +876,3 @@ summary.dCVnet <- function(object, ...) {
 
   invisible(R)
 }
-

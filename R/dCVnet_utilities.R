@@ -287,12 +287,12 @@ tidy_confusionmatrix <- function(mat) {
                         Value = mat$overall,
                         stringsAsFactors = F)
 
-  byClass <- data.frame(Measure = names(mat$byClass),
+  byclass <- data.frame(Measure = names(mat$byClass),
                         Value = mat$byClass,
                         stringsAsFactors = F)
 
   tab <- rbind(tab, overall)
-  tab <- rbind(tab, byClass)
+  tab <- rbind(tab, byclass)
   rownames(tab) <- NULL
   return(tab)
 }
