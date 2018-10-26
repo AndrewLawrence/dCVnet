@@ -1,7 +1,7 @@
 Package: dCVnet
 Type: Package
 Title: Doubly Cross-Validated Elastic-Net Regularised (Generalised) Linear Models
-Version: 0.7.0
+Version: 1.0.0
 Authors@R: c(person("Andrew J.", "Lawrence", 
                     email = "lawrenceajl@gmail.com",
                     role = c("aut", "cre")))

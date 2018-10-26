@@ -1,9 +1,9 @@
 
+
+
+# FIXED (26/10/2018)
 # Needs print functions for new S3 types.
-
 # Needs better summary function for dCVnet
-
-
 
 # FIXED (25/10/2018)
 # Currently dCVnet:::predict_cat.glm() fails if
