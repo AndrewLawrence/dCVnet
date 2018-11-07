@@ -311,11 +311,11 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
   if ( !("glm" %in% class(glm)) ) stop("input must be of class 'glm'")
   if ( !("binomial" %in% glm$family$family) ) stop("input glm must be binomial")
 
-  # name of LHS:
-  outcome <- as.character(glm$terms[[2]])
+  # extract the outcome variable.
+  outcome <- model.frame(glm)[[1]]
 
   # Return categorical predictions from a glm given a threshold (default = 0.5):
-  lvl <- levels(glm$data[[outcome]])
+  lvl <- levels(outcome)
 
   if (is.null(lvl)) stop("outcome is missing levels")
 
