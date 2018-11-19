@@ -207,9 +207,9 @@ plot_outerloop_coefs <- function(object) {
                                             colour = "stdbeta")) +
     ggplot2::geom_hline(yintercept = 0.0) +
     ggplot2::geom_point(alpha = 1) +
-    ggplot2::scale_colour_gradient2(low = muted("blue"),
+    ggplot2::scale_colour_gradient2(low = scales::muted("blue"),
                                     mid = "grey",
-                                    high = muted("red"),
+                                    high = scales::muted("red"),
                                     midpoint = 0) +
     ggplot2::stat_summary(fun.data = "mean_se") +
     ggplot2::ylab("Standardised Beta") +

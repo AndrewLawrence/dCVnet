@@ -16,12 +16,9 @@ LazyData: true
 Imports: glmnet (>= 2.0-1),
     caret,
     ggplot2,
-    mgcv,
     ModelMetrics,
     parallel,
-    psych,
     ROCR,
-    openxlsx,
     scales
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.0
