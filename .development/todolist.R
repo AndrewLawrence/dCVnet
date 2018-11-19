@@ -1,4 +1,20 @@
 
+# TODO: Timing values are incorrect when the model is fit in parallel
+# TODO: when running in parallel the inner-loop (per-alpha) report lines are confusing. Quick-fix: suppress these when parallel. Slowfix: investigate a parallel progress bar.
+# TODO: Model summary works well, but would be nice to have 'tidy' methods for results.
+# TODO: Write something which dumps model summary and complete results to excel file.
+# TODO: If you request only a single rep then the summary measures 'break' with errors or display issues.
+# TODO: Summary methods take a looong time to run when you have even a moderate number of reps (~100). Can we optimise the code?
+# TODO: Sampling options - Leave-group-out,
+#                          Proportional sampling by outcome or covariate/
+#       This could be achieved by switching to rsample.
+# TODO: add checks that randomised folds are unique? (not sure if compatible with rsample)
+
+
+
+# NOT REPLICATED (19/11/2018)
+# TODO: On installation: "Error e1071 required" probably needs adding to the description/imports/depends.
+# RESULTS: systematic search found no functions from e1071. Possibly the error message relates to another package.
 
 
 # FIXED (26/10/2018)
