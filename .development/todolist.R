@@ -14,7 +14,11 @@
 
 # NOT REPLICATED (19/11/2018)
 # TODO: On installation: "Error e1071 required" probably needs adding to the description/imports/depends.
-# RESULTS: systematic search found no functions from e1071. Possibly the error message relates to another package.
+# RESULTS: systematic search found no functions from e1071.
+# Possibly the error message relates to another package.
+# UPDATE: it was the confusionMatrix function from caret.
+#         Caret only 'suggests' e1071, so it is not installed as a dependency.
+#         adding e1071 to the imports fixes the error.
 
 
 # FIXED (26/10/2018)
