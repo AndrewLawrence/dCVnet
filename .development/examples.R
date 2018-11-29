@@ -58,29 +58,29 @@ maxlambdas <- lambda_rangefinder(x = parsed$x_mat,
                                  alphalist = alphalist,
                                  prop = 0.9)
 
-lambdalist <- lambda_seq_list(maxlambdas, 1000, 0.0001)
+lambdalist <- lambda_seq_list(maxlambdas, 100, 0.0001)
 
 
-test1 <- dCVnet:::repeated.cv.glmnet(fixfolds,
-                                    x = parsed$x_mat,
-                                    y = parsed$y,
-                                    type.measure = "class",
-                                    lambdas = lambdalist[[2]],
-                                    alpha = 0.5)
+test1 <- repeated.cv.glmnet(fixfolds,
+                            x = parsed$x_mat,
+                            y = parsed$y,
+                            type.measure = "class",
+                            lambdas = lambdalist[[2]],
+                            alpha = 0.5)
 
-test2 <- dCVnet:::repeated.cv.glmnet(fixfolds,
-                                    x = parsed$x_mat,
-                                    y = parsed$y,
-                                    type.measure = "deviance",
-                                    lambdas = lambdalist[[2]],
-                                    alpha = 0.5)
+test2 <- repeated.cv.glmnet(fixfolds,
+                            x = parsed$x_mat,
+                            y = parsed$y,
+                            type.measure = "deviance",
+                            lambdas = lambdalist[[2]],
+                            alpha = 0.5)
 
-test3 <- dCVnet:::repeated.cv.glmnet(fixfolds,
-                                    x = parsed$x_mat,
-                                    y = parsed$y,
-                                    type.measure = "auc",
-                                    lambdas = lambdalist[[2]],
-                                    alpha = 0.5)
+test3 <- repeated.cv.glmnet(fixfolds,
+                            x = parsed$x_mat,
+                            y = parsed$y,
+                            type.measure = "auc",
+                            lambdas = lambdalist[[2]],
+                            alpha = 0.5)
 
 
 

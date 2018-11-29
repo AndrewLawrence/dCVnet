@@ -1,10 +1,13 @@
 
 # TODO: Timing values are incorrect when the model is fit in parallel
 # TODO: when running in parallel the inner-loop (per-alpha) report lines are confusing. Quick-fix: suppress these when parallel. Slowfix: investigate a parallel progress bar.
+
 # TODO: Model summary works well, but would be nice to have 'tidy' methods for results.
 # TODO: Write something which dumps model summary and complete results to excel file.
+
 # TODO: If you request only a single rep then the summary measures 'break' with errors or display issues.
 # TODO: Summary methods take a looong time to run when you have even a moderate number of reps (~100). Can we optimise the code?
+
 # TODO: Sampling options - Leave-group-out,
 #                          Proportional sampling by outcome or covariate/
 #       This could be achieved by switching to rsample.
