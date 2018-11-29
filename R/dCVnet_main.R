@@ -183,8 +183,10 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
 
   malist <- lapply(1:length(alphalist),
                    function(i) {
-                     cat(paste("Inner Alpha", i, "of",
-                               length(alphalist), Sys.time(), "\n"))
+                     if ( getOption("mc.cores", default = 1) == 1 ) {
+                       cat(paste("Inner Alpha", i, "of",
+                                 length(alphalist), Sys.time(), "\n"))
+                     }
                      a <- alphalist[[i]]
 
                      repeated <- repeated.cv.glmnet(alpha = a,
