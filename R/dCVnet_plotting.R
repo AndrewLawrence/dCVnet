@@ -119,9 +119,9 @@ plot.dCVnet <- function(x, type = "tuning", ...) {
 plot.rocdata <- function(x, legend = F, ...) {
 
   p <- ggplot2::ggplot(x, ggplot2::aes_string(y = "Sens",
-                                                    x = "InvSpec",
-                                                    group = "run",
-                                                    colour = "run")) +
+                                              x = "InvSpec",
+                                              group = "run",
+                                              colour = "run")) +
     ggplot2::geom_abline(slope = 1, intercept = 0,
                          colour = "black") +
     ggplot2::geom_line(show.legend = legend) +

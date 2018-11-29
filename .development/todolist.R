@@ -1,5 +1,4 @@
 
-# TODO: ROC averaging.
 
 # TODO: Add 'tidy' methods for objects / summaries / results
 # TODO: Write something which dumps model summary and 'complete' results to excel file.
@@ -14,9 +13,15 @@
 
 # TODO: Timing values are incorrect when the model is fit in parallel. Nice to have a parallel progress bar.
 
+
+
+
 # FIXED (29/11/2018):
 # TODO: when running in parallel the inner-loop (per-alpha) report lines are confusing. Slowfix: investigate a parallel progress bar. Quick-fix: suppress these when parallel.
 #   added an mc.cores check to the inner-loop print command.
+
+# TODO: ROC averaging.
+#   average_rocdata included.
 
 # NOT REPLICATED (19/11/2018)
 # TODO: On installation: "Error e1071 required" probably needs adding to the description/imports/depends.
