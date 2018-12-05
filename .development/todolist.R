@@ -5,7 +5,6 @@
 # TODO: Add 'tidy' methods for objects / summaries / results
 # TODO: Write something which dumps model summary and 'complete' results to excel file.
 
-# TODO: If you request only a single rep then the summary measures 'break' with errors or display issues.
 # TODO: Summary methods take a looong time to run when you have even a moderate number of reps (~100). Can we optimise the code?
 
 # TODO: Sampling options - Leave-group-out,
@@ -17,6 +16,12 @@
 
 
 
+
+
+
+
+# Fixed (05/12/2018):
+# TODO: If you request only a single rep then the summary measures 'break' with errors or display issues.
 
 # FIXED (29/11/2018):
 # TODO: when running in parallel the inner-loop (per-alpha) report lines are confusing. Slowfix: investigate a parallel progress bar. Quick-fix: suppress these when parallel.

@@ -251,18 +251,31 @@ summary.classperformance <- function(object, label = NA, ...) {
 #'
 #' @export
 report_classperformance_summary <- function(dCVnet_object) {
+
+  outernreps <- length(unique(dCVnet_object$performance$label))
+
+  if ( outernreps == 1 ) {
+    # Simpler frame can be returned if only one outer loop:
+    ols <- summary(classperformance(dCVnet_object), label = "None")
+    names(ols)[2] <- "Rep1"
+    return(ols)
+  }
+
   ols <- summary(classperformance(dCVnet_object))
 
   summary_measures <- c("mean", "sd", "min", "max")
   names(summary_measures) <- summary_measures
 
   S <- lapply(summary_measures, function(M) {
-    apply(ols[, -1], 1, function(i) get(M)(i, na.rm = T))
+    apply(ols[, -1, drop = F], 1, function(i) {
+      # suppress warning messages to quietly deal with NaNs in Mcnemar P-value.
+      suppressWarnings(get(M)(i, na.rm = T))
+    })
   } )
 
-  S <- do.call(data.frame, list(Measure = ols[, 1], S))
+  S <- do.call(data.frame, list(Measure = ols[, 1, drop = F], S))
 
-  S <- data.frame(S, "..." = " - ", ols[, -1], stringsAsFactors = F)
+  S <- data.frame(S, "..." = " - ", ols[, -1, drop = F], stringsAsFactors = F)
 
   return(S)
 }
