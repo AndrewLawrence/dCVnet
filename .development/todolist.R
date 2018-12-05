@@ -1,5 +1,7 @@
 
-
+# TODO: S3 class + print / summary methods for reference model objects.
+#         - include clear description of whether PCA reduction applied (or not)
+#
 # TODO: Add 'tidy' methods for objects / summaries / results
 # TODO: Write something which dumps model summary and 'complete' results to excel file.
 

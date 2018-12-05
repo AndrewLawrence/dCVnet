@@ -184,7 +184,7 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
   malist <- lapply(1:length(alphalist),
                    function(i) {
                      if ( getOption("mc.cores", default = 1) == 1 ) {
-                       cat(paste("Inner Alpha", i, "of",
+                       cat(paste("\tInner Alpha", i, "of",
                                  length(alphalist), Sys.time(), "\n"))
                      }
                      a <- alphalist[[i]]
@@ -466,9 +466,13 @@ dCVnet <- function(
   outers <- parallel::mclapply(
     seq(along = outfolds),
     mc.cores = getOption("mc.cores", 1L),
-
     function(i) {
-      cat(paste0("\n\nOuterloop:", i, " of ", imax, "\n"))
+      if ( getOption("mc.cores", 1L) > 1 ) {
+        cat(paste0("Outerloop:", i, " of ", imax, "\n"))
+      } else {
+        cat(paste0("\nOuterloop:", i, " of ", imax, "\n"))
+      }
+
       of <- outfolds[[i]]
 
       # Preprocessing
