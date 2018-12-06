@@ -191,32 +191,59 @@ tuning_plot_dCVnet <- function(object) {
 #' plot_outerloop_coefs
 #'
 #' Plot showing standardised betas for outer-loop model coefficients.
-#'     coefficients are first mean-averaged over the k-folds,
-#'     then displayed per-repetition.
+#'      Because each fold/repetition of the outerloop can have
+#'      completely different amounts and types of regularisation
+#'      this should be interpreted with caution.
+#'
+#' It is circular to use these plots to select a subset of variables.
+#'      Because these coefficients are based on the complete dataset,
+#'      this can produce optimism.
 #'
 #' @param object a \code{\link{dCVnet}} object
+#' @param type How to display coefficients.
+#'                 passed to \code{\link{coef.dCVnet}} .
+#'     \itemize{
+#'     \item{\code{"all"} - boxplot of coefficients for each rep/fold.}
+#'     \item{\code{"rep"} - boxplot of mean coefficients for each rep
+#'         (mean average over folds).}
+#'     \item{\code{"mean"} - dotplot of the mean of \code{"rep"}.}
+#'     \item{\code{"median"} - dotplot of the median of \code{"rep"}.}
+#'     }
+#' @param abs plot absolute values?
 #' @importFrom scales muted
 #' @export
-plot_outerloop_coefs <- function(object) {
-  df <- coef.dCVnet(object, type = "rep")
-  df$stdbeta <-  df$Coef
+plot_outerloop_coefs <- function(object, type = "rep", abs = FALSE) {
+  df <- coef.dCVnet(object, type = type)
+
+  if ( abs ) {
+    df$stdbeta <- abs(df$Coef)
+    ylabel <- "|Standardised Beta|"
+  } else {
+    df$stdbeta <- df$Coef
+    ylabel <- "Standardised Beta"
+  }
 
   p <-  ggplot2::ggplot(df,
                         ggplot2::aes_string(y = "stdbeta",
-                                            x = "Predictor",
-                                            colour = "stdbeta")) +
+                                            x = "Predictor")) +
     ggplot2::geom_hline(yintercept = 0.0) +
-    ggplot2::geom_point(alpha = 1) +
-    ggplot2::scale_colour_gradient2(low = scales::muted("blue"),
-                                    mid = "grey",
-                                    high = scales::muted("red"),
-                                    midpoint = 0) +
-    ggplot2::stat_summary(fun.data = "mean_se") +
-    ggplot2::ylab("Standardised Beta") +
+    # ggplot2::scale_fill_gradient2(low = scales::muted("blue"),
+    #                                 mid = "grey",
+    #                                 high = scales::muted("red"),
+    #                                 midpoint = 0) +
+    #ggplot2::stat_summary(fun.data = "mean_se") +
+    ggplot2::ylab(ylabel) +
+    ggplot2::theme_light() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
                                                        hjust = 1.0,
-                                                       vjust = 0.5)) +
-    ggplot2::theme_light()
+                                                       vjust = 0.5))
+
+  if ( type %in% c("rep", "all") ) {
+    p <- p + ggplot2::geom_boxplot()
+  } else {
+    p <- p + ggplot2::geom_point()
+  }
+
   print(p)
 
   invisible(df)

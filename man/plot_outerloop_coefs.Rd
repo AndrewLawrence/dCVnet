@@ -4,13 +4,29 @@
 \alias{plot_outerloop_coefs}
 \title{plot_outerloop_coefs}
 \usage{
-plot_outerloop_coefs(object)
+plot_outerloop_coefs(object, type = "rep")
 }
 \arguments{
 \item{object}{a \code{\link{dCVnet}} object}
+
+\item{type}{How to display coefficients.
+passed to \code{\link{coef.dCVnet}} .
+\itemize{
+\item{\code{"all"} - boxplot of coefficients for each rep/fold.}
+\item{\code{"rep"} - boxplot of mean coefficients for each rep
+(mean average over folds).}
+\item{\code{"mean"} - dotplot of the mean of \code{"rep"}.}
+\item{\code{"median"} - dotplot of the median of \code{"rep"}.}
+}}
 }
 \description{
 Plot showing standardised betas for outer-loop model coefficients.
-coefficients are first mean-averaged over the k-folds,
-then displayed per-repetition.
+Because each fold/repetition of the outerloop can have
+completely different amounts and types of regularisation
+this should be interpreted with caution.
+}
+\details{
+It is circular to use these plots to select a subset of variables.
+Because these coefficients are based on the complete dataset,
+this can produce optimism.
 }
