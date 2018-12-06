@@ -813,8 +813,17 @@ summary.dCVnet <- function(object, ...) {
   min_vars <- c("Accuracy", "Sensitivity",
                 "Specificity", "Balanced Accuracy",
                 "AUROC")
-  min_outcv <- outcv[outcv$Measure %in% min_vars,
-                     c("mean", "sd", "min", "max")]
+
+  outernreps <- length(unique(object$performance$label))
+
+  if ( outernreps == 1 ) {
+    min_outcv <- outcv[outcv$Measure %in% min_vars, "Rep1", drop = F]
+    colnames(min_outcv) <- "Value"
+  } else {
+    min_outcv <- outcv[outcv$Measure %in% min_vars,
+                       c("mean", "sd", "min", "max")]
+  }
+
   min_outcv <- round(min_outcv, 3)
   row.names(min_outcv) <- min_vars
 

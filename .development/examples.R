@@ -14,7 +14,7 @@ library(dCVnet)
 
 # Example Application -----------------------------------------------------
 
-# Use iris data:
+# Use example data from glmnet:
 data(BinomialExample, package = "glmnet") # x and y
 
 df <- data.frame(y = factor(y,
