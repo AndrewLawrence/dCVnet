@@ -168,16 +168,20 @@ lambda_rangefinder <- function(y, x,
 
   subsize <- round(length(y) * prop)
 
-  result <- sapply(1:niter, function(i) {
-    subsamp <- sample(1:length(y), size = subsize)
-    .get_maxlambda(x = x[subsamp, ], y = y[subsamp], alphalist = alphalist)
-  })
-
+  result <- parallel::mclapply(1:niter,
+                               mc.cores = getOption("mc.cores", 1L),
+                               function(i) {
+                                 subsamp <- sample(1:length(y), size = subsize)
+                                 .get_maxlambda(x = x[subsamp, ],
+                                                y = y[subsamp],
+                                                alphalist = alphalist)
+                               })
+  result <- do.call(rbind, result)
 
   if ( length(alphalist) == 1 ) {
     return(max(result))
   } else {
-    result <- setNames(data.frame(t(result)), as.character(alphalist))
+    result <- setNames(data.frame(result), as.character(alphalist))
     return(apply(result, 2, max))
   }
 }
