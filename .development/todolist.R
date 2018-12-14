@@ -1,17 +1,26 @@
 
+# TODO: Implement lambda + 1se, lambda + 3pc, lambda + Xse, lambda + Xpc.
+
 # TODO: S3 class + print / summary methods for reference model objects.
-#         - include clear description of whether PCA reduction applied (or not)
+#         - include clear description of whether PCA reduction was applied.
 #
-# TODO: Add 'tidy' methods for objects / summaries / results
-# TODO: Write something which dumps model summary and 'complete' results to excel file.
-
-# TODO: Summary methods take a looong time to run when you have even a moderate number of reps (~100). Can we optimise the code?
-
+# TODO: Add 'tidy' methods for objects / summaries / results.
+#
+# TODO: Write something which dumps model summary and 'complete' results to
+#         an excel file.
+#
+# TODO: Summary methods take a looong time to run when you have even a moderate
+#         number of reps (~100). Can we optimise the code?
+#
 # TODO: Sampling options - Leave-group-out,
 #                          Proportional sampling by outcome or covariate/
 #       This could be achieved by switching to rsample?
-# TODO: add checks that randomised folds are unique? (unsure if compatible with rsample)
-
+#       UPDATE: 14/12/2018 - the current code is already proportional by outcome.
+#                             could add option to stratify by other covariates.
+#                            rsample seems to be overkill as it stores the data.
+#
+# TODO: add checks that randomised folds are unique?
+#
 # TODO: Timing values are incorrect when the model is fit in parallel. Nice to have a parallel progress bar.
 
 
