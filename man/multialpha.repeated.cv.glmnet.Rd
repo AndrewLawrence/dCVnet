@@ -4,7 +4,8 @@
 \alias{multialpha.repeated.cv.glmnet}
 \title{multialpha.repeated.cv.glmnet}
 \usage{
-multialpha.repeated.cv.glmnet(alphalist, lambdas, y, k, nrep, ...)
+multialpha.repeated.cv.glmnet(alphalist, lambdas, y, k, nrep,
+  opt.ystratify, opt.uniquefolds, ...)
 }
 \arguments{
 \item{alphalist}{a vector of alpha values to search.}

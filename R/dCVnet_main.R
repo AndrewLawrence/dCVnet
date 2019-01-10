@@ -175,11 +175,18 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                                           y,
                                           k,
                                           nrep,
+                                          opt.ystratify,
+                                          opt.uniquefolds,
                                           ...) {
   # Fold generation:
+  ystrat <- y
+  if ( identical(opt.ystratify, FALSE) ) { ystrat <- rep("x", length(y)) }
+
   folds <- lapply(1:nrep, function(i) {
     caret::createFolds(y = y, k = k, list = FALSE, returnTrain = FALSE)
   })
+
+  if ( identical(opt.uniquefolds, TRUE) ) checkForDuplicateCVFolds(folds)
 
   malist <- lapply(1:length(alphalist),
                    function(i) {
@@ -364,10 +371,17 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
 #'     This sets the metric used for hyperparameter optimisation in the
 #'     inner cross-validation. Options: \code{"deviance"}, \code{"class"},
 #'     \code{"mse"}, \code{"mae"}
-#' @param option.empirical_cutoff Boolian.
+#' @param opt.empirical_cutoff Boolian.
 #'     Use the empirical proportion of cases as the cutoff for outer CV
 #'     classification (affects outer CV performance only).
 #'     Otherwise classify at 50\% probability.
+#' @param opt.ystratify Boolian.
+#'     Outer and inner sampling is stratified by outcome.
+#'     This is implemented with \code{\link[caret]{createFolds}}
+#' @param opt.uniquefolds Boolian.
+#'     In most circumstances folds will be unique. This requests
+#'     that random folds are checked for uniqueness in inner and outer loops.
+#'     Currently it warns if non-unqiue values are found.
 #' @param ... Arguments to pass through to cv.glmnet
 #'     (beware, making use of this may break things).
 #' @return a dCVnet object.
@@ -395,7 +409,9 @@ dCVnet <- function(
   nlambda = 100,
   type.measure = "deviance",
   positive = 1,
-  option.empirical_cutoff = F,
+  opt.empirical_cutoff = FALSE,
+  opt.uniquefolds = FALSE,
+  opt.ystratify = TRUE,
   ...) {
 
   thecall <- match.call()
@@ -435,9 +451,18 @@ dCVnet <- function(
   # Main work starts here:
 
   # Step 1: make repeated outer folds in x & y according to nrep_outer, k_outer.
-  outfolds <- caret::createMultiFolds(y = y,
+  #
+  # Note: this is default stratified by y, we obtain unstratified sampling
+  #         by giving caret::createMultiFolds a single-level factor/char.
+  ystrat <- y
+  if ( identical(opt.ystratify, FALSE) ) { ystrat <- rep("x", length(y)) }
+  outfolds <- caret::createMultiFolds(y = ystrat,
                                       k = k_outer,
                                       times = nrep_outer)
+  rm(ystrat)
+  # Warn if repeated folds were obtained.
+  if ( opt.uniquefolds ) checkForDuplicateCVFolds(outfolds)
+
   imax <- length(outfolds)
   names(outfolds) <- paste0("Out", names(outfolds)) # give names
 
@@ -457,7 +482,7 @@ dCVnet <- function(
 
   # are we working with empirical cutoffs?
   cutoff <- 0.5
-  if ( option.empirical_cutoff ) {
+  if ( opt.empirical_cutoff ) {
     cutoff <- (as.numeric(table(y)[1]) / sum(as.numeric(table(y))))
   }
   cat(paste("Cutoff: ", cutoff, "\n"))
@@ -500,6 +525,8 @@ dCVnet <- function(
                                               y = trainy, x = trainx,
                                               type.measure = type.measure,
                                               standardize = F,
+                                              opt.ystratify,
+                                              opt.uniquefolds,
                                               ...)
 
       # extract the best alpha/lambda based on out of sample performance:
@@ -567,7 +594,9 @@ dCVnet <- function(
     k = k_inner,
     nrep = nrep_inner,
     y = y, x = xs,
-    type.measure = type.measure
+    type.measure = type.measure,
+    opt.ystratify = opt.ystratify,
+    opt.uniquefolds = opt.uniquefolds
   )
 
   final_model <- glmnet(
@@ -734,8 +763,15 @@ print.dCVnet <- function(x, ...) {
   inner_k <- max(innerfolds[[1]])
   inner_nrep <- length(innerfolds)
 
-  opts.empirical <- x$input$call[["option.empirical_cutoff"]]
+  # What options were specified?:
+  opts.empirical <- x$input$call[["opt.empirical_cutoff"]]
   if ( is.null(opts.empirical) ) opts.empirical <- FALSE
+
+  opts.ystratify <- x$input$call[["opt.ystratify"]]
+  if ( is.null(opts.ystratify) ) opts.ystratify <- TRUE
+
+  opts.uniquefolds <- x$input$call[["opt.uniquefolds"]]
+  if ( is.null(opts.uniquefolds) ) opts.uniquefolds <- FALSE
 
   cat("A dCVnet object, from the dCVnet Package\n\n")
   print(x$input$call)
@@ -767,7 +803,12 @@ print.dCVnet <- function(x, ...) {
 
   cat("Options:\n")
   cat(paste("\tUse Empirical Thresholding for LogReg Classification: ",
-            opts.empirical, "\n\n"))
+            opts.empirical, "\n"))
+
+  cat(paste("\tStratify k-fold sampling by outcome: ",
+            opts.ystratify, "\n"))
+  cat(paste("\tCheck random folds are unique: ",
+            opts.uniquefolds, "\n\n"))
 
   invisible(x)
 }

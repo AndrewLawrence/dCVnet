@@ -112,6 +112,20 @@ parse_alphalist <- function(alphalist) {
   return(alphalist)
 }
 
+checkForDuplicateCVFolds <- function(folds) {
+  cat("Checking for duplicate folds...\n")
+  R <- length(folds) == length(unique(folds))
+  if ( !R ) {
+    ndup <- sum(duplicated(folds))
+    warning(paste("Outer Loop CrossValidation - there were",
+                  ndup,
+                  "duplicated folds.\n",
+                  "Consider reducing number of folds and/or",
+                  "turning off stratification"))
+  }
+  invisible(R)
+}
+
 
 #' lambda_rangefinder
 #'

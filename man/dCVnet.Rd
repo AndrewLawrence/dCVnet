@@ -7,7 +7,8 @@
 dCVnet(f, data, nrep_outer = 2, k_outer = 10, nrep_inner = 5,
   k_inner = 10, alphalist = c(0.2, 0.5, 0.8), nlambda = 100,
   type.measure = "deviance", positive = 1,
-  option.empirical_cutoff = F, ...)
+  opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
+  opt.ystratify = TRUE, ...)
 }
 \arguments{
 \item{f}{a two sided formula.
@@ -45,10 +46,19 @@ Can be a numeric indicating which of \code{levels(y)} to use
 (i.e. 1 | 2). Alternatively a character specifying the exact level
 (e.g. \code{"patient"}).}
 
-\item{option.empirical_cutoff}{Boolian.
+\item{opt.empirical_cutoff}{Boolian.
 Use the empirical proportion of cases as the cutoff for outer CV
 classification (affects outer CV performance only).
 Otherwise classify at 50\% probability.}
+
+\item{opt.uniquefolds}{Boolian.
+In most circumstances folds will be unique. This requests
+that random folds are checked for uniqueness in inner and outer loops.
+Currently it warns if non-unqiue values are found.}
+
+\item{opt.ystratify}{Boolian.
+Outer and inner sampling is stratified by outcome.
+This is implemented with \code{\link[caret]{createFolds}}}
 
 \item{...}{Arguments to pass through to cv.glmnet
 (beware, making use of this may break things).}

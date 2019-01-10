@@ -4,7 +4,7 @@
 \alias{plot_outerloop_coefs}
 \title{plot_outerloop_coefs}
 \usage{
-plot_outerloop_coefs(object, type = "rep")
+plot_outerloop_coefs(object, type = "rep", abs = FALSE)
 }
 \arguments{
 \item{object}{a \code{\link{dCVnet}} object}
@@ -18,6 +18,8 @@ passed to \code{\link{coef.dCVnet}} .
 \item{\code{"mean"} - dotplot of the mean of \code{"rep"}.}
 \item{\code{"median"} - dotplot of the median of \code{"rep"}.}
 }}
+
+\item{abs}{plot absolute values?}
 }
 \description{
 Plot showing standardised betas for outer-loop model coefficients.
