@@ -171,7 +171,7 @@ plot_outerloop_coefs(blarg2)
 summary(classperformance(blarg1))
 summary(classperformance(blarg2))
 
-blarg1.ref <- dCVnet_refmodels(blarg1)
+blarg1.ref <- reflogreg(blarg1)
 
 summary(classperformance(blarg1.ref$glm), "GLM")
 report_classperformance_summary(blarg1.ref$univariate)

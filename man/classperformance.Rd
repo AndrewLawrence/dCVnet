@@ -57,6 +57,6 @@ extracts a standardised classification performance table for a model.
 object
 
 \item \code{glmlist}: classperformance for glmlist from
-\code{\link{dCVnet_refmodels}} object
+\code{\link{reflogreg}} object
 }}
 

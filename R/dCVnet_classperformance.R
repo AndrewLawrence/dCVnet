@@ -105,7 +105,7 @@ classperformance.glm <- function(x,
 
 #' classperformance.glm
 #' @describeIn classperformance classperformance for glmlist from
-#'     \code{\link{dCVnet_refmodels}} object
+#'     \code{\link{reflogreg}} object
 #' @export
 classperformance.glmlist <- function(x, as.data.frame = T, ...) {
   # applies pobj.glm to a list of glms.

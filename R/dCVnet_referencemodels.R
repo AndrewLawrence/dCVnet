@@ -2,9 +2,11 @@
 # Reference Models --------------------------------------------------------
 
 
-#' dCVnet_refmodels
+#' reflogreg
 #'
-#' calculate some reference models to help interpret dCVnet performance.
+#' Unregularised logistic regression models for comparison
+#'
+#' Calculate reference logistic regressions to help interpret performance.
 #'     models for \eqn{n} observations of \eqn{p} predictors calculated are:
 #'     \itemize{
 #'     \item{a logistic regression using all variables (if \eqn{n > 5 * p}),
@@ -17,28 +19,70 @@
 #' The univariate component has a class ('glmlist') used in some summary
 #'     functions. This is not currently correctly implemented.
 #'
-#' @name dCVnet_refmodels
+#' @name reflogreg
 #'
-#' @param object a dCVnet object
+#' @param object an object to calculate reference logistic regressions for
+#' @param ... arguments to pass on
 #'
 #' @return a list containing: \itemize{
 #' \item{\code{glm} - the multiple-predictor model (possibly PCA-reduced)}
-#' \item{\code{univariate} - a \code{glmlist} of models, one for each predictor}
+#' \item{\code{univariate} - an optional \code{glmlist} of models,
+#'                 one for each predictor}
 #' }
 #'
 #' @export
-dCVnet_refmodels <- function(object) {
+reflogreg <- function(object, ...) {
+  UseMethod("reflogreg", object)
+}
+
+#' reflogreg.default
+#'
+#' @describeIn reflogreg reflogreg for \code{\link{dCVnet}} object
+#' @export
+reflogreg.default <- function(object, ...) {
+  stop("This function is only implemented for dCVnet class")
+}
+
+
+#' reflogreg.dCVnet
+#'
+#' @describeIn reflogreg reflogreg for \code{\link{dCVnet}} object
+#'
+#' @param univariate calculate per-variable logistic-regression models.
+#' @param doPCA first run PCA on the features can be "auto" or a boolian.
+#'                  \itemize{
+#'                  \item{\code{"auto"} determines based on ratio of
+#'                             observations to predictors}
+#'                  \item{\code{TRUE|FALSE} forces pca/no-pca.}
+#'                  }
+#' @param ncomp specify how many components for pca (integer).
+#'                  \code{"auto"}
+#'
+#' @export
+reflogreg.dCVnet <- function(object,
+                             univariate = TRUE,
+                             doPCA = "auto",
+                             ncomp = "auto",
+                             ...) {
   parsed <- object$input$parsed
   n <- min(table(parsed$y))
   # above we assume effective N for a logistic regression is n minority cases.
   k <- ncol(parsed$x_mat)
-  ideal_nvars <- round(n / 5) # ideally we want at least 5 cases per predictor.
+  estncomp <- round(n / 5) # rule of thumb: 5 cases per predictor.
 
-  if ( k > ideal_nvars ) {
-    # if we have more variables than subjects then first
+  # Settings:
+  if ( ((doPCA == "auto") && (k > estncomp)) || identical(doPCA, TRUE) ) {
+    doPCA <- TRUE
+  } else {
+    doPCA <- FALSE
+  }
+  if ( identical(ncomp, "auto") ) ncomp <- estncomp
+
+  # Is PCA required?:
+  if ( identical(doPCA, TRUE) ) {
     #   reduce the number of variables via a (svd)PCA on the data.
     x_pca <- prcomp(parsed$x_mat,
-                    rank. = ideal_nvars,
+                    rank. = ncomp,
                     retx = T)
     pglm.data <- data.frame(y = parsed$y, as.data.frame.matrix(x_pca$x))
 
@@ -47,16 +91,40 @@ dCVnet_refmodels <- function(object) {
     pglm.data <- data.frame(y = parsed$y, parsed$x_mat)
     pglm <- glm(y ~ ., data = pglm.data, family = "binomial")
   }
-  # next univariate prediction:
-  punivariate <- lapply(1:k, function(i) {
-    f <- as.formula(paste0("y ~ ", colnames(parsed$x_mat)[i]))
-    glm(f, data = data.frame(y = parsed$y, parsed$x_mat), family = "binomial")
-  } )
-  names(punivariate) <- colnames(parsed$x_mat)
-  return(list(glm = pglm,
-              univariate = structure(punivariate,
-                                     class = c("glmlist",
-                                               class(punivariate)))))
+
+  # univariate models:
+  if ( !univariate ) {
+    punivariate <- NA
+  } else {
+    punivariate <- lapply(1:k, function(i) {
+      f <- as.formula(paste0("y ~ ", colnames(parsed$x_mat)[i]))
+      glm(f, data = data.frame(y = parsed$y, parsed$x_mat), family = "binomial")
+    } )
+    names(punivariate) <- colnames(parsed$x_mat)
+    punivariate <- structure(punivariate,
+                             class = c("glmlist",
+                                       class(punivariate)))
+  }
+  # Merge:
+  rlr <- structure(list(glm = pglm,
+                        univariate = punivariate,
+                        object = substitute(object),
+                        options = list(doPCA = doPCA,
+                                       ncomp = ncomp,
+                                       univariate = univariate)
+  ),
+  class = c("reflogreg", "list"))
+  return(rlr)
+}
+
+#' Simple print function for \code{\link{reflogreg}} objects.
+#' @export
+print.reflogreg <- function(x, ...) {
+  cat(paste("\nReference models fit to", x$object, "\n\n"))
+  cat(paste("\tncases:", length(x$glm$y), "\n"))
+  cat(paste("\tnpreds:", length(x$glm$coefficients)-1, "\n\n"))
+  cat(paste("options:\n"))
+  print(x$options)
 }
 
 
@@ -66,7 +134,7 @@ dCVnet_refmodels <- function(object) {
 #'     reference models.
 #'
 #' @param refobj a set of reference models provided by
-#'     \code{\link{dCVnet_refmodels}}
+#'     \code{\link{reflogreg.dCVnet}}
 #'
 #' @name report_reference_classperformance_summary
 #' @inherit report_classperformance_summary return
@@ -78,9 +146,13 @@ report_reference_classperformance_summary <- function(refobj) {
   glm <- glm[, -3]
   names(glm)[2] <- "Reference GLM"
 
-  univ <- report_classperformance_summary(refobj$univariate)
+  if ( refobj$options$univariate ) {
+    univ <- report_classperformance_summary(refobj$univariate)
 
-  names(univ)[2:5] <- paste("UnivPred", names(univ)[2:5])
+    names(univ)[2:5] <- paste("UnivPred", names(univ)[2:5])
 
-  return(data.frame(glm, univ[, -1]))
+    return(data.frame(glm, univ[, -1]))
+  } else {
+    return(glm)
+  }
 }
