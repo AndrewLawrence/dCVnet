@@ -1,9 +1,4 @@
 
-# TODO: Implement lambda + 1se, lambda + 3pc, lambda + Xse, lambda + Xpc.
-
-# TODO: S3 class + print / summary methods for reference model objects.
-#         - include clear description of whether PCA reduction was applied.
-#
 # TODO: Add 'tidy' methods for objects / summaries / results.
 #
 # TODO: Write something which dumps model summary and 'complete' results to
@@ -17,16 +12,19 @@
 #       This could be achieved by switching to rsample?
 #       UPDATE: 14/12/2018 - the current code is already proportional by outcome.
 #                             could add option to stratify by other covariates.
-#                            rsample seems to be overkill as it stores the data.
+#                            rsample seems to be overkill as it stores data copies.
 #
+# TODO: Timing values are incorrect when the model is fit in parallel.
+#         -- Nice to have a parallel progress bar.
+
+
+
+
+# Added 10/01/2019
+# TODO: S3 class + print / summary methods for reference model objects.
+#         - include clear description of whether PCA reduction was applied.
 # TODO: add checks that randomised folds are unique?
-#
-# TODO: Timing values are incorrect when the model is fit in parallel. Nice to have a parallel progress bar.
-
-
-
-
-
+# TODO: Implement lambda + 1se, lambda + 3pc, lambda + Xse, lambda + Xpc.
 
 
 # Fixed (05/12/2018):

@@ -68,6 +68,15 @@ test1 <- repeated.cv.glmnet(fixfolds,
                             lambdas = lambdalist[[2]],
                             alpha = 0.5)
 
+# Test 1a uses the lambda +1se for selection.
+test1a <- repeated.cv.glmnet(fixfolds,
+                            x = parsed$x_mat,
+                            y = parsed$y,
+                            type.measure = "class",
+                            lambda.type = "se",
+                            lambdas = lambdalist[[2]],
+                            alpha = 0.5)
+
 test2 <- repeated.cv.glmnet(fixfolds,
                             x = parsed$x_mat,
                             y = parsed$y,
@@ -85,7 +94,9 @@ test3 <- repeated.cv.glmnet(fixfolds,
 
 
 plot(test1) # (mis)class(ification)
+plot(test1a)
 summary(test1)
+summary(test1a)
 
 plot(test2) # deviance
 summary(test2)
@@ -101,6 +112,15 @@ tmp1 <- dCVnet:::multialpha.repeated.cv.glmnet(alphalist = c(0.2, 0.5, 0.8),
                                                k = 5, nrep = 5,
                                                x = parsed$x_mat,
                                                y = parsed$y,
+                                               type.measure = "class")
+
+# lambda+1se
+tmp1a <- dCVnet:::multialpha.repeated.cv.glmnet(alphalist = c(0.2, 0.5, 0.8),
+                                               lambdas = lambdalist,
+                                               k = 5, nrep = 5,
+                                               x = parsed$x_mat,
+                                               y = parsed$y,
+                                               lambda.type = "se",
                                                type.measure = "class")
 
 tmp2 <- dCVnet:::multialpha.repeated.cv.glmnet(alphalist = c(0.2, 0.5, 0.8),
@@ -138,8 +158,20 @@ blarg1 <- dCVnet::dCVnet(f = y ~ .,
                          alphalist = c(0.2, 0.5, 0.8),
                          k_inner = 10, nrep_inner = 3,
                          k_outer = 5, nrep_outer = 2,
-                         option.empirical_cutoff = FALSE,
+                         opt.empirical_cutoff = FALSE,
                          type.measure = "class",
+                         nlambda = 100)
+
+# lambda.1se:
+blarg1a <- dCVnet::dCVnet(f = y ~ .,
+                         data = df,
+                         positive = "case",
+                         alphalist = c(0.2, 0.5, 0.8),
+                         k_inner = 10, nrep_inner = 3,
+                         k_outer = 5, nrep_outer = 2,
+                         opt.empirical_cutoff = FALSE,
+                         type.measure = "class",
+                         lambda.type = "se",
                          nlambda = 100)
 
 blarg2 <- dCVnet::dCVnet(f = y ~ .,
@@ -155,6 +187,7 @@ str(blarg1,1)
 
 # we can also plot all the inner results together:
 plot(blarg1)
+plot(blarg1a)
 plot(blarg2)
 
 # We can still get access to individual inner tuning plots:

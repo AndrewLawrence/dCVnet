@@ -5,7 +5,8 @@
 \title{multialpha.repeated.cv.glmnet}
 \usage{
 multialpha.repeated.cv.glmnet(alphalist, lambdas, y, k, nrep,
-  opt.ystratify, opt.uniquefolds, ...)
+  opt.lambda.type = "minimum", opt.lambda.type.value = 1,
+  opt.ystratify = T, opt.uniquefolds = F, ...)
 }
 \arguments{
 \item{alphalist}{a vector of alpha values to search.}
@@ -18,6 +19,27 @@ see \code{\link[glmnet]{glmnet}}}
 \item{k}{the number of folds for k-fold cross-validation.}
 
 \item{nrep}{the number of repetitions}
+
+\item{opt.lambda.type}{Method for selecting optimum lambda. One of
+\itemize{
+\item{\code{"minimum"} - returns the lambda with best
+CV score.}
+\item{\code{"se"} - returns the +1 se lambda}
+\item{\code{"percentage"} - returns minimum lambda
+scaled by a factor, e.g. allowing lambda+3pc}
+}}
+
+\item{opt.lambda.type.value}{determines the se multiplier or percentage
+for \code{opt.lambda.type}.}
+
+\item{opt.ystratify}{Boolian.
+Outer and inner sampling is stratified by outcome.
+This is implemented with \code{\link[caret]{createFolds}}}
+
+\item{opt.uniquefolds}{Boolian.
+In most circumstances folds will be unique. This requests
+that random folds are checked for uniqueness in inner and outer loops.
+Currently it warns if non-unqiue values are found.}
 
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
 }

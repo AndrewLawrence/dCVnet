@@ -4,9 +4,15 @@
 \alias{repeated.cv.glmnet}
 \title{repeated.cv.glmnet}
 \usage{
-repeated.cv.glmnet(folds, lambdas, alpha, x, y, ..., debug = F)
+repeated.cv.glmnet(x, y, folds, lambdas, alpha,
+  opt.lambda.type = "minimum", opt.lambda.type.value = 1, ...,
+  debug = F)
 }
 \arguments{
+\item{x}{\code{x} matrix as in \code{glmnet}.}
+
+\item{y}{response \code{y} as in \code{glmnet}.}
+
 \item{folds}{This is a list where each element is an integer vector
 of length \emph{n_cases}. The integer for each case labels it as belonging
 to a fold \emph{1:n_folds}. This argument implicitly sets the number of repeats
@@ -20,9 +26,17 @@ see \code{\link[glmnet]{glmnet}}}
     as \deqn{(1-\alpha)/2||\beta||_2^2+\alpha||\beta||_1.} \code{alpha=1}
     is the lasso penalty, and \code{alpha=0} the ridge penalty.}
 
-\item{x}{\code{x} matrix as in \code{glmnet}.}
+\item{opt.lambda.type}{Method for selecting optimum lambda. One of
+\itemize{
+\item{\code{"minimum"} - returns the lambda with best
+CV score.}
+\item{\code{"se"} - returns the +1 se lambda}
+\item{\code{"percentage"} - returns minimum lambda
+scaled by a factor, e.g. allowing lambda+3pc}
+}}
 
-\item{y}{response \code{y} as in \code{glmnet}.}
+\item{opt.lambda.type.value}{determines the se multiplier or percentage
+for \code{opt.lambda.type}.}
 
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
 
@@ -32,14 +46,14 @@ see \code{\link[glmnet]{glmnet}}}
 a data.frame object of class \code{\link{repeated.cv.glmnet}}
 containting averaged metrics. Has the following columns:
 \itemize{
-\item{lambda - the specified lambda value}
-\item{cvm - the averaged performance metric}
-\item{cvsd - the averaged sd of performance metric}
-\item{cvup - the averaged cvm + cvsd}
-\item{cvlo - the averaged cvm - cvsd}
-\item{nzero - the number of nonzero predictors}
-\item{lambda.min - logical indicating best performing lambda
-(on average)}
+\item{lambda - lambda at which performance evaluated}
+\item{cvm - average performance metric}
+\item{cvsd - average sd of performance metric}
+\item{cvup - average cvm + cvsd}
+\item{cvlo - average cvm - cvsd}
+\item{nzero - average number of nonzero predictors}
+\item{lambda.min - logical indicating 'best' performing lambda
+(see opt.lambda.type and opt.lambda.type.value)}
 }
 }
 \description{

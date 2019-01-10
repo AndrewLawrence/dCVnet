@@ -7,8 +7,9 @@
 dCVnet(f, data, nrep_outer = 2, k_outer = 10, nrep_inner = 5,
   k_inner = 10, alphalist = c(0.2, 0.5, 0.8), nlambda = 100,
   type.measure = "deviance", positive = 1,
-  opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
-  opt.ystratify = TRUE, ...)
+  opt.lambda.type = c("minimum", "se", "percentage"),
+  opt.lambda.type.value = 1, opt.empirical_cutoff = FALSE,
+  opt.uniquefolds = FALSE, opt.ystratify = TRUE, ...)
 }
 \arguments{
 \item{f}{a two sided formula.
@@ -45,6 +46,18 @@ inner cross-validation. Options: \code{"deviance"}, \code{"class"},
 Can be a numeric indicating which of \code{levels(y)} to use
 (i.e. 1 | 2). Alternatively a character specifying the exact level
 (e.g. \code{"patient"}).}
+
+\item{opt.lambda.type}{Method for selecting optimum lambda. One of
+\itemize{
+\item{\code{"minimum"} - returns the lambda with best
+CV score.}
+\item{\code{"se"} - returns the +1 se lambda}
+\item{\code{"percentage"} - returns minimum lambda
+scaled by a factor, e.g. allowing lambda+3pc}
+}}
+
+\item{opt.lambda.type.value}{determines the se multiplier or percentage
+for \code{opt.lambda.type}.}
 
 \item{opt.empirical_cutoff}{Boolian.
 Use the empirical proportion of cases as the cutoff for outer CV

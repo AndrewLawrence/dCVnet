@@ -122,10 +122,46 @@ checkForDuplicateCVFolds <- function(folds) {
                   "duplicated folds.\n",
                   "Consider reducing number of folds and/or",
                   "turning off stratification"))
+    #TODO: could implement a while loop to run until a non-dup set of the
+    #       desired size is recovered.
   }
   invisible(R)
 }
 
+
+cvlambdafinder <- function(lambda, cvm, cvsd,
+                           minimise = T,
+                           type = c("minimum", "se", "percentage"),
+                           type.value = 1) {
+  # Adapted from glmnet.
+  #   'minimum' will just return lambda.min.
+  #   'se' will return lambda + type.value*SE.
+  #   'percentage' will return lambda * type.value.
+  #     e.g. 'percentage' & type.value = 1.03 gives lambda + 3%.
+  #     e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.
+  #
+  type <- match.arg(type)
+  if( ! minimise ) { cvm <- cvm * -1 }
+
+  cvmin <- min(cvm, na.rm = TRUE)
+  idmin <- cvm <= cvmin
+  lambda.min <- max(lambda[idmin], na.rm = TRUE)
+
+  if ( type == "minimum" ) {
+    return(list(lambda.min = lambda.min))
+  } else {
+    if ( type == "se" ) {
+      idmin <- match(lambda.min, lambda)
+      semin <- (cvm + type.value * cvsd)[idmin]
+      idmin <- cvm <= semin
+      lambda.1se <- max(lambda[idmin], na.rm = TRUE)
+      return(list(lambda.min = lambda.1se))
+    } else {
+      # type must be percentage:
+      return(list(lambda.min = lambda.min * type.value))
+    }
+  }
+}
 
 #' lambda_rangefinder
 #'

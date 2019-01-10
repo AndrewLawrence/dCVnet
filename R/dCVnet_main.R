@@ -14,29 +14,44 @@
 #' @inheritParams glmnet::glmnet
 #' @param lambdas use a fixed, user supplied lambda sequence (descending)
 #'     see \code{\link[glmnet]{glmnet}}
+#' @param opt.lambda.type Method for selecting optimum lambda. One of
+#'                         \itemize{
+#'                         \item{\code{"minimum"} - returns the lambda with best
+#'                         CV score.}
+#'                         \item{\code{"se"} - returns the +1 se lambda}
+#'                         \item{\code{"percentage"} - returns minimum lambda
+#'                         scaled by a factor, e.g. allowing lambda+3pc}
+#'                         }
+#' @param opt.lambda.type.value determines the se multiplier or percentage
+#'                               for \code{opt.lambda.type}.
+#     e.g. 'percentage' & type.value = 1.03 gives lambda + 3%.
+#     e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.
 #' @param folds This is a list where each element is an integer vector
 #'     of length *n_cases*. The integer for each case labels it as belonging
 #'     to a fold *1:n_folds*. This argument implicitly sets the number of repeats
 #'     and the k in repeated k-fold cv.
 #' @param ... arguments passed to \code{\link[glmnet]{cv.glmnet}}
 #' @param debug if TRUE return models and unaveraged results (default: FALSE).
+#'
 #' @return a data.frame object of class \code{\link{repeated.cv.glmnet}}
 #'     containting averaged metrics. Has the following columns:
 #'     \itemize{
-#'     \item{lambda - the specified lambda value}
-#'     \item{cvm - the averaged performance metric}
-#'     \item{cvsd - the averaged sd of performance metric}
-#'     \item{cvup - the averaged cvm + cvsd}
-#'     \item{cvlo - the averaged cvm - cvsd}
-#'     \item{nzero - the number of nonzero predictors}
-#'     \item{lambda.min - logical indicating best performing lambda
-#'         (on average)}
+#'     \item{lambda - lambda at which performance evaluated}
+#'     \item{cvm - average performance metric}
+#'     \item{cvsd - average sd of performance metric}
+#'     \item{cvup - average cvm + cvsd}
+#'     \item{cvlo - average cvm - cvsd}
+#'     \item{nzero - average number of nonzero predictors}
+#'     \item{lambda.min - logical indicating 'best' performing lambda
+#'         (see opt.lambda.type and opt.lambda.type.value)}
 #'     }
 #' @export
-repeated.cv.glmnet <- function(folds,
+repeated.cv.glmnet <- function(x, y,
+                               folds,
                                lambdas,
                                alpha,
-                               x, y,
+                               opt.lambda.type = "minimum",
+                               opt.lambda.type.value = 1,
                                ...,
                                debug = F) {
   # We need to use fixed folds, fixed lambdas and a single fixed alpha
@@ -69,25 +84,32 @@ repeated.cv.glmnet <- function(folds,
     by = list(lambda = results$lambda),
     FUN = mean)
 
+  theLambda <- cvlambdafinder(lambda = av$lambda,
+                              cvm = av$cvm,
+                              cvsd = av$cvsd,
+                              minimise = !("auc" %in% measure_name),
+                              type = opt.lambda.type,
+                              type.value = opt.lambda.type.value)
   # What optimising function should we use?:
-  optfun <- ifelse("auc" %in% measure_name, max, min)
+  #optfun <- ifelse("auc" %in% measure_name, max, min)
 
   # Which is the optimum lambda?
-  av$lambda.min <- av$cvm == optfun(av$cvm, na.rm = T)
-
-  # Deal with ties (multiple lambdas with the same minimum).
-  nties <- sum(av$lambda.min)
-  if ( nties > 1 ) {
-    tiedlambdas <- av$lambda[av$lambda.min]
-    # For odd length vectors the median exists in the data.
-    #   otherwise return the larger lambda of the middle two.
-    if ( length(tiedlambdas) %% 2 == 1 ) {
-      av$lambda.min <- av$lambda == median(tiedlambdas)
-    } else {
-      larger_middle_lambda <- (length(tiedlambdas) / 2) + 1
-      av$lambda.min <- av$lambda == sort(tiedlambdas)[larger_middle_lambda]
-    }
-  }
+  av$lambda.min <- F
+  av$lambda.min[match(theLambda, av$lambda)] <- TRUE
+#
+#   # Deal with ties (multiple lambdas with the same minimum).
+#   nties <- sum(av$lambda.min)
+#   if ( nties > 1 ) {
+#     tiedlambdas <- av$lambda[av$lambda.min]
+#     # For odd length vectors the median exists in the data.
+#     #   otherwise return the larger lambda of the middle two.
+#     if ( length(tiedlambdas) %% 2 == 1 ) {
+#       av$lambda.min <- av$lambda == median(tiedlambdas)
+#     } else {
+#       larger_middle_lambda <- (length(tiedlambdas) / 2) + 1
+#       av$lambda.min <- av$lambda == sort(tiedlambdas)[larger_middle_lambda]
+#     }
+#   }
 
   av[order(av$lambda, decreasing = T), ]
   attr(av, "type.measure") <- measure_name
@@ -162,10 +184,19 @@ summary.repeated.cv.glmnet <- function(object, ...) {
 #' @param alphalist a vector of alpha values to search.
 #' @param k the number of folds for k-fold cross-validation.
 #' @param nrep the number of repetitions
+#'
+#' @param opt.ystratify Boolian.
+#'     Outer and inner sampling is stratified by outcome.
+#'     This is implemented with \code{\link[caret]{createFolds}}
+#' @param opt.uniquefolds Boolian.
+#'     In most circumstances folds will be unique. This requests
+#'     that random folds are checked for uniqueness in inner and outer loops.
+#'     Currently it warns if non-unqiue values are found.
+#'
 #' @return an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
 #'     This is a 3 item list: \itemize{
 #'     \item{inner_results - merged \code{\link{repeated.cv.glmnet}} with
-#'         additional columns indicating *alpha* and logical for *best* overall.}
+#'         additional columns indicating *alpha* and logical for *best* overall}
 #'     \item{inner_best - best selected row from inner_results}
 #'     \item{inner_folds - record of folds used}
 #'     }
@@ -175,8 +206,10 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                                           y,
                                           k,
                                           nrep,
-                                          opt.ystratify,
-                                          opt.uniquefolds,
+                                          opt.lambda.type = "minimum",
+                                          opt.lambda.type.value = 1,
+                                          opt.ystratify = T,
+                                          opt.uniquefolds = F,
                                           ...) {
   # Fold generation:
   ystrat <- y
@@ -200,6 +233,8 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                                                     lambdas = lambdas[[i]],
                                                     y = y,
                                                     folds = folds,
+                                                    opt.lambda.type = opt.lambda.type,
+                                                    opt.lambda.type.value = opt.lambda.type.value,
                                                     ...)
                      repeated$alpha <- as.character(a)
 
@@ -358,6 +393,8 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
 #'     and \bold{alpha} (the balance of L1 and L2 regularisation types).
 #'
 #' @inheritParams parse_dCVnet_input
+#' @inheritParams multialpha.repeated.cv.glmnet
+#'
 #' @param k_inner an integer, the k in the inner k-fold CV.
 #' @param k_outer an integer, the k in the outer k-fold CV.
 #' @param nrep_inner an integer, the number of repetitions (k-fold inner CV)
@@ -375,13 +412,6 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
 #'     Use the empirical proportion of cases as the cutoff for outer CV
 #'     classification (affects outer CV performance only).
 #'     Otherwise classify at 50\% probability.
-#' @param opt.ystratify Boolian.
-#'     Outer and inner sampling is stratified by outcome.
-#'     This is implemented with \code{\link[caret]{createFolds}}
-#' @param opt.uniquefolds Boolian.
-#'     In most circumstances folds will be unique. This requests
-#'     that random folds are checked for uniqueness in inner and outer loops.
-#'     Currently it warns if non-unqiue values are found.
 #' @param ... Arguments to pass through to cv.glmnet
 #'     (beware, making use of this may break things).
 #' @return a dCVnet object.
@@ -400,7 +430,9 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
 #' @importFrom stats predict sd terms var
 #' @export
 dCVnet <- function(
-  f, data,
+  f,
+  data,
+
   nrep_outer = 2,
   k_outer = 10,
   nrep_inner = 5,
@@ -409,9 +441,13 @@ dCVnet <- function(
   nlambda = 100,
   type.measure = "deviance",
   positive = 1,
+
+  opt.lambda.type = c("minimum", "se", "percentage"),
+  opt.lambda.type.value = 1.0,
   opt.empirical_cutoff = FALSE,
   opt.uniquefolds = FALSE,
   opt.ystratify = TRUE,
+
   ...) {
 
   thecall <- match.call()
@@ -525,8 +561,10 @@ dCVnet <- function(
                                               y = trainy, x = trainx,
                                               type.measure = type.measure,
                                               standardize = F,
-                                              opt.ystratify,
-                                              opt.uniquefolds,
+                                              opt.lambda.type = opt.lambda.type,
+                                              opt.lambda.type.value = opt.lambda.type.value,
+                                              opt.ystratify = opt.ystratify,
+                                              opt.uniquefolds = opt.uniquefolds,
                                               ...)
 
       # extract the best alpha/lambda based on out of sample performance:
@@ -595,6 +633,8 @@ dCVnet <- function(
     nrep = nrep_inner,
     y = y, x = xs,
     type.measure = type.measure,
+    opt.lambda.type = opt.lambda.type,
+    opt.lambda.type.value = opt.lambda.type.value,
     opt.ystratify = opt.ystratify,
     opt.uniquefolds = opt.uniquefolds
   )

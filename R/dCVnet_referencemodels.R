@@ -117,7 +117,7 @@ reflogreg.dCVnet <- function(object,
   return(rlr)
 }
 
-#' Simple print function for \code{\link{reflogreg}} objects.
+# Simple print function for \code{\link{reflogreg}} objects.
 #' @export
 print.reflogreg <- function(x, ...) {
   cat(paste("\nReference models fit to", x$object, "\n\n"))
