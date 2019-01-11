@@ -216,7 +216,7 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
   if ( identical(opt.ystratify, FALSE) ) { ystrat <- rep("x", length(y)) }
 
   folds <- lapply(1:nrep, function(i) {
-    caret::createFolds(y = y, k = k, list = FALSE, returnTrain = FALSE)
+    caret::createFolds(y = ystrat, k = k, list = FALSE, returnTrain = FALSE)
   })
 
   if ( identical(opt.uniquefolds, TRUE) ) checkForDuplicateCVFolds(folds)
