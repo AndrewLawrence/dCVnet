@@ -141,7 +141,7 @@ cvlambdafinder <- function(lambda, cvm, cvsd,
   #     e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.
   #
   type <- match.arg(type)
-  if( ! minimise ) { cvm <- cvm * -1 }
+  if ( ! minimise ) cvm <- cvm * -1
 
   cvmin <- min(cvm, na.rm = TRUE)
   idmin <- cvm <= cvmin

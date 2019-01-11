@@ -122,7 +122,7 @@ reflogreg.dCVnet <- function(object,
 print.reflogreg <- function(x, ...) {
   cat(paste("\nReference models fit to", x$object, "\n\n"))
   cat(paste("\tncases:", length(x$glm$y), "\n"))
-  cat(paste("\tnpreds:", length(x$glm$coefficients)-1, "\n\n"))
+  cat(paste("\tnpreds:", length(x$glm$coefficients) - 1, "\n\n"))
   cat(paste("options:\n"))
   print(x$options)
 }

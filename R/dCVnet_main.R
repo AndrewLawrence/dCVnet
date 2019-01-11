@@ -91,25 +91,10 @@ repeated.cv.glmnet <- function(x, y,
                               type = opt.lambda.type,
                               type.value = opt.lambda.type.value)
   # What optimising function should we use?:
-  #optfun <- ifelse("auc" %in% measure_name, max, min)
 
   # Which is the optimum lambda?
   av$lambda.min <- F
   av$lambda.min[match(theLambda, av$lambda)] <- TRUE
-#
-#   # Deal with ties (multiple lambdas with the same minimum).
-#   nties <- sum(av$lambda.min)
-#   if ( nties > 1 ) {
-#     tiedlambdas <- av$lambda[av$lambda.min]
-#     # For odd length vectors the median exists in the data.
-#     #   otherwise return the larger lambda of the middle two.
-#     if ( length(tiedlambdas) %% 2 == 1 ) {
-#       av$lambda.min <- av$lambda == median(tiedlambdas)
-#     } else {
-#       larger_middle_lambda <- (length(tiedlambdas) / 2) + 1
-#       av$lambda.min <- av$lambda == sort(tiedlambdas)[larger_middle_lambda]
-#     }
-#   }
 
   av[order(av$lambda, decreasing = T), ]
   attr(av, "type.measure") <- measure_name
@@ -213,7 +198,7 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                                           ...) {
   # Fold generation:
   ystrat <- y
-  if ( identical(opt.ystratify, FALSE) ) { ystrat <- rep("x", length(y)) }
+  if ( identical(opt.ystratify, FALSE) ) ystrat <- rep("x", length(y))
 
   folds <- lapply(1:nrep, function(i) {
     caret::createFolds(y = ystrat, k = k, list = FALSE, returnTrain = FALSE)
@@ -229,13 +214,14 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                      }
                      a <- alphalist[[i]]
 
-                     repeated <- repeated.cv.glmnet(alpha = a,
-                                                    lambdas = lambdas[[i]],
-                                                    y = y,
-                                                    folds = folds,
-                                                    opt.lambda.type = opt.lambda.type,
-                                                    opt.lambda.type.value = opt.lambda.type.value,
-                                                    ...)
+                     repeated <- repeated.cv.glmnet(
+                       alpha = a,
+                       lambdas = lambdas[[i]],
+                       y = y,
+                       folds = folds,
+                       opt.lambda.type = opt.lambda.type,
+                       opt.lambda.type.value = opt.lambda.type.value,
+                       ...)
                      repeated$alpha <- as.character(a)
 
                      return(repeated)
@@ -491,7 +477,7 @@ dCVnet <- function(
   # Note: this is default stratified by y, we obtain unstratified sampling
   #         by giving caret::createMultiFolds a single-level factor/char.
   ystrat <- y
-  if ( identical(opt.ystratify, FALSE) ) { ystrat <- rep("x", length(y)) }
+  if ( identical(opt.ystratify, FALSE) ) ystrat <- rep("x", length(y))
   outfolds <- caret::createMultiFolds(y = ystrat,
                                       k = k_outer,
                                       times = nrep_outer)
@@ -554,18 +540,19 @@ dCVnet <- function(
       testx <- predict(PPx, testx)
 
       # Run the tuning for the training data:
-      inners <- multialpha.repeated.cv.glmnet(nrep = nrep_inner,
-                                              k = k_inner,
-                                              alphalist = alphalist,
-                                              lambdas = lambdas,
-                                              y = trainy, x = trainx,
-                                              type.measure = type.measure,
-                                              standardize = F,
-                                              opt.lambda.type = opt.lambda.type,
-                                              opt.lambda.type.value = opt.lambda.type.value,
-                                              opt.ystratify = opt.ystratify,
-                                              opt.uniquefolds = opt.uniquefolds,
-                                              ...)
+      inners <- multialpha.repeated.cv.glmnet(
+        nrep = nrep_inner,
+        k = k_inner,
+        alphalist = alphalist,
+        lambdas = lambdas,
+        y = trainy, x = trainx,
+        type.measure = type.measure,
+        standardize = F,
+        opt.lambda.type = opt.lambda.type,
+        opt.lambda.type.value = opt.lambda.type.value,
+        opt.ystratify = opt.ystratify,
+        opt.uniquefolds = opt.uniquefolds,
+        ...)
 
       # extract the best alpha/lambda based on out of sample performance:
       fit_alpha <- as.numeric(inners$inner_best$alpha)
