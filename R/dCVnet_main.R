@@ -73,7 +73,7 @@ dCVnet <- function(
   thecall <- match.call()
   callenv <- c(as.list(environment()), list(...))
 
-  time_start <- Sys.time() # for logging.
+  time_start <- force(Sys.time()) # for logging.
 
   parsed <- parse_dCVnet_input(f = f, data = data, positive = positive)
   x <- parsed$x_mat

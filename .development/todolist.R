@@ -1,8 +1,6 @@
 
 # TODO: Add 'tidy' methods for objects / summaries / results.
 #
-# TODO: Write something which dumps model summary and 'complete' results to
-#         an excel file.
 #
 # TODO: Summary methods take a looong time to run when you have even a moderate
 #         number of reps (~100). Can we optimise the code?
@@ -16,8 +14,12 @@
 #
 # TODO: Timing values are incorrect when the model is fit in parallel.
 #         -- Nice to have a parallel progress bar.
+#         -- test the fix.
 
 
+# Added 14/01/2019
+# TODO: Write something which dumps model summary and 'complete' results to
+#         an excel file.
 
 
 # Added 10/01/2019

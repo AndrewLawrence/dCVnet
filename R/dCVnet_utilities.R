@@ -245,7 +245,7 @@ lambda_rangefinder <- function(y, x,
   y <- as.numeric(y) - 1
   # Utility function:
   .get_maxlambda <- function(x, y, alphalist) {
-    # https://stats.stackexchange.com/questions/166630/glmnet-compute-maximal-lambda-value
+    # https://stats.stackexchange.com/questions/166630
     # y must be 0/1 coded.
     # x must be a matrix.
     # If a zero alpha is fed in maxlambda is infinity - because of maths!
