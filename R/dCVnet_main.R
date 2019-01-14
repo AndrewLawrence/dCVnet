@@ -250,7 +250,6 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                    class = "multialpha.repeated.cv.glmnet"))
 }
 
-
 #' @export
 print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 
@@ -286,7 +285,7 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 
 }
 
-#' summary.repeated.cv.glmnet
+#' summary.multialpha.repeated.cv.glmnet
 #'
 #' a summary of key options and results for a
 #'     \code{\link{multialpha.repeated.cv.glmnet}} object.
@@ -294,6 +293,7 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 #' @param object a a \code{\link{multialpha.repeated.cv.glmnet}} object.
 #' @param print if FALSE silently returns the summary results table.
 #' @param ... NULL
+#'
 #' @export
 summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
   .get_nsimilar <- function(marc) {
@@ -760,10 +760,6 @@ coef.dCVnet <- function(object, type = "all", ...) {
   ))
 }
 
-
-coefficients.dCVnet <- function(object, ...) coef.dCVnet(object, ...)
-
-
 #' @export
 print.dCVnet <- function(x, ...) {
 
@@ -840,6 +836,104 @@ print.dCVnet <- function(x, ...) {
   invisible(x)
 }
 
+
+
+#' selected_hyperparameters
+#'
+#' What hyperparameters were chosen for the outer loop of a dCVnet object.
+#'
+#' @param object a dCVnet object
+#' @param what desired returns:
+#'     \itemize{
+#'     \item{\code{"summary"} - alpha/lambda summary over all outer folds/reps.}
+#'     \item{\code{"data"} - return underlying data.}
+#'     \item{\code{"both"} - both of the above in a list.}
+#'     }
+#' @param ... " "
+#'
+#' @name selected_hyperparameters
+#'
+#' @export
+selected_hyperparameters <- function(object,
+                                     what = c("summary", "data", "both")) {
+  what <- match.arg(what)
+
+  # what were the final hyperparams:
+  FF <- as.data.frame(object$final$tuning$inner_best)
+  FF.summary <- FF[,c("alpha","lambda")]
+
+  # What do the 'best-fitting' results of the inner loops look like:
+  R <- lapply(object$tuning, function(x) {
+    summary(x$tuning, print = F)
+  })
+  R <- data.frame(do.call(rbind, R))
+  R <- R[R$best, names(R)[!names(R) %in% "best"]]
+  rownames(R) <- names(object$tuning)
+
+  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = T), "[", 2)
+
+  if ( what == "data") { return(list(CVfolds = R, FinalModel = FF)) }
+
+  alphas <- setNames(sort(unique(R$alpha)),
+                     paste0("Alpha:", sort(unique(R$alpha))))
+
+  # alpha, lambda and joint lambda|alpha descriptives:
+  A <- table(R$alpha)
+  L <- summary(R$lambda)
+  J <- lapply(alphas, function(a) {
+    data.frame(`n times selected` = sum(R$alpha == a),
+         `lambda mean` = mean(R$lambda[R$alpha == a]),
+         `lambda sd` = sd(R$lambda[R$alpha == a]),
+         `lambda min` = min(R$lambda[R$alpha == a]),
+         `lambda max` = max(R$lambda[R$alpha == a])) } )
+  J <- do.call(rbind, J)
+
+  if ( what == "summary") {
+    return(list(alpha = A, lambda = L, joint = J, FinalModel = FF.summary))
+  } else {
+    return(list(data = R,
+                summary = list(alpha = A, lambda = L, joint = J,
+                               FinalModel = FF.summary)))
+  }
+}
+
+
+
+#' coefficients_summary
+#'
+#' Describe the coefficients in the outer loop/final production model
+#'     of a dCVnet object.
+#'
+#' @param object a dCVnet object
+#' @param ... " "
+#'
+#' @name coefficients_summary
+#'
+#' @export
+coefficients_summary <- function(object, ...) {
+
+  Medians <- setNames(coef(object, type = "median"),
+                      c("Predictor", "Median Coef"))
+
+  Range <- coef(object, type = "all")
+  Range.preds <- setNames(unique(Range$Predictor), unique(Range$Predictor))
+  Range <- lapply(Range.preds, function(i) {
+    kk <- Range$Coef[Range$Predictor == i]
+    return(data.frame(min = min(kk),
+                      max = max(kk),
+                      propnz = sum(kk != 0)/length(kk)))
+  } )
+  names(Range) <- names(Range.preds)
+  Range <- do.call(rbind, Range)
+
+  FinalModel <- coef(object$final$model,
+                     s = object$final$tuning$inner_best$lambda)
+  FinalModel <- setNames(as.data.frame(as.matrix(FinalModel)), "FinalModel")
+
+  return(data.frame(FinalModel,
+                    OuterMedian = Medians[,2],
+                    Range))
+}
 
 
 #' summary.dCVnet

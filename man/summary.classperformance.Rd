@@ -9,11 +9,13 @@
 \arguments{
 \item{object}{a \code{\link{classperformance}} object.}
 
-\item{label}{a label can be assigned here.}
+\item{label}{a label can be assigned here.
+(Warning - setting a length 1 vector will concatenate multiple reps.)}
 
 \item{...}{additional arguments (not currently used)}
 }
 \description{
-Calculates performance table and two-class classification metrics for a
+Calculates classification performance table and
+two-class classification metrics for a
 \code{\link{classperformance}} object.
 }

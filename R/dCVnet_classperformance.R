@@ -83,6 +83,8 @@ classperformance.glm <- function(x,
   #     given a threshold (default = 0.5):
   outcome <- as.character(x$terms[[2]])
 
+  rwid <- rownames(x$data)
+
   lvl <- levels(x$data[[outcome]])
   classification <- as.numeric(stats::fitted(x) > threshold) + 1
   classification <- factor(lvl[classification], levels = lvl)
@@ -90,7 +92,8 @@ classperformance.glm <- function(x,
   reference <- x$data[[outcome]]
   probability <- fitted(x)
 
-  R <- data.frame(reference = reference,
+  R <- data.frame(rowid = rwid,
+                  reference = reference,
                   probability = probability,
                   classification = classification,
                   label = label)
@@ -157,10 +160,12 @@ print.classperformance <- function(x, ...) {
 
 #' summary.classperformance
 #'
-#' Calculates performance table and two-class classification metrics for a
+#' Calculates classification performance table and
+#'     two-class classification metrics for a
 #'     \code{\link{classperformance}} object.
 #' @param object a \code{\link{classperformance}} object.
 #' @param label a label can be assigned here.
+#'      (Warning - setting a length 1 vector will concatenate multiple reps.)
 #' @param ... additional arguments (not currently used)
 #' @export
 summary.classperformance <- function(object, label = NA, ...) {
@@ -171,7 +176,7 @@ summary.classperformance <- function(object, label = NA, ...) {
   if ( "list" %in% class(object) ) {
     # convert lists to data.frames.
     object <- structure(data.frame(do.call(rbind, object)),
-                             class = c("classperformance", "data.frame"))
+                        class = c("classperformance", "data.frame"))
   }
 
   # Check structure:
@@ -279,3 +284,70 @@ report_classperformance_summary <- function(dCVnet_object) {
 
   return(S)
 }
+
+
+
+#' casesummary.classperformance
+#'
+#' What proportion of the time were subjects correctly classified in a
+#'     \code{\link{classperformance}} object.
+#' @param object a \code{\link{classperformance}} object?
+#' @param type What should be returned?
+#'                 \itemize{
+#'                 \item{\code{data} - The true and estimated classifications.}
+#'                 \item{\code{summary} - The mean proportion correct}
+#'                 }
+#' @param ... additional arguments (not currently used)
+#' @export
+casesummary.classperformance <- function(object,
+                                         type = c("both",
+                                                  "data",
+                                                  "summary"),
+                                         ...) {
+  type = match.arg(type)
+
+  object <- as.data.frame(object)
+  labs <- unique(object$label)
+  names(labs) <- make.names(labs, unique = TRUE)
+
+  # sort the object by rowid (with numerical order if appropriate):
+  if ( all(!is.na(suppressWarnings(as.numeric(object$rowid)))) ) {
+    # if we can convert to numeric without any NAs, then force numeric:
+    object <- object[order(as.numeric(object$rowid)),]
+  } else {
+    # sort by character:
+    object <- object[order(object$rowid),]
+  }
+
+  # iterate over the labels (reps) to make a wide dataframe.
+  repdata <- lapply(labs, function(rep){
+    object[object$label == rep, ]
+  })
+  names(repdata) <- names(labs)
+
+  Rleft <- repdata[[1]][,c("rowid", "reference")]
+  Rbits <- data.frame(lapply(repdata, function(kk) kk$classification),
+                      stringsAsFactors = F)
+  R.data <- data.frame(lapply(Rbits, function(x) {
+    as.numeric(x == Rleft$reference)
+  } ))
+
+  R <- switch(type,
+              data = list(Rleft,
+                          Rbits,
+                          stringsAsFactors = T),
+              summary = list(Rleft,
+                             prop_correct = rowMeans(R.data),
+                             stringsAsFactors = T),
+              both = list(Rleft,
+                          prop_correct = rowMeans(R.data),
+                          `...` = "-",
+                          Rbits,
+                          stringsAsFactors = T)
+              )
+
+  return(do.call(data.frame, R))
+}
+
+
+

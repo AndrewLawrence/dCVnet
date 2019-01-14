@@ -2,7 +2,7 @@
 % Please edit documentation in R/dCVnet_main.R
 \name{summary.multialpha.repeated.cv.glmnet}
 \alias{summary.multialpha.repeated.cv.glmnet}
-\title{summary.repeated.cv.glmnet}
+\title{summary.multialpha.repeated.cv.glmnet}
 \usage{
 \method{summary}{multialpha.repeated.cv.glmnet}(object, print = T, ...)
 }

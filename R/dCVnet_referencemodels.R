@@ -156,3 +156,37 @@ report_reference_classperformance_summary <- function(refobj) {
     return(glm)
   }
 }
+
+
+#' coef_reflogreg
+#'
+#' Returns model coefficients (betas) for glm/univariate reference models.
+#'
+#' @param refobj a set of reference models provided by
+#'     \code{\link{reflogreg}}
+#'
+#' @return a data.frame with columns for:
+#'     \itemize{
+#'     \item{\code{glm} - unless PCA was performed}
+#'     \item{\code{univariate} - unless univariate was not requested}
+#'     }
+#' @name coef_reflogreg
+#' @export
+coef_reflogreg <- function(refobj) {
+  a <- !refobj$options$doPCA
+  b <- refobj$options$univariate
+
+  if ( a ) {
+    G <- coef(refobj$glm)
+  }
+  if ( b ) {
+    U <- c(NA, sapply(refobj$univariate, function(x) coef(x)[2]))
+    names(U) <- c("(Intercept)", names(refobj$univariate))
+  }
+
+  if ( a & b ) { return(data.frame(glm = G, univariate = U)) }
+  if ( a ) { return(data.frame(glm = G)) }
+  if ( b ) { return(data.frame(univariate = U)) }
+  return(NA)
+}
+

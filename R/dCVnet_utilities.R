@@ -76,6 +76,47 @@ parse_dCVnet_input <- function(f, data, positive = 1) {
 }
 
 
+
+#' parseddata_summary
+#'
+#' Simple descriptives for a dCVnet parsed dataset.
+#'
+#' This acts on a model matrix, so factor variables will be indicator coded.
+#'     nnz should be informative for such variables.
+#'
+#' @name parseddata_summary
+#' @param object either a \code{\link{dCVnet}} object, or a parsed dataset
+#'      output from \code{\link{parse_dCVnet_input}}
+#'
+#' @return a list containing: \itemize{
+#'     \item{ \code{OutcomeData} - frequencies, proportions and level names
+#'         for the outcome factor}
+#'     \item{ \code{PredictorData} - descriptives for the predictor matrix}
+#'     }
+#'
+#' @export
+parseddata_summary <- function(object) {
+  # we want to operate either on a 'parsed' input,
+  #   or a dCVnet object. The former can be extracted from the latter.
+  if ( "dCVnet" %in% class(object) ) {
+    object <- object$input$parsed
+  }
+  # First describe the target:
+  ytab <- table(object$y)
+  yptab <- round(prop.table(ytab),3) * 100
+  stry <- paste0(names(ytab), ": ", sprintf(ytab, fmt = "%i"), " (", yptab, "%)")
+  # Next the predictor matrix:
+  xdes <- lapply(as.data.frame(object$x_mat),
+                 function(x) { data.frame(mean = mean(x, na.rm = T),
+                                          sd = sd(x, na.rm = T),
+                                          min = min(x, na.rm = T),
+                                          max = max(x, na.rm = T),
+                                          nnz = sum(x != 0)) })
+  xdes <- do.call(rbind, xdes)
+  return(list(OutcomeData = stry,
+              PredictorData = xdes))
+}
+
 #' parse_alphalist
 #'
 #' Check and process a numeric of alpha values.

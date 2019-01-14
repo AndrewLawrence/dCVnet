@@ -22,6 +22,8 @@ df <- data.frame(y = factor(y,
                             labels = c("control", "case")),
                  x)
 
+rownames(df) <- apply(expand.grid(letters, letters),1, function(x) paste(x, collapse = ""))[1:100]
+
 # Parse data into dCVnet input format:
 parsed <- dCVnet::parse_dCVnet_input(f = y ~ .,
                                      data = df,
@@ -204,7 +206,7 @@ plot_outerloop_coefs(blarg2)
 summary(classperformance(blarg1))
 summary(classperformance(blarg2))
 
-blarg1.ref <- reflogreg(blarg1)
+blarg1.ref <- reflogreg(blarg1, doPCA = F)
 
 summary(classperformance(blarg1.ref$glm), "GLM")
 report_classperformance_summary(blarg1.ref$univariate)

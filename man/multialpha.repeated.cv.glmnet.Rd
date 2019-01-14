@@ -47,7 +47,7 @@ Currently it warns if non-unqiue values are found.}
 an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
 This is a 3 item list: \itemize{
 \item{inner_results - merged \code{\link{repeated.cv.glmnet}} with
-additional columns indicating \emph{alpha} and logical for \emph{best} overall.}
+additional columns indicating \emph{alpha} and logical for \emph{best} overall}
 \item{inner_best - best selected row from inner_results}
 \item{inner_folds - record of folds used}
 }
