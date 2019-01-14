@@ -64,7 +64,12 @@ reflogreg.dCVnet <- function(object,
                              doPCA = "auto",
                              ncomp = "auto",
                              ...) {
-  parsed <- object$input$parsed
+
+
+  parsed <- parse_dCVnet_input(f = object$input$callenv$f,
+                               data = object$input$callenv$data,
+                               positive = object$input$callenv$positive)
+
   n <- min(table(parsed$y))
   # above we assume effective N for a logistic regression is n minority cases.
   k <- ncol(parsed$x_mat)

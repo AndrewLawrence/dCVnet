@@ -72,7 +72,8 @@ parse_dCVnet_input <- function(f, data, positive = 1) {
 
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,
-              x_mat = x_mat))
+              x_mat = x_mat,
+              yname = as.character(f[[2]])))
 }
 
 
@@ -99,7 +100,9 @@ parseddata_summary <- function(object) {
   # we want to operate either on a 'parsed' input,
   #   or a dCVnet object. The former can be extracted from the latter.
   if ( "dCVnet" %in% class(object) ) {
-    object <- object$input$parsed
+    object <- parse_dCVnet_input(f = object$input$callenv$f,
+                                 data = object$input$callenv$data,
+                                 positive = object$input$callenv$positive)
   }
   # First describe the target:
   ytab <- table(object$y)

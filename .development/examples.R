@@ -1,16 +1,9 @@
+# running this script without errors and inspecting all output is
+#   a good start to having a working set of data.
+
 library(glmnet)
 library(dCVnet)
-
-#      )                              (
-#   ( /(                    )         )\ )
-#   )\())  (  (     (    ( /(    (   (()/(  (      ) (  (
-#  ((_)\  ))\ )(   ))\   )\())  ))\   /(_)) )(  ( /( )\))( (   (    (
-#   _((_)/((_|()\ /((_) ((_)\  /((_) (_))_ (()\ )(_)|(_))\ )\  )\ ) )\
-#  | || (_))  ((_|_))   | |(_)(_))    |   \ ((_|(_)_ (()(_|(_)_(_/(((_)
-#  | __ / -_)| '_/ -_)  | '_ \/ -_)   | |) | '_/ _` / _` / _ \ ' \)|_-<
-#  |_||_\___||_| \___|  |_.__/\___|   |___/|_| \__,_\__, \___/_||_|/__/
-#                                                   |___/
-
+library(tidyverse)
 
 # Example Application -----------------------------------------------------
 
@@ -75,7 +68,7 @@ test1a <- repeated.cv.glmnet(fixfolds,
                             x = parsed$x_mat,
                             y = parsed$y,
                             type.measure = "class",
-                            lambda.type = "se",
+                            opt.lambda.type = "se",
                             lambdas = lambdalist[[2]],
                             alpha = 0.5)
 
@@ -122,7 +115,7 @@ tmp1a <- dCVnet:::multialpha.repeated.cv.glmnet(alphalist = c(0.2, 0.5, 0.8),
                                                k = 5, nrep = 5,
                                                x = parsed$x_mat,
                                                y = parsed$y,
-                                               lambda.type = "se",
+                                               opt.lambda.type = "se",
                                                type.measure = "class")
 
 tmp2 <- dCVnet:::multialpha.repeated.cv.glmnet(alphalist = c(0.2, 0.5, 0.8),
@@ -173,7 +166,7 @@ blarg1a <- dCVnet::dCVnet(f = y ~ .,
                          k_outer = 5, nrep_outer = 2,
                          opt.empirical_cutoff = FALSE,
                          type.measure = "class",
-                         lambda.type = "se",
+                         opt.lambda.type = "se",
                          nlambda = 100)
 
 blarg2 <- dCVnet::dCVnet(f = y ~ .,
@@ -200,13 +193,14 @@ plot(blarg1$tuning[[3]]$tuning) # rep3
 # We can extract and visualise the per-fold coefficients:
 coef(blarg1, type = "mean")
 plot_outerloop_coefs(blarg1)
+plot_outerloop_coefs(blarg1a)
 plot_outerloop_coefs(blarg2)
 
 # And classification stats / AUROC:
 summary(classperformance(blarg1))
 summary(classperformance(blarg2))
 
-blarg1.ref <- reflogreg(blarg1, doPCA = F)
+blarg1.ref <- reflogreg(blarg1, doPCA = T)
 
 summary(classperformance(blarg1.ref$glm), "GLM")
 report_classperformance_summary(blarg1.ref$univariate)
@@ -246,6 +240,4 @@ summary(tmp1)
 summary(tmp1, print = F)
 
 summary(blarg1)
-
-
 summary(blarg1$tuning$OutFold1.Rep1$tuning)

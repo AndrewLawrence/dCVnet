@@ -71,6 +71,7 @@ dCVnet <- function(
   ...) {
 
   thecall <- match.call()
+  callenv <- c(as.list(environment()), list(...))
 
   time_start <- Sys.time() # for logging.
 
@@ -300,11 +301,9 @@ dCVnet <- function(
                         performance = performance,
                         folds = outfolds,
                         final = final,
-                        input = list(call = thecall,
+                        input = list(callenv = callenv,
                                      runtime.mins = run_time_mins,
-                                     parsed = parsed,
-                                     lambdas = lambdas,
-                                     alphas = alphalist)),
+                                     lambdas = lambdas)),
                    class = c("dCVnet", "list"))
 
   cat("\n\n")
@@ -397,11 +396,15 @@ coef.dCVnet <- function(object, type = "all", ...) {
 #' @export
 print.dCVnet <- function(x, ...) {
 
-  parsed <- x$input$parsed
+  callenv <- x$input$callenv
+
+  parsed <- parse_dCVnet_input(f = callenv$f,
+                               data = callenv$data,
+                               positive = callenv$positive)
 
   stab <- table(parsed$y)
 
-  nalphas <- length(x$input$alphas)
+  nalphas <- length(callenv$alphalist)
   nlambdas <- length(x$input$lambdas[[1]])
 
   typemeas <- attr(x$final$tuning$inner_results, "type.measure")
@@ -421,17 +424,14 @@ print.dCVnet <- function(x, ...) {
   inner_nrep <- length(innerfolds)
 
   # What options were specified?:
-  opts.empirical <- x$input$call[["opt.empirical_cutoff"]]
-  if ( is.null(opts.empirical) ) opts.empirical <- FALSE
-
-  opts.ystratify <- x$input$call[["opt.ystratify"]]
-  if ( is.null(opts.ystratify) ) opts.ystratify <- TRUE
-
-  opts.uniquefolds <- x$input$call[["opt.uniquefolds"]]
-  if ( is.null(opts.uniquefolds) ) opts.uniquefolds <- FALSE
+  opts.empirical <- callenv[["opt.empirical_cutoff"]]
+  opts.ystratify <- callenv[["opt.ystratify"]]
+  opts.uniquefolds <- callenv[["opt.uniquefolds"]]
+  opts.lambdatype <- callenv[["opt.lambda.type"]]
+  opts.lambdatypevalue <- callenv[["opt.lambda.type.value"]]
 
   cat("A dCVnet object, from the dCVnet Package\n\n")
-  print(x$input$call)
+  print(callenv[[1]]) # the call.
   cat("\n")
   cat(paste0("Runtime: ", as.numeric(x$input$runtime.mins), " mins\n\n"))
 
@@ -447,7 +447,7 @@ print.dCVnet <- function(x, ...) {
   cat("Hyperparameter Tuning:\n")
   cat(paste("\tOptimising: ", typemeas, "\n"))
   cat(paste0("\t", nalphas, " alpha values:\t"))
-  cat(x$input$alphas)
+  cat(callenv$alphalist)
   cat(paste0("\n\t", nlambdas, " lambda values\n"))
 
   cat("Cross-validation:\n")
@@ -459,9 +459,11 @@ print.dCVnet <- function(x, ...) {
   cat(paste("\t\tnrep =\t", outer_nrep, "\n"))
 
   cat("Options:\n")
+  cat(paste("\tOptimal Lambda selection (and parameter)",
+            opts.lambdatype, "(", opts.lambdatypevalue, ")\n"
+            ))
   cat(paste("\tUse Empirical Thresholding for LogReg Classification: ",
             opts.empirical, "\n"))
-
   cat(paste("\tStratify k-fold sampling by outcome: ",
             opts.ystratify, "\n"))
   cat(paste("\tCheck random folds are unique: ",
