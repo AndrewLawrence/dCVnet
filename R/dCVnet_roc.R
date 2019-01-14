@@ -4,7 +4,7 @@
 #   acts on classperformance to produce data for a ROC.
 #   which is a table of:
 #     Sens : Sensitivity (tpr),
-#     InvSpec : 1 - Specificity (fpr)
+#     InvSpec : one-minus Specificity (fpr)
 #   for assorted thresholds of the model class thresholds.
 # Uses ROCR.
 
@@ -36,11 +36,14 @@ extract_rocdata <- function(classperformance) {
   # First ensure it is in list format, not dataframe:
   if ( "data.frame" %in% class(classperformance) ) {
     lvls <- as.character(unique(classperformance$label))
-    classperformance <- lapply(lvls,
-                          function(lab) {
-                            classperformance[classperformance$label == lab, ]
-                          })
+
+    classperformance <- lapply(
+      lvls,
+      function(lab) {
+        classperformance[classperformance$label == lab, ]
+      })
     names(classperformance) <- lvls
+
     classperformance <- structure(classperformance,
                                   class = c("classperformance", "list"))
   }
@@ -108,7 +111,7 @@ average_rocdata <- function(rocdata,
   # 1 roc curve per level of rocdata$run:
   runs <- as.character(unique(rocdata$run))
   # Split data to a list of rocdatas:
-  ds <- lapply(runs, function(x) rocdata[rocdata$run == x,] )
+  ds <- lapply(runs, function(x) rocdata[rocdata$run == x, ] )
 
   # Calculate sens and spec values
   #     at a set of standard thresholds [0,1] for each curve.
@@ -118,12 +121,12 @@ average_rocdata <- function(rocdata,
   alphalabs <- 1:length(alphas)
 
   res <- lapply(ds, function(d) {
-    d <- d[order(d$alpha),]
-    dinf <- d[is.infinite(d$alpha),] # set aside Inf
+    d <- d[order(d$alpha), ]
+    dinf <- d[is.infinite(d$alpha), ] # set aside Inf
 
-    d <- d[findInterval(alphas, vec = d$alpha, all.inside = T, left.open = T),]
+    d <- d[findInterval(alphas, vec = d$alpha, all.inside = T, left.open = T), ]
 
-    d[is.infinite(alphas),] <- dinf  # add inf back in.
+    d[is.infinite(alphas), ] <- dinf  # add inf back in.
 
     d$alab <- alphalabs # this label is used as the grouping variable
     return(d)
@@ -132,7 +135,7 @@ average_rocdata <- function(rocdata,
   res <- as.data.frame(do.call(rbind, res))
 
   # average results for threshold values:
-  av <- aggregate(res[,!names(res) %in% c("run","alab")],
+  av <- aggregate(res[, !names(res) %in% c("run", "alab")],
                   by = list(alab = res$alab),
                   FUN = "mean")
   # add a run label

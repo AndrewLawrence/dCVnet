@@ -71,7 +71,7 @@ reflogreg.dCVnet <- function(object,
   estncomp <- round(n / 5) # rule of thumb: 5 cases per predictor.
 
   # Settings:
-  if ( ((doPCA == "auto") && (k > estncomp)) || identical(doPCA, TRUE) ) {
+  if ( ( (doPCA == "auto") && (k > estncomp) ) || identical(doPCA, TRUE) ) {
     doPCA <- TRUE
   } else {
     doPCA <- FALSE
@@ -184,9 +184,8 @@ coef_reflogreg <- function(refobj) {
     names(U) <- c("(Intercept)", names(refobj$univariate))
   }
 
-  if ( a & b ) { return(data.frame(glm = G, univariate = U)) }
-  if ( a ) { return(data.frame(glm = G)) }
-  if ( b ) { return(data.frame(univariate = U)) }
+  if ( a & b ) return(data.frame(glm = G, univariate = U))
+  if ( a ) return(data.frame(glm = G))
+  if ( b ) return(data.frame(univariate = U))
   return(NA)
 }
-

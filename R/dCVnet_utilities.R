@@ -103,15 +103,20 @@ parseddata_summary <- function(object) {
   }
   # First describe the target:
   ytab <- table(object$y)
-  yptab <- round(prop.table(ytab),3) * 100
-  stry <- paste0(names(ytab), ": ", sprintf(ytab, fmt = "%i"), " (", yptab, "%)")
+  yptab <- round(prop.table(ytab), 3) * 100
+  stry <- paste0(names(ytab),
+                 ": ",
+                 sprintf(ytab, fmt = "%i"),
+                 " (", yptab, "%)")
   # Next the predictor matrix:
   xdes <- lapply(as.data.frame(object$x_mat),
-                 function(x) { data.frame(mean = mean(x, na.rm = T),
-                                          sd = sd(x, na.rm = T),
-                                          min = min(x, na.rm = T),
-                                          max = max(x, na.rm = T),
-                                          nnz = sum(x != 0)) })
+                 function(x) {
+                   data.frame(mean = mean(x, na.rm = T),
+                              sd = sd(x, na.rm = T),
+                              min = min(x, na.rm = T),
+                              max = max(x, na.rm = T),
+                              nnz = sum(x != 0))
+                 })
   xdes <- do.call(rbind, xdes)
   return(list(OutcomeData = stry,
               PredictorData = xdes))

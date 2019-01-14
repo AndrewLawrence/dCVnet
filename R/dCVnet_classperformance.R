@@ -304,7 +304,7 @@ casesummary.classperformance <- function(object,
                                                   "data",
                                                   "summary"),
                                          ...) {
-  type = match.arg(type)
+  type <- match.arg(type)
 
   object <- as.data.frame(object)
   labs <- unique(object$label)
@@ -313,10 +313,10 @@ casesummary.classperformance <- function(object,
   # sort the object by rowid (with numerical order if appropriate):
   if ( all(!is.na(suppressWarnings(as.numeric(object$rowid)))) ) {
     # if we can convert to numeric without any NAs, then force numeric:
-    object <- object[order(as.numeric(object$rowid)),]
+    object <- object[order(as.numeric(object$rowid)), ]
   } else {
     # sort by character:
-    object <- object[order(object$rowid),]
+    object <- object[order(object$rowid), ]
   }
 
   # iterate over the labels (reps) to make a wide dataframe.
@@ -325,7 +325,7 @@ casesummary.classperformance <- function(object,
   })
   names(repdata) <- names(labs)
 
-  Rleft <- repdata[[1]][,c("rowid", "reference")]
+  Rleft <- repdata[[1]][, c("rowid", "reference")]
   Rbits <- data.frame(lapply(repdata, function(kk) kk$classification),
                       stringsAsFactors = F)
   R.data <- data.frame(lapply(Rbits, function(x) {
@@ -344,10 +344,7 @@ casesummary.classperformance <- function(object,
                           `...` = "-",
                           Rbits,
                           stringsAsFactors = T)
-              )
+  )
 
   return(do.call(data.frame, R))
 }
-
-
-

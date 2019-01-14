@@ -28,8 +28,12 @@ log_results_to_excel <- function(object,
          call. = FALSE)
   }
 
-  if ( !grepl("\\.xlsx$", file, fixed = F) ) { file <- paste0(file, ".xlsx") }
-  .wrap_add_worksheet <- function(wb, x, sheetname, name = NA, colNames = F, ...) {
+  if ( !grepl("\\.xlsx$", file, fixed = F) ) file <- paste0(file, ".xlsx")
+  .wrap_add_worksheet <- function(wb,
+                                  x,
+                                  sheetname,
+                                  name = NA,
+                                  colNames = F, ...) {
     openxlsx::addWorksheet(wb, sheetname)
     srow <- 1
     if ( !is.na(name) ) {
@@ -48,8 +52,7 @@ log_results_to_excel <- function(object,
   ces <- coefficients_summary(object)
 
   # final classification + hyperparameters:
-  final <- summary(classperformance(object$final))[,-3]
-  #final <- data.frame(Measure = row.names(final), final)
+  final <- summary(classperformance(object$final))[, -3]
   final.hps <- data.frame(Measure = c("...",
                                       "Final Model Hyperparameters",
                                       "lambda",
@@ -73,8 +76,8 @@ log_results_to_excel <- function(object,
   sheets <- list(
     coversheet = setNames(as.data.frame(
       utils::capture.output(summary(object))
-    ),""),
-    dqs.1 = setNames(as.data.frame(pds[[1]]),""),
+    ), ""),
+    dqs.1 = setNames(as.data.frame(pds[[1]]), ""),
     dqs.2 = as.data.frame(pds[[2]]),
     classif = report_classperformance_summary(object),
     subclass = casesummary.classperformance(object$performance),
@@ -95,7 +98,8 @@ log_results_to_excel <- function(object,
         c("CV-Classification",
           "Outer loop cross-validated classification performance"),
         c("SubjectClass", "Subject classification over outer loops"),
-        c("Hyperparameters", "Hyperparameters chosen for outer loop folds/reps"),
+        c("Hyperparameters",
+          "Hyperparameters chosen for outer loop folds/reps"),
         c("Coefficients", "Descriptives of Model coefficients"),
         c("Final Model", "Performance of Final Model (not cross-validated)")
       ), stringsAsFactors = F),
@@ -118,5 +122,3 @@ log_results_to_excel <- function(object,
   cat(paste0("Write completed\n"))
   return(invisible(NULL))
 }
-
-

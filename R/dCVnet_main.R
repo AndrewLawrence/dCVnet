@@ -860,7 +860,7 @@ selected_hyperparameters <- function(object,
 
   # what were the final hyperparams:
   FF <- as.data.frame(object$final$tuning$inner_best)
-  FF.summary <- FF[,c("alpha","lambda")]
+  FF.summary <- FF[, c("alpha", "lambda")]
 
   # What do the 'best-fitting' results of the inner loops look like:
   R <- lapply(object$tuning, function(x) {
@@ -872,7 +872,7 @@ selected_hyperparameters <- function(object,
 
   R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = T), "[", 2)
 
-  if ( what == "data") { return(list(CVfolds = R, FinalModel = FF)) }
+  if ( what == "data") return(list(CVfolds = R, FinalModel = FF))
 
   alphas <- setNames(sort(unique(R$alpha)),
                      paste0("Alpha:", sort(unique(R$alpha))))
@@ -882,10 +882,11 @@ selected_hyperparameters <- function(object,
   L <- summary(R$lambda)
   J <- lapply(alphas, function(a) {
     data.frame(`n times selected` = sum(R$alpha == a),
-         `lambda mean` = mean(R$lambda[R$alpha == a]),
-         `lambda sd` = sd(R$lambda[R$alpha == a]),
-         `lambda min` = min(R$lambda[R$alpha == a]),
-         `lambda max` = max(R$lambda[R$alpha == a])) } )
+               `lambda mean` = mean(R$lambda[R$alpha == a]),
+               `lambda sd` = sd(R$lambda[R$alpha == a]),
+               `lambda min` = min(R$lambda[R$alpha == a]),
+               `lambda max` = max(R$lambda[R$alpha == a]))
+  } )
   J <- do.call(rbind, J)
 
   if ( what == "summary") {
@@ -921,7 +922,7 @@ coefficients_summary <- function(object, ...) {
     kk <- Range$Coef[Range$Predictor == i]
     return(data.frame(min = min(kk),
                       max = max(kk),
-                      propnz = sum(kk != 0)/length(kk)))
+                      propnz = sum(kk != 0) / length(kk)))
   } )
   names(Range) <- names(Range.preds)
   Range <- do.call(rbind, Range)
@@ -931,7 +932,7 @@ coefficients_summary <- function(object, ...) {
   FinalModel <- setNames(as.data.frame(as.matrix(FinalModel)), "FinalModel")
 
   return(data.frame(FinalModel,
-                    OuterMedian = Medians[,2],
+                    OuterMedian = Medians[, 2],
                     Range))
 }
 
