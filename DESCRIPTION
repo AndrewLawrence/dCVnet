@@ -1,12 +1,12 @@
 Package: dCVnet
 Type: Package
 Title: Doubly Cross-Validated Elastic-Net Regularised (Generalised) Linear Models
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: c(person("Andrew J.", "Lawrence", 
                     email = "lawrenceajl@gmail.com",
                     role = c("aut", "cre")))
-Description: A wrapper for glmnet to fit elasticnet regularised two-class logistic regresion.
-    The double cross-validation has two functions. 
+Description: A wrapper for glmnet to fit elastic-net regularised two-class logistic regresion.
+    The double cross-validation has two functions: 
     1) selects elasticnet hyperparameters (alpha and lambda) by (inner) cross-validation.
     2) Produces rigorous estimates of out-of-sample classification performance 
     via an independent (outer) cross-validation.
