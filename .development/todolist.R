@@ -1,9 +1,12 @@
-
+# TODO: check reproducibility with setseed(X).
+#
+# TODO: Add support for cox/gaussian/other data.
+#
+#
 # TODO: Add 'tidy' methods for objects / summaries / results.
 #
-#
 # TODO: Summary methods take a looong time to run when you have even a moderate
-#         number of reps (~100). Can we optimise the code?
+#         number of reps (~100). Can we optimise this code?
 #
 # TODO: Sampling options - Leave-group-out,
 #                          Proportional sampling by outcome or covariate/
@@ -14,7 +17,13 @@
 #
 # TODO: Timing values are incorrect when the model is fit in parallel.
 #         -- Nice to have a parallel progress bar.
-#         -- test the fix.
+#         -- test the quickfix?
+
+
+
+
+
+
 
 
 # Added 14/01/2019

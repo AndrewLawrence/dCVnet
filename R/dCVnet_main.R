@@ -428,6 +428,7 @@ print.dCVnet <- function(x, ...) {
   opts.ystratify <- callenv[["opt.ystratify"]]
   opts.uniquefolds <- callenv[["opt.uniquefolds"]]
   opts.lambdatype <- callenv[["opt.lambda.type"]]
+  if ( length(opts.lambdatype) > 1 ) opts.lambdatype <- opts.lambdatype[1]
   opts.lambdatypevalue <- callenv[["opt.lambda.type.value"]]
 
   cat("A dCVnet object, from the dCVnet Package\n\n")
@@ -459,8 +460,8 @@ print.dCVnet <- function(x, ...) {
   cat(paste("\t\tnrep =\t", outer_nrep, "\n"))
 
   cat("Options:\n")
-  cat(paste("\tOptimal Lambda selection (and parameter)",
-            opts.lambdatype, "(", opts.lambdatypevalue, ")\n"
+  cat(paste0("\tOptimal Lambda selection (and parameter): \"",
+            opts.lambdatype, "\" (", opts.lambdatypevalue, ")\n"
             ))
   cat(paste("\tUse Empirical Thresholding for LogReg Classification: ",
             opts.empirical, "\n"))
