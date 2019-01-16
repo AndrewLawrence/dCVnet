@@ -6,12 +6,12 @@ This is the source code of the R Package 'dCVnet' which estimates
 ### Overview & Rationale
 
 The motivating problem behind dCVnet is prediction modelling in datasets 
-with relatively few observations ($n$)<sup>[1](#fn1)</sup> for the number of 
-predictors ($p$), especially where there may be uninformative or redundant 
+with relatively few observations (*n*)<sup>[1](#fn1)</sup> for the number of 
+predictors (*p*), especially where there may be uninformative or redundant 
 predictors which the analyst isn't willing, or able, to remove.
 
 These circumstances lead to a number of related statistical problems which 
-become worse with greater ratios of $p/n$:<sup>[2](#fn2)</sup>
+become worse with greater ratios of *p*/*n*:<sup>[2](#fn2)</sup>
 
 * [Overfitting](https://en.wikipedia.org/wiki/Overfitting)
 * [Multicollinearity](https://en.wikipedia.org/wiki/Multicollinearity)
@@ -52,12 +52,12 @@ for a description of the issue.
 
 The type of regularisation employed by *dCVnet* ([Elastic-net](https://en.wikipedia.org/wiki/Elastic_net_regularization))
 permits predictors with perfect *collinearity*
-and performs *variable selection* (through $L_1$-penalisation - 
+and performs *variable selection* (through *L1*-penalisation - 
 the Least Absolute Shrinkage and Selection Operator; LASSO).
 
 Elastic-net regularisation requires two hyperparameters be specified:
 
-* `alpha` - the balance of $L_1$- and $L_2$-regularisation penalties.
+* `alpha` - the balance of *L1*- and *L2*-regularisation penalties.
 * `lambda` - the total amount of regularisation.
 
 there are no default values for these parameters, and suitable values 
@@ -125,17 +125,14 @@ This project is licensed under the
 <hr>
 
 <a name="fn1">1</a>: For two-class prediction problems 
-(binary logistic regression) the balance 
-of the two classes has an important effect on effective sample size. 
-The effective number of observations ($n$) reflects the rarer of the 
-two outcomes:
-$$ n = min\{n_{outcome1}, n_{outcome2}\}$$
+(e.g. binary logistic regression) the class-balance impacts sample size, 
+the rarer of the two outcomes should be used.
 
 
-<a name="fn2">2</a>: Where $p/n > 1$ standard least-squares solutions 
+<a name="fn2">2</a>: Where *p*/*n* > 1 standard least-squares solutions 
 (for continuous outcomes) are not defined. For binary logistic models 
 convergence problems are likely. In both cases predictors will have
-perfect mutlicollinearity. Where $p/n > 0.1$,
+perfect mutlicollinearity. Where *p*/*n* > 0.1,
 conventional [rules of thumb](https://en.wikipedia.org/wiki/One_in_ten_rule) 
 for logistic regression sample size are violated.
 
