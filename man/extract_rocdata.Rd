@@ -4,10 +4,20 @@
 \alias{extract_rocdata}
 \title{extract_rocdata}
 \usage{
-extract_rocdata(classperformance)
+extract_rocdata(classperformance, ROCR.invertprob = T)
 }
 \arguments{
 \item{classperformance}{a \code{\link{classperformance}} object.}
+
+\item{ROCR.invertprob}{boolian. Should class probabilities be inverted?
+This will depend on what your 'positive' class is.
+The internal \link[ROCR]{prediction} uses opposing convention to the
+rest of this package, so normally this should be TRUE.
+\itemize{
+\item{ROCR}{last level is 'positive'}
+\item{typical}{first level is 'positive'}
+}
+If the ROC curve appears under the diagonal then toggle this option.}
 }
 \value{
 a data.frame object of class "rocdata" which can be plotted. Contents:

@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 # dCVnet
 
 This is the source code of the R Package 'dCVnet' which estimates

@@ -20,7 +20,15 @@
 #'
 #' @name extract_rocdata
 #' @param classperformance a \code{\link{classperformance}} object.
-#'
+#' @param ROCR.invertprob boolian. Should class probabilities be inverted?
+#'     This will depend on what your 'positive' class is.
+#'     The internal \link[ROCR]{prediction} uses opposing convention to the
+#'     rest of this package, so normally this should be TRUE.
+#'     \itemize{
+#'         \item{ROCR}{last level is 'positive'}
+#'         \item{typical}{first level is 'positive'}
+#'     }
+#'     If the ROC curve appears under the diagonal then toggle this option.
 #' @return a data.frame object of class "rocdata" which can be plotted. Contents:
 #'     \itemize{
 #'     \item{\code{Sens} : Sensitivity}
@@ -32,7 +40,7 @@
 #' @seealso \code{\link{plot.rocdata}}
 #'
 #' @export
-extract_rocdata <- function(classperformance) {
+extract_rocdata <- function(classperformance, ROCR.invertprob = T) {
   # First ensure it is in list format, not dataframe:
   if ( "data.frame" %in% class(classperformance) ) {
     lvls <- as.character(unique(classperformance$label))
@@ -60,8 +68,19 @@ extract_rocdata <- function(classperformance) {
     return(outer.df)
   }
 
+  .extract_pred <- function(x, mode) {
+    if ( mode ) {
+      return(1 - x$probability)
+    } else {
+      return(x$probability)
+    }
+  }
+
   outer.pred <- ROCR::prediction(
-    predictions = lapply(classperformance, "[[", "probability"),
+    # Invert class probabilities if needed:
+    predictions = lapply(classperformance,
+                         .extract_pred,
+                         mode = ROCR.invertprob),
     labels = lapply(classperformance, "[[", "reference"))
   outer.perf <- ROCR::performance(outer.pred, "tpr", "fpr")
 
