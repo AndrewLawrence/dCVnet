@@ -67,7 +67,7 @@ Otherwise classify at 50\% probability.}
 \item{opt.uniquefolds}{Boolian.
 In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
-Currently it warns if non-unqiue values are found.}
+Currently it warns if non-unique values are found.}
 
 \item{opt.ystratify}{Boolian.
 Outer and inner sampling is stratified by outcome.

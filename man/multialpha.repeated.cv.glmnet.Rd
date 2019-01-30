@@ -39,7 +39,7 @@ This is implemented with \code{\link[caret]{createFolds}}}
 \item{opt.uniquefolds}{Boolian.
 In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
-Currently it warns if non-unqiue values are found.}
+Currently it warns if non-unique values are found.}
 
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
 }

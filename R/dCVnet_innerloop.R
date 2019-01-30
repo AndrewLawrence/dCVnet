@@ -176,7 +176,7 @@ summary.repeated.cv.glmnet <- function(object, ...) {
 #' @param opt.uniquefolds Boolian.
 #'     In most circumstances folds will be unique. This requests
 #'     that random folds are checked for uniqueness in inner and outer loops.
-#'     Currently it warns if non-unqiue values are found.
+#'     Currently it warns if non-unique values are found.
 #'
 #' @return an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
 #'     This is a 3 item list: \itemize{
