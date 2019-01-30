@@ -13,7 +13,6 @@
 #' @param ... NULL
 #' @export
 plot.repeated.cv.glmnet <- function(x, ...) {
-  x$lambda <- log10(x$lambda)
   p <- ggplot2::ggplot(x,
                        ggplot2::aes_string(y = "cvm", x = "lambda")) +
     ggplot2::geom_line(data = x, colour = "grey", size = 1.2) +
@@ -21,12 +20,13 @@ plot.repeated.cv.glmnet <- function(x, ...) {
                         ggplot2::aes_string(y = "cvm", x = "lambda"),
                         shape = 25, size = 2, colour = "red", fill = "black",
                         inherit.aes = F) +
+    ggplot2::scale_x_log10() +
     ggplot2::ylab(paste("Metric:", attr(x, "type.measure"))) +
     ggplot2::xlab("lambda (log10)") +
     ggplot2::theme_light()
   print(p)
 
-  invisible(x)
+  invisible(p)
 }
 
 #' plot.repeated.cv.glmnet
@@ -42,20 +42,22 @@ plot.multialpha.repeated.cv.glmnet <- function(x, ...) {
   x <- x$inner_results # only need the inner_results dataframe.
 
   p <- ggplot2::ggplot(x,
-                       ggplot2::aes_string(y = "cvm", x = "log10(lambda)",
-                                    colour = "alpha", fill = "alpha")) +
+                       ggplot2::aes_string(y = "cvm", x = "lambda",
+                                           colour = "alpha", fill = "alpha")) +
     ggplot2::geom_line() +
     ggplot2::geom_point(data = x[x$lambda.min, ],
                         colour = "black", shape = 25) +
     ggplot2::geom_point(data = x[x$best, ],
                         colour = "black", shape = 1, size = 5,
                         show.legend = F) +
+    ggplot2::scale_x_log10() +
     ggplot2::ylab(paste("Metric:", attr(x, "type.measure"))) +
     ggplot2::xlab("Lambda path (log10)") +
     ggplot2::theme_light()
   print(p)
 
-  invisible(x)
+  invisible(list(plot = p,
+                 data = x))
 }
 
 #' plot.dCVnet
@@ -148,10 +150,13 @@ plot.rocdata <- function(x, legend = F, ...) {
 #'
 #' @name tuning_plot_dCVnet
 #' @param object a \code{\link{dCVnet}} object
-#' @return a ROC plot, as above.
+#' @param n.random select a random sample of k-fold reps to display.
+#'      0 = display all.
+#' @return a data.frame containing the full dataset used to plot
+#'     (ignores n.random)
 #'
 #' @export
-tuning_plot_dCVnet <- function(object) {
+tuning_plot_dCVnet <- function(object, n.random = 0) {
   # Plotting function to show outer fold variability in the tuning curves
   #   at different alphas.
 
@@ -169,22 +174,28 @@ tuning_plot_dCVnet <- function(object) {
   df$Fold <- sapply(strsplit(df$outfold, split = "\\."), "[", 1)
   df$Rep <- sapply(strsplit(df$outfold, split = "\\."), "[", 2)
 
-  p <- ggplot2::ggplot(df,
-                       ggplot2::aes_string(y = "cvm", x = "log10(lambda)",
-                                    colour = "alpha", fill = "alpha",
-                                    label = "gsub(\"OutFold\", \"\", Fold)",
-                                    group = "paste(alpha, outfold)")) +
+  plotReps <- unique(df$Rep)
+  if ( n.random > 0 ) plotReps <- sample(plotReps, size = n.random)
+  pdf <- df[df$Rep %in% plotReps, ]
+
+  p <- ggplot2::ggplot(pdf,
+                       ggplot2::aes_string(
+                         y = "cvm",
+                         x = "log10(lambda)",
+                         colour = "alpha", fill = "alpha",
+                         label = "gsub(\"OutFold\", \"\", Fold)",
+                         group = "paste(alpha, outfold)")) +
     ggplot2::geom_line() +
-    ggplot2::geom_point(data = df[df$lambda.min, ],
+    ggplot2::geom_point(data = pdf[pdf$lambda.min, ],
                         colour = "black", size = 3, shape = 24) +
-    ggplot2::geom_text(data = df[df$lambda.min, ],
+    ggplot2::geom_text(data = pdf[pdf$lambda.min, ],
                        colour = "black", size = 3) +
-    ggplot2::ylab(paste("Metric:", attr(df, "type.measure"))) +
+    ggplot2::ylab(paste("Metric:", attr(pdf, "type.measure"))) +
     ggplot2::xlab("lambda path (log10)") +
     ggplot2::facet_wrap(~Rep) +
     ggplot2::theme_light()
   print(p)
-  invisible(df)
+  invisible(list(plot = p, data = df))
 }
 
 
@@ -246,5 +257,6 @@ plot_outerloop_coefs <- function(object, type = "rep", abs = FALSE) {
 
   print(p)
 
-  invisible(df)
+  invisible(list(plot = p,
+                 data = df))
 }

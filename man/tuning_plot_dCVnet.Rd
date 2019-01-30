@@ -4,13 +4,17 @@
 \alias{tuning_plot_dCVnet}
 \title{tuning_plot_dCVnet}
 \usage{
-tuning_plot_dCVnet(object)
+tuning_plot_dCVnet(object, n.random = 0)
 }
 \arguments{
 \item{object}{a \code{\link{dCVnet}} object}
+
+\item{n.random}{select a random sample of k-fold reps to display.
+0 = display all.}
 }
 \value{
-a ROC plot, as above.
+a data.frame containing the full dataset used to plot
+(ignores n.random)
 }
 \description{
 Display the tuning curves for the repeated k-folds of the outerloop of a
