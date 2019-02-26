@@ -4,14 +4,29 @@
 \alias{repeated.cv.glmnet}
 \title{repeated.cv.glmnet}
 \usage{
-repeated.cv.glmnet(x, y, folds, lambdas, alpha,
+repeated.cv.glmnet(x, y, folds, lambdas, alpha, family,
   opt.lambda.type = "minimum", opt.lambda.type.value = 1, ...,
   debug = F)
 }
 \arguments{
-\item{x}{\code{x} matrix as in \code{glmnet}.}
+\item{x}{input matrix, of dimension nobs x nvars; each row is an
+  observation vector. Can be in sparse matrix format (inherit from class \code{"sparseMatrix"} as in package \code{Matrix}; not yet available for \code{family="cox"})}
 
-\item{y}{response \code{y} as in \code{glmnet}.}
+\item{y}{response variable. Quantitative for \code{family="gaussian"},
+  or \code{family="poisson"} (non-negative counts). For
+  \code{family="binomial"} should be either a factor with two levels, or
+  a two-column matrix of counts or proportions (the second column is
+  treated as the target class; for a factor, the last level in
+  alphabetical order is the target class). For
+  \code{family="multinomial"}, can be a \code{nc>=2} level factor, or a
+  matrix with \code{nc} columns of counts or proportions.
+  For either \code{"binomial"} or \code{"multinomial"}, if \code{y} is
+  presented as a vector, it will be coerced into a factor. For
+  \code{family="cox"}, \code{y} should be a two-column matrix with
+  columns named 'time' and 'status'. The latter is a binary variable,
+  with '1' indicating death, and '0' indicating right censored. The
+  function \code{Surv()} in package \pkg{survival} produces such a
+  matrix. For  \code{family="mgaussian"}, \code{y} is a matrix of quantitative responses.}
 
 \item{folds}{This is a list where each element is an integer vector
 of length \emph{n_cases}. The integer for each case labels it as belonging
@@ -25,6 +40,8 @@ see \code{\link[glmnet]{glmnet}}}
     \eqn{0\le\alpha\le 1}. The penalty is defined
     as \deqn{(1-\alpha)/2||\beta||_2^2+\alpha||\beta||_1.} \code{alpha=1}
     is the lasso penalty, and \code{alpha=0} the ridge penalty.}
+
+\item{family}{Response type (see above)}
 
 \item{opt.lambda.type}{Method for selecting optimum lambda. One of
 \itemize{
@@ -55,8 +72,14 @@ containting averaged metrics. Has the following columns:
 \item{lambda.min - logical indicating 'best' performing lambda
 (see opt.lambda.type and opt.lambda.type.value)}
 }
+Also contains attributes for the response family (\code{family})
+and cv-type (\code{type.measure})
 }
 \description{
 Repeatedly runs a \code{\link[glmnet]{cv.glmnet}} and returns averaged
-results. \emph{This is intended to be a dCVnet internal function}.
+results. \emph{This is intended as a dCVnet internal function}.
+}
+\details{
+The code will run for any glmnet family, but folds & lambdas must be
+correctly specified.
 }

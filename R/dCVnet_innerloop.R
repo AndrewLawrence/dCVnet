@@ -8,10 +8,14 @@
 #' repeated.cv.glmnet
 #'
 #' Repeatedly runs a \code{\link[glmnet]{cv.glmnet}} and returns averaged
-#'     results. *This is intended to be a dCVnet internal function*.
+#'     results. *This is intended as a dCVnet internal function*.
 #'
-#' @inheritParams glmnet::cv.glmnet
+#' The code will run for any glmnet family, but folds & lambdas must be
+#' correctly specified.
+#'
+#'
 #' @inheritParams glmnet::glmnet
+#' @inheritParams glmnet::cv.glmnet
 #' @param lambdas use a fixed, user supplied lambda sequence (descending)
 #'     see \code{\link[glmnet]{glmnet}}
 #' @param opt.lambda.type Method for selecting optimum lambda. One of
@@ -45,11 +49,14 @@
 #'     \item{lambda.min - logical indicating 'best' performing lambda
 #'         (see opt.lambda.type and opt.lambda.type.value)}
 #'     }
+#'     Also contains attributes for the response family (\code{family})
+#'         and cv-type (\code{type.measure})
 #' @export
 repeated.cv.glmnet <- function(x, y,
                                folds,
                                lambdas,
                                alpha,
+                               family,
                                opt.lambda.type = "minimum",
                                opt.lambda.type.value = 1,
                                ...,
@@ -63,7 +70,7 @@ repeated.cv.glmnet <- function(x, y,
     glmnet::cv.glmnet(x = x,
                       y = y,
                       lambda = lambdas,
-                      family = "binomial",
+                      family = family,
                       foldid = f,
                       alpha = alpha,
                       ...)
@@ -98,6 +105,7 @@ repeated.cv.glmnet <- function(x, y,
 
   av[order(av$lambda, decreasing = T), ]
   attr(av, "type.measure") <- measure_name
+  attr(av, "family") <- family
   attr(av, "class") <- c("repeated.cv.glmnet", "data.frame")
 
   # models and results could be useful, but we do not usually want these.
@@ -116,7 +124,8 @@ print.repeated.cv.glmnet <- function(x, ...) {
   alpha <- unique(x$alpha)
   lambda <- range(x$lambda)
 
-  cat(paste("A repeated.cv.glmnet object from package dCVnet\n"))
+  cat(paste("a repeated.cv.glmnet object from package dCVnet\n"))
+  cat(paste("Model family:", attr(x, "family"), "\n"))
   cat(paste("Tuning metric (cvm):", attr(x, "type.measure"), "\n"))
   cat(paste0("\talpha:\t\t", prettyNum(alpha), "\n"))
   cat(paste0("\tnlambda:\t", length(unique(x$lambda)), "\n"))
@@ -144,6 +153,7 @@ summary.repeated.cv.glmnet <- function(object, ...) {
     return(probe < best_up & probe > best_lo)
   })
 
+  cat("Summary of ")
   print(object)
 
   cat("Best fit:\n")
@@ -195,10 +205,14 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                                           opt.lambda.type.value = 1,
                                           opt.ystratify = T,
                                           opt.uniquefolds = F,
+                                          family,
                                           ...) {
   # Fold generation:
   ystrat <- y
-  if ( identical(opt.ystratify, FALSE) ) ystrat <- rep("x", length(y))
+  if ( identical(opt.ystratify, FALSE) | family %in% c("cox", "mgaussian") ) {
+    # caret stratification isn't sensible for cox / mgauss:
+    ystrat <- rep("x", NROW(y))
+  }
 
   folds <- lapply(1:nrep, function(i) {
     caret::createFolds(y = ystrat, k = k, list = FALSE, returnTrain = FALSE)
@@ -221,14 +235,18 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                        folds = folds,
                        opt.lambda.type = opt.lambda.type,
                        opt.lambda.type.value = opt.lambda.type.value,
+                       family = family,
                        ...)
                      repeated$alpha <- as.character(a)
 
                      return(repeated)
                    })
   tmeas <- attr(malist[[1]], "type.measure")
+  tfam  <- attr(malist[[1]], "family")
+
   malist <- do.call(rbind, malist)
   attr(malist, "type.measure") <- tmeas
+  attr(malist, "family") <- tfam
 
   bestfun <- ifelse(tmeas == "auc", max, min)
   bestcandidates <- malist[malist$lambda.min, ]
@@ -271,7 +289,9 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 
   selected <- (R$alpha == best$alpha) & (R$lambda == best$lambda)
 
-  cat("A multialpha.repeated.cv.glmnet object, from the dCVnet Package\n\n")
+  cat("A dCVnet::multialpha.repeated.cv.glmnet object\n")
+  cat(paste("Model family:", attr(x, "family"), "\n"))
+  cat(paste("Tuning metric (cvm):", attr(x, "type.measure"), "\n\n"))
   cat(paste0("\t", length(alpha), " alpha(s): ",
              paste(alpha, collapse = ", "), "\n\n"))
   cat(paste0("\tLambda Counts:\n"))
@@ -282,7 +302,6 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 
   R$best <- selected
   invisible(R)
-
 }
 
 #' summary.multialpha.repeated.cv.glmnet

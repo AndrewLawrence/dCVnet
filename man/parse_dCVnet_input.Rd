@@ -4,7 +4,7 @@
 \alias{parse_dCVnet_input}
 \title{parse_dCVnet_input}
 \usage{
-parse_dCVnet_input(f, data, positive = 1)
+parse_dCVnet_input(f, data, family, positive = 1)
 }
 \arguments{
 \item{f}{a two sided formula.

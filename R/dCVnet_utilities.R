@@ -29,7 +29,7 @@
 #'     }
 #'
 #' @export
-parse_dCVnet_input <- function(f, data, positive = 1) {
+parse_dCVnet_input <- function(f, data, family, positive = 1) {
   # Ordering levels of y for classification:
   # We will follow a convention that the condition we are aiming to
   #   detect/diagnose ('i.e. the disease') should be the first
@@ -53,22 +53,23 @@ parse_dCVnet_input <- function(f, data, positive = 1) {
     stop("Error: no complete cases found.")
   }
   # TODO:: missing data imputation?
-  y <- as.factor(df[, 1]) # extract y variable & coerce to factor.
 
-  if ( length(levels(y)) != 2 ) stop("LHS (i.e. outcome) must have 2 levels")
+  if ( family %in% c("binomial", "multinomial")) {
+    y <- as.factor(df[, 1]) # extract y variable & coerce to factor.
+
+    # Recode levels.
+    lvl <- levels(y)
+    if ( is.numeric(positive) ) {
+      positive <- lvl[positive]
+    } else {
+      positive <- as.character(positive)
+    }
+    if ( lvl[1] != positive ) y <- relevel(y, positive)
+  }
 
   # Make a model matrix of RHS variables
   #   i.e. parse dummy coding / interaction terms & drop intercept:
   x_mat <- model.matrix(f, data = data)[, -1]
-
-  # Recode levels.
-  lvl <- levels(y)
-  if ( is.numeric(positive) ) {
-    positive <- lvl[positive]
-  } else {
-    positive <- as.character(positive)
-  }
-  if ( lvl[1] != positive ) y <- relevel(y, positive)
 
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,

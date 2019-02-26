@@ -52,6 +52,7 @@
 dCVnet <- function(
   f,
   data,
+  y = NULL,
 
   nrep_outer = 2,
   k_outer = 10,
@@ -60,6 +61,7 @@ dCVnet <- function(
   alphalist = c(0.2, 0.5, 0.8),
   nlambda = 100,
   type.measure = "deviance",
+  family = "binomial",
   positive = 1,
 
   opt.lambda.type = c("minimum", "se", "percentage"),
@@ -75,9 +77,19 @@ dCVnet <- function(
 
   time_start <- force(Sys.time()) # for logging.
 
-  parsed <- parse_dCVnet_input(f = f, data = data, positive = positive)
-  x <- parsed$x_mat
-  y <- parsed$y
+  if ( missing(y) ) {
+    parsed <- parse_dCVnet_input(f = f,
+                                 data = data,
+                                 family = family,
+                                 positive = positive)
+    x <- parsed$x_mat
+    y <- parsed$y
+  } else {
+    # if y is specified then user 'knows what they are doing'.
+    parsed <- list(x_mat = as.matrix(data),
+                   y = y,
+                   yname = "y")
+  }
 
   min_lambda_ratio <- ifelse(ncol(parsed$x_mat) > nrow(parsed$x_mat),
                              0.01, 0.0001)
@@ -112,7 +124,9 @@ dCVnet <- function(
   # Note: this is default stratified by y, we obtain unstratified sampling
   #         by giving caret::createMultiFolds a single-level factor/char.
   ystrat <- y
-  if ( identical(opt.ystratify, FALSE) ) ystrat <- rep("x", length(y))
+  if ( identical(opt.ystratify, FALSE) | family %in% c("cox", "mgaussian") ) {
+    ystrat <- rep("x", length(y))
+  }
   outfolds <- caret::createMultiFolds(y = ystrat,
                                       k = k_outer,
                                       times = nrep_outer)
@@ -182,6 +196,7 @@ dCVnet <- function(
         lambdas = lambdas,
         y = trainy, x = trainx,
         type.measure = type.measure,
+        family = family,
         standardize = F,
         opt.lambda.type = opt.lambda.type,
         opt.lambda.type.value = opt.lambda.type.value,
@@ -196,7 +211,7 @@ dCVnet <- function(
       # fit a model to ALL the train data using the selected alpha/lambda:
       model <- glmnet::glmnet(x = trainx,
                               y = trainy,
-                              family = "binomial",
+                              family = family,
                               alpha = fit_alpha,
                               standardize = F,
                               lambda = lambdas[[which(alphalist == fit_alpha)]])
@@ -254,6 +269,7 @@ dCVnet <- function(
     k = k_inner,
     nrep = nrep_inner,
     y = y, x = xs,
+    family = family,
     type.measure = type.measure,
     opt.lambda.type = opt.lambda.type,
     opt.lambda.type.value = opt.lambda.type.value,
@@ -316,6 +332,7 @@ dCVnet <- function(
 
   return(obj)
 }
+
 
 # Extract logreg coefficients from the outerloop best models:
 #' coef.dCVnet
@@ -393,14 +410,22 @@ coef.dCVnet <- function(object, type = "all", ...) {
   ))
 }
 
+
 #' @export
 print.dCVnet <- function(x, ...) {
 
   callenv <- x$input$callenv
 
-  parsed <- parse_dCVnet_input(f = callenv$f,
-                               data = callenv$data,
-                               positive = callenv$positive)
+  if ( is.null(callenv$y) ) {
+    parsed <- parse_dCVnet_input(f = callenv$f,
+                                 data = callenv$data,
+                                 family = callenv$family,
+                                 positive = callenv$positive)
+  } else {
+    parsed <- list(x_mat = callenv$data,
+                   y = callenv$y,
+                   yname = "y")
+  }
 
   stab <- table(parsed$y)
 
@@ -474,7 +499,6 @@ print.dCVnet <- function(x, ...) {
 }
 
 
-
 #' selected_hyperparameters
 #'
 #' What hyperparameters were chosen for the outer loop of a dCVnet object.
@@ -534,7 +558,6 @@ selected_hyperparameters <- function(object,
                                FinalModel = FF.summary)))
   }
 }
-
 
 
 #' coefficients_summary

@@ -6,7 +6,7 @@
 \usage{
 dCVnet(f, data, nrep_outer = 2, k_outer = 10, nrep_inner = 5,
   k_inner = 10, alphalist = c(0.2, 0.5, 0.8), nlambda = 100,
-  type.measure = "deviance", positive = 1,
+  type.measure = "deviance", family = "binomial", positive = 1,
   opt.lambda.type = c("minimum", "se", "percentage"),
   opt.lambda.type.value = 1, opt.empirical_cutoff = FALSE,
   opt.uniquefolds = FALSE, opt.ystratify = TRUE, ...)
@@ -40,6 +40,8 @@ See \code{glmnet} argument \code{nlambda}.}
 This sets the metric used for hyperparameter optimisation in the
 inner cross-validation. Options: \code{"deviance"}, \code{"class"},
 \code{"mse"}, \code{"mae"}}
+
+\item{family}{Response type (see above)}
 
 \item{positive}{What level of the outcome is a 'positive' result
 (in the sense of a diagnostic test).
