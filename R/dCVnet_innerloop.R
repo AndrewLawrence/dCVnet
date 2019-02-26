@@ -318,17 +318,13 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
     return(kk)
   }
 
+  if ( print ) {
+    cat("Summary of ")
+    print(object)
+  }
+
   best <- object$inner_best
   object <- object$inner_results
-
-  alpha <- unique(object$alpha)
-
-  lambdas <- lapply(alpha, function(i) object$lambda[object$alpha == i]  )
-
-  l_lengths <- sapply(lambdas, length)
-  l_min <- prettyNum(sapply(lambdas, min))
-  l_max <- prettyNum(sapply(lambdas, max))
-  l_ranges <- paste(l_min, l_max, "\n")
 
   rcols <- c("alpha", "lambda", "nzero", "cvm", "cvsd", "cvup", "cvlo")
 
@@ -338,14 +334,6 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
   selected <- (R$alpha == best$alpha) & (R$lambda == best$lambda)
 
   if ( print ) {
-    cat("Summary of multiple-alpha repeated k-fold cross-validated glmnet\n\n")
-
-    cat(paste0("\t", length(alpha), " alpha(s): ",
-               paste(alpha, collapse = ", "), "\n\n"))
-    cat(paste0("\tLambda Counts:\n"))
-    cat(paste0("\t", l_lengths))
-    cat(paste0("\n\n\tLambda Ranges:\n"))
-    cat(paste0("\t", l_ranges))
 
     cat("\nBest fitting alpha:\n")
     print(R[selected, ], row.names = F)
