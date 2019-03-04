@@ -70,9 +70,9 @@ extract_rocdata <- function(classperformance, ROCR.invertprob = T) {
 
   .extract_pred <- function(x, mode) {
     if ( mode ) {
-      return(1 - x$probability)
+      return(1 - x$prediction)
     } else {
-      return(x$probability)
+      return(x$prediction)
     }
   }
 

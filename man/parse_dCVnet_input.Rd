@@ -4,23 +4,32 @@
 \alias{parse_dCVnet_input}
 \title{parse_dCVnet_input}
 \usage{
-parse_dCVnet_input(f, data, family, positive = 1)
+parse_dCVnet_input(data, y, family, f = "~.", positive = 1,
+  offset = NULL, yname = "y")
 }
 \arguments{
-\item{f}{a two sided formula.
-The LHS must be a single binary variable.
-The RHS must refer to columns in \code{data}, but may include
+\item{data}{a data.frame containing all terms in f.}
+
+\item{y}{the outcome (can be numeric vector,
+a factor (for binomial / multinomial) or a matrix for cox/mgaussian)}
+
+\item{family}{the model family (see \code{\link{glmnet}})}
+
+\item{f}{a one sided formula.
+The RHS must refer to columns in \code{data} and may include
 interactions, transformations or expansions (like \code{\link{poly}}, or
 \code{\link{log}}).
 The formula \emph{must} include an intercept.}
-
-\item{data}{a data.frame containing all terms in f.}
 
 \item{positive}{What level of the outcome is a 'positive' result
 (in the sense of a diagnostic test).
 Can be a numeric indicating which of \code{levels(y)} to use
 (i.e. 1 | 2). Alternatively a character specifying the exact level
 (e.g. \code{"patient"}).}
+
+\item{offset}{optional model offset (see \code{\link{glmnet}})}
+
+\item{yname}{an optional label for the outcome / y variable.}
 }
 \value{
 \itemize{

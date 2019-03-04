@@ -23,9 +23,12 @@
 #'     with the following columns:
 #'    \itemize{
 #'    \item{reference - the known 'true' class of the observation}
-#'    \item{classification - the predicted class assigned by the model}
-#'    \item{probability - the probability of the non-positive class assigned
+#'    \item{prediction - the model prediction for a case.
+#'          for dCVnet this is the result of predict(model, type = "response")
+#'          for "binary" probability of the non-positive class assigned
 #'        by the model (used for AUROC)}
+#'    \item{classification - for binomial and multinomial models this is
+#'        the predicted class assigned by the model}
 #'    \item{label - a grouping variable when predictions come from more than
 #'        one source, e.g. multiple reps}
 #'    }
@@ -36,7 +39,7 @@ classperformance <- function(x, ...) {
 }
 
 
-#' classperformance.dCVnet
+#' classperformance.list
 #' @describeIn classperformance classperformance for \code{\link{list}} object
 #'     (treats it as a \code{\link{dCVnet}} object)
 #' @export
@@ -46,7 +49,7 @@ classperformance.list <- function(x, ...) {
   if (!"performance" %in% names(x)) {
     stop("not a suitable list for classperformance")
   }
-  expected <- c("label", "reference", "probability", "classification")
+  expected <- c("label", "reference", "prediction")
   if ( any(!expected %in% names(x$performance)) ) {
     stop("required columns for classperformance missing.")
   }
@@ -90,11 +93,11 @@ classperformance.glm <- function(x,
   classification <- factor(lvl[classification], levels = lvl)
 
   reference <- x$data[[outcome]]
-  probability <- fitted(x)
+  prediction <- fitted(x)
 
   R <- data.frame(rowid = rwid,
                   reference = reference,
-                  probability = probability,
+                  prediction = prediction,
                   classification = classification,
                   label = label)
   # return merged df or list.
@@ -181,7 +184,7 @@ summary.classperformance <- function(object, label = NA, ...) {
 
   # Check structure:
   test <- names(object)
-  test_cols <- c("reference", "probability", "classification", "label")
+  test_cols <- c("reference", "classification", "label")
   test <- any(!(test_cols %in% test))
   if ( test ) {
     cat(names(object))
@@ -200,7 +203,7 @@ summary.classperformance <- function(object, label = NA, ...) {
 
     # Next add the AUC:
     B <- ModelMetrics::auc(actual = performance$reference,
-                           predicted = performance$probability)
+                           predicted = performance$prediction)
     B <- pmax(B, 1 - B)
     B <- data.frame(Measure = "AUROC", Value = B)
 

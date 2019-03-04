@@ -4,22 +4,25 @@
 \alias{dCVnet}
 \title{Fit a doubly cross-validated elastic-net regularised logistic regression}
 \usage{
-dCVnet(f, data, nrep_outer = 2, k_outer = 10, nrep_inner = 5,
-  k_inner = 10, alphalist = c(0.2, 0.5, 0.8), nlambda = 100,
-  type.measure = "deviance", family = "binomial", positive = 1,
-  opt.lambda.type = c("minimum", "se", "percentage"),
-  opt.lambda.type.value = 1, opt.empirical_cutoff = FALSE,
-  opt.uniquefolds = FALSE, opt.ystratify = TRUE, ...)
+dCVnet(y, data, f = "~.", nrep_outer = 2, k_outer = 10,
+  nrep_inner = 5, k_inner = 10, alphalist = c(0.2, 0.5, 0.8),
+  nlambda = 100, type.measure = "deviance", family = "binomial",
+  positive = 1, offset = NULL, opt.lambda.type = c("minimum", "se",
+  "percentage"), opt.lambda.type.value = 1,
+  opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
+  opt.ystratify = TRUE, ...)
 }
 \arguments{
-\item{f}{a two sided formula.
-The LHS must be a single binary variable.
-The RHS must refer to columns in \code{data}, but may include
+\item{y}{the outcome (can be numeric vector,
+a factor (for binomial / multinomial) or a matrix for cox/mgaussian)}
+
+\item{data}{a data.frame containing all terms in f.}
+
+\item{f}{a one sided formula.
+The RHS must refer to columns in \code{data} and may include
 interactions, transformations or expansions (like \code{\link{poly}}, or
 \code{\link{log}}).
 The formula \emph{must} include an intercept.}
-
-\item{data}{a data.frame containing all terms in f.}
 
 \item{nrep_outer}{an integer, the number of repetitions (k-fold outer CV)}
 
@@ -41,13 +44,15 @@ This sets the metric used for hyperparameter optimisation in the
 inner cross-validation. Options: \code{"deviance"}, \code{"class"},
 \code{"mse"}, \code{"mae"}}
 
-\item{family}{Response type (see above)}
+\item{family}{the model family (see \code{\link{glmnet}})}
 
 \item{positive}{What level of the outcome is a 'positive' result
 (in the sense of a diagnostic test).
 Can be a numeric indicating which of \code{levels(y)} to use
 (i.e. 1 | 2). Alternatively a character specifying the exact level
 (e.g. \code{"patient"}).}
+
+\item{offset}{optional model offset (see \code{\link{glmnet}})}
 
 \item{opt.lambda.type}{Method for selecting optimum lambda. One of
 \itemize{

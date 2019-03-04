@@ -8,18 +8,23 @@
 #' The outcome is coerced to a binary factor which is releveled (if necessary)
 #' such that the test=positive level comes first.
 #' @name parse_dCVnet_input
-#' @param f a two sided formula.
-#'     The LHS must be a single binary variable.
-#'     The RHS must refer to columns in \code{data}, but may include
+#'
+#' @param data a data.frame containing all terms in f.
+#' @param y the outcome (can be numeric vector,
+#'      a factor (for binomial / multinomial) or a matrix for cox/mgaussian)
+#' @param f a one sided formula.
+#'     The RHS must refer to columns in \code{data} and may include
 #'     interactions, transformations or expansions (like \code{\link{poly}}, or
 #'     \code{\link{log}}).
 #'     The formula *must* include an intercept.
-#' @param data a data.frame containing all terms in f.
+#' @param family the model family (see \code{\link{glmnet}})
+#' @param offset optional model offset (see \code{\link{glmnet}})
 #' @param positive What level of the outcome is a 'positive' result
 #'     (in the sense of a diagnostic test).
 #'     Can be a numeric indicating which of \code{levels(y)} to use
 #'     (i.e. 1 | 2). Alternatively a character specifying the exact level
 #'     (e.g. \code{"patient"}).
+#' @param yname an optional label for the outcome / y variable.
 #'
 #' @return \itemize{
 #'     \item{ \code{y} - outcome factor
@@ -29,33 +34,47 @@
 #'     }
 #'
 #' @export
-parse_dCVnet_input <- function(f, data, family, positive = 1) {
-  # Ordering levels of y for classification:
-  # We will follow a convention that the condition we are aiming to
-  #   detect/diagnose ('i.e. the disease') should be the first
-  #   level of the factor.
-  # If this is not the case for the input then 'positive'
-  #   can be used to specify.
+parse_dCVnet_input <- function(data,
+                               y,
+                               family,
+                               f = "~.",
+                               positive = 1,
+                               offset = NULL,
+                               yname = "y") {
 
   # Check input:
   f <- as.formula(f)
-  if ( !identical(attr(terms(f, data = data), "intercept"), 1L) ) {
+  fterms <- terms(f, data = data)
+
+  if ( !identical(attr(fterms, "intercept"), 1L) ) {
     stop("Error: formula must have an intercept. See terms(f)")
   }
-
-  if ( !"data.frame" %in% class(data) ) {
-    stop("Error: data must be data.frame.")
+  if ( !identical(attr(fterms, "response"), 0L) ) {
+    stop("Error: use a RHS formula to specify in data")
   }
 
-  df <- model.frame(f, data = data,
-                    drop.unused.levels = T) # does not include interaction.
-  if (identical(nrow(df), 0L)) {
-    stop("Error: no complete cases found.")
+  data <- as.data.frame(data)
+  vars <- attr(fterms, "term.labels")
+  data <- data[, vars, drop = F]
+  # remove missing based on data:
+  if ( any(!stats::complete.cases(data)) ) {
+    cat(paste0("Removing ", sum(!stats::complete.cases(data)),
+               " of ", NROW(data),
+               " subjects due to missing data.\n"))
+    y <- subset(y, stats::complete.cases(data))
+    data <- subset(data, stats::complete.cases(data))
   }
-  # TODO:: missing data imputation?
+  # remove missing based on y:
+  if ( any(!stats::complete.cases(y)) ) {
+    cat(paste0("Removing ", sum(!stats::complete.cases(y)),
+               " of ", NROW(y),
+               " subjects due to missing y.\n"))
+    data <- subset(data, stats::complete.cases(y))
+    y <- subset(y, stats::complete.cases(y))
+  }
 
   if ( family %in% c("binomial", "multinomial")) {
-    y <- as.factor(df[, 1]) # extract y variable & coerce to factor.
+    y <- as.factor(y) # extract y variable & coerce to factor.
 
     # Recode levels.
     lvl <- levels(y)
@@ -74,9 +93,9 @@ parse_dCVnet_input <- function(f, data, family, positive = 1) {
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,
               x_mat = x_mat,
-              yname = as.character(f[[2]])))
+              yname = yname,
+              family = family))
 }
-
 
 
 #' parseddata_summary
@@ -98,20 +117,33 @@ parse_dCVnet_input <- function(f, data, family, positive = 1) {
 #'
 #' @export
 parseddata_summary <- function(object) {
-  # we want to operate either on a 'parsed' input,
-  #   or a dCVnet object. The former can be extracted from the latter.
+  # we want to operate either directly on a 'parsed' input,
+  #   or extract one from a dCVnet object.
   if ( "dCVnet" %in% class(object) ) {
     object <- parse_dCVnet_input(f = object$input$callenv$f,
+                                 y = object$input$callenv$y,
                                  data = object$input$callenv$data,
+                                 family = object$input$callenv$family,
                                  positive = object$input$callenv$positive)
   }
   # First describe the target:
-  ytab <- table(object$y)
-  yptab <- round(prop.table(ytab), 3) * 100
-  stry <- paste0(names(ytab),
-                 ": ",
-                 sprintf(ytab, fmt = "%i"),
-                 " (", yptab, "%)")
+  if ( object$family %in% c("binomial", "multinomial") ) {
+    ytab <- table(object$y)
+    yptab <- round(prop.table(ytab), 3) * 100
+    stry <- paste0(names(ytab),
+                   ": ",
+                   sprintf(ytab, fmt = "%i"),
+                   " (", yptab, "%)")
+  } else {
+    if ( object$family == "cox") {
+      stry <- aggregate(list(Time = object$y[, 1]),
+                        by = list(Outcome = object$y[, 2]),
+                        summary)
+    } else {
+      stry <- summary(object$y)
+    }
+  }
+
   # Next the predictor matrix:
   xdes <- lapply(as.data.frame(object$x_mat),
                  function(x) {
@@ -191,7 +223,7 @@ cvlambdafinder <- function(lambda, cvm, cvsd,
   #     e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.
   #
   type <- match.arg(type)
-  if ( ! minimise ) cvm <- cvm * -1
+  if ( !minimise ) cvm <- cvm * -1
 
   cvmin <- min(cvm, na.rm = TRUE)
   idmin <- cvm <= cvmin
@@ -313,33 +345,45 @@ lambda_seq_list <- function(maxlambdas, nlambda, lambda_min_ratio) {
   })
 }
 
-
+# Print some run info to screen.
 startup_message <- function(k_inner, nrep_inner,
                             k_outer, nrep_outer,
                             nalpha, nlambda,
-                            parsed, time.start) {
-  # Print some general run info to screen.
+                            parsed, time.start,
+                            family) {
   nit_inner <- k_inner * nrep_inner * nalpha
   nit_outer <- k_outer * nrep_outer
   nit_total <- nit_inner * nit_outer
 
-  stab <- table(parsed$y)
-
   cat(paste0("-- dCVnet --\n"))
   cat(paste0(time.start, "\n"))
+  cat(paste0("Model family: ", family, "\n"))
+
   cat("Features:\n")
   cat(paste0("\t", ncol(parsed$x_mat), "\n"))
+
   cat("Observations:\n")
   cat(paste0("\t", nrow(parsed$x_mat), " subjects\n"))
-  cat(paste0("\t", stab[1], " of outcome: ", names(stab)[1], "\n"))
-  cat(paste0("\t", stab[2], " of outcome: ", names(stab)[2], "\n"))
+
+  cat("Outcome:\n")
+  if ( family %in% c("binomial", "multinomial")) {
+    stab <- table(parsed$y)
+    sapply(1:length(stab), function(i) {
+      cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
+    })
+  } else {
+    print(summary(parsed$y)); cat("\n")
+  }
+
   cat("Tuning:\n")
   cat(paste0("\t", nalpha, " alpha values\n"))
   cat(paste0("\t", nlambda, " lambda values\n"))
+
   cat("Models:\n")
   cat(paste0("\t", nit_inner, " inner models\n"))
   cat(paste0("\t", nit_outer, " outer models\n"))
   cat(paste0("\t", nit_total, " models in total\n"))
+
   cat("------------\n\n")
 }
 
@@ -370,6 +414,198 @@ cv.glmnet.modelsummary <- function(mod,
                     rep = rep,
                     stringsAsFactors = F))
 }
+
+#' tidy_predict.glmnet
+#'
+#' return a dataframe of glmnet predictions associated with outcomes (when these
+#'     are provided.)
+#'
+#' @param mod a fitted glmnet object (alpha is determined by the object)
+#' @param newx new values of x for which predictions are desired.
+#' @param s the value of penalty parameter lambda at which predictions are
+#'     required.
+#' @param family the glmnet model family
+#'     (this determines the format of the return)
+#' @param label an optional label (value is added in column "label")
+#' @param newy outcome associated with newx. If provided these will be included
+#'     in the output (useful for subsequent performance assessment).
+#' @param newoffset if an offset is used in the fit, then one must be supplied
+#'     for making predictions.
+#' @param binomial_thresh this allows non-default thresholds to
+#'     be used for classification. This is only relevant for binary
+#'     classification. E.g. for an imbalanced binary outcome
+#'     with 70:30 allocation, setting the decision threshold to 0.7
+#'     gives a better balance of sensitivity and specificity
+#'     without requiring threshold tuning (as in AUC optimal threshold).
+#' @param ... passed to \code{\link{predict.glmnet}}
+#'
+#' @return a \code{\link{data.frame}} containing column(s) for:
+#'     \itemize{
+#'     \item{'prediction' - result of
+#'         \code{predict.glmnet(.., type = "response")}.
+#'         The interpretation depends on the model family.
+#'         }
+#'     \item{'rowid' - the rownames of newx}
+#'     \item{'label' - a column of a single label used when merging predictions}
+#'     }
+#'     Optionally the data.frame will contain:
+#'     \itemize{
+#'     \item{'classification' - the predicted class (for nominal outcomes).}
+#'     \item{'reference' - the response being predicted (if newy specified).}
+#'     }
+#'
+#' @name tidy_predict.glmnet
+#'
+#' @export
+tidy_predict.glmnet <- function(mod,
+                                newx,
+                                s,
+                                family,
+                                newy = NULL,
+                                newoffset = NULL,
+                                label = "",
+                                binomial_thresh = 0.5,
+                                ...) {
+  # always specify a value for lambda (s)
+  # if rownames were used in fitting the model they will be carried through
+  p <- predict(object = mod,
+               newx = newx,
+               type = "response",
+               s = s,
+               exact = F,
+               newoffset = newoffset,
+               ...)
+  if ( class(p) == "array" ) {
+    p <- p[,,1] # extra dims not needed.
+  }
+
+  p <- as.data.frame(p)
+
+  class(p) <- c("dcvntidyperf", "data.frame")
+  attr(p, "family") <- family
+
+  if ( !is.null(newy)) {
+    a <- as.data.frame(newy)
+  }
+
+  # different rules for column names of p:
+  if ( family %in% c("mgaussian", "multinomial") ) {
+    colnames(p) <- paste0("prediction", colnames(p))
+  } else {
+    colnames(p) <- "prediction"
+  }
+
+  p$rowid <- rownames(p)
+
+  if ( family %in% c("gaussian", "poisson") ) {
+    if ( !is.null(newy) ) p$reference <- a[[1]]
+    p$label <- label
+    return(p)
+  }
+
+  if ( family == "cox" ) {
+    if ( !is.null(newy) ) p$reference.Time <- a[,1]
+    if ( !is.null(newy) ) p$reference.Status <- a[,2]
+    p$label <- label
+    return(p)
+  }
+
+  if ( family == "binomial" ) {
+    lvl <- mod$classnames
+
+    p$classification <- factor(p$prediction > binomial_thresh,
+                               levels = c(F,T),
+                               labels = lvl)
+
+    if ( !is.null(newy) ) {
+      p$reference <- factor(newy, levels = lvl)
+    }
+
+    # if ( is.null(levels(newy)) ) {
+    #   p$classification <- factor(p$prediction > binomial_thresh,
+    #                              levels = c(F,T),
+    #                              labels = unique(as.character(newy)))
+    #
+    #   p$reference <- factor(newy, levels = unique(as.character(newy)))
+    #
+    # } else {
+    #   p$classification <- factor(p$prediction > binomial_thresh,
+    #                              levels = c(F,T),
+    #                              labels = levels(newy))
+    #
+    #   p$reference <- newy
+    # }
+
+    p$label <- label
+    return(p)
+  }
+
+  if ( family == "mgaussian" ) {
+    if ( !is.null(newy) ) {
+      colnames(a) <- paste0("reference", colnames(a))
+      p <- data.frame(p, a)
+    }
+    p$label <- label
+    return(p)
+  }
+
+  if ( family == "multinomial" ) {
+    p$classification <- c(predict(object = mod,
+                                  newx = newx,
+                                  type = "class",
+                                  s = s,
+                                  exact = F,
+                                  newoffset = newoffset))
+    if ( !is.null(newy) ) p$reference <- a[[1]]
+    p$label <- label
+    return(p)
+  }
+  stop(paste0("family error: ", family))
+}
+
+
+#' tidy_coef.glmnet
+#'
+#' return a dataframe of glmnet predictions associated with outcomes (when these
+#'     are provided.)
+#'
+#' @inheritParams tidy_predict.glmnet
+#'
+#' @name tidy_coef.glmnet
+#' @export
+tidy_coef.glmnet <- function(mod,
+                             newx,
+                             newy,
+                             s,
+                             family,
+                             label = "",
+                             newoffset = NULL,
+                             binomial_thresh = 0.5) {
+  # always specify a value for lambda (s)
+  # if rownames were used in fitting the model they will be carried through
+  p <- predict(object = mod,
+               newx = newx,
+               type = "coefficients",
+               s = s,
+               exact = F,
+               newoffset = newoffset)
+
+  if ( is.null(dim(p)) ) {
+    nm <- names(p)
+    p <- mapply(function(x, n) {
+      x <- as.matrix(x)
+      rownames(x) <- paste0(rownames(x), "_", n)
+      return(x)
+    },
+    x = p, n = nm, SIMPLIFY = F)
+    p <- do.call(rbind, p)
+  } else {
+    p <- as.matrix(p)
+  }
+  colnames(p) <- label
+  return(p)
+}
+
 
 
 #' tidy_confusionmatrix

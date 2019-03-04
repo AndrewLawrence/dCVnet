@@ -50,9 +50,9 @@
 #' @importFrom stats predict sd terms var
 #' @export
 dCVnet <- function(
-  f,
+  y,
   data,
-  y = NULL,
+  f = "~.",
 
   nrep_outer = 2,
   k_outer = 10,
@@ -63,6 +63,7 @@ dCVnet <- function(
   type.measure = "deviance",
   family = "binomial",
   positive = 1,
+  offset = NULL,
 
   opt.lambda.type = c("minimum", "se", "percentage"),
   opt.lambda.type.value = 1.0,
@@ -72,32 +73,24 @@ dCVnet <- function(
 
   ...) {
 
+  # Parse input -------------------------------------------------------------
+
   thecall <- match.call()
   callenv <- c(as.list(environment()), list(...))
 
   time_start <- force(Sys.time()) # for logging.
-
-  if ( missing(y) ) {
-    parsed <- parse_dCVnet_input(f = f,
-                                 data = data,
-                                 family = family,
-                                 positive = positive)
-    x <- parsed$x_mat
-    y <- parsed$y
-  } else {
-    # if y is specified then user 'knows what they are doing'.
-    parsed <- list(x_mat = as.matrix(data),
-                   y = y,
-                   yname = "y")
-  }
-
-  min_lambda_ratio <- ifelse(ncol(parsed$x_mat) > nrow(parsed$x_mat),
-                             0.01, 0.0001)
+  parsed <- parse_dCVnet_input(f = f,
+                               y = y,
+                               data = as.data.frame(data),
+                               family = family,
+                               positive = positive)
+  x <- parsed$x_mat
+  y <- parsed$y
 
   if ( type.measure == "auc" ) {
     # magic number for innerloop is:
     #   Ncases * outer train proportion * inner test proportion
-    auc_magic <- (nrow(parsed$x_mat) * (1 - (1 / k_outer)) * (1 / k_inner))
+    auc_magic <- (nrow(x) * (1 - (1 / k_outer)) * (1 / k_inner))
     if (auc_magic < 11) {
       warning(
         paste("AUC is not possible due to small sample size!\n
@@ -112,15 +105,22 @@ dCVnet <- function(
   # how many alphas did we feed in:
   nalpha <- length(alphalist)
 
+  # are we working with empirical cutoffs?
+  cutoff <- 0.5
+  if ( opt.empirical_cutoff ) {
+    cutoff <- (as.numeric(table(y)[1]) / sum(as.numeric(table(y))))
+  }
+  if ( family == "binomial" ) cat(paste("Cutoff: ", cutoff, "\n"))
+
   # Print some general run info to screen.
   startup_message(k_inner = k_inner, nrep_inner = nrep_inner,
                   k_outer = k_outer, nrep_outer = nrep_outer,
                   nalpha = nalpha, nlambda = nlambda,
-                  parsed = parsed, time.start = time_start)
-  # Main work starts here:
+                  parsed = parsed,
+                  family = family,
+                  time.start = time_start)
 
-  # Step 1: make repeated outer folds in x & y according to nrep_outer, k_outer.
-  #
+  # Create outer folds ------------------------------------------------------
   # Note: this is default stratified by y, we obtain unstratified sampling
   #         by giving caret::createMultiFolds a single-level factor/char.
   ystrat <- y
@@ -137,42 +137,57 @@ dCVnet <- function(
   imax <- length(outfolds)
   names(outfolds) <- paste0("Out", names(outfolds)) # give names
 
-  cat("Lambda rangefinding...\n")
-  outmaxlambdas <- lambda_rangefinder(
-    y = y, x = x,
-    alphalist = alphalist,
-    prop = 1 * (1 - (1 / k_outer)) * (1 - (1 / k_inner)) )
 
-  # define the complete list of lambdas for each alpha
-  lambdas <- lapply(outmaxlambdas,
-                    function(maxlambda) {
-                      exp(seq(from = log(maxlambda),
-                              to =   log(maxlambda * min_lambda_ratio),
-                              length.out = nlambda))
-                    })
-
-  # are we working with empirical cutoffs?
-  cutoff <- 0.5
-  if ( opt.empirical_cutoff ) {
-    cutoff <- (as.numeric(table(y)[1]) / sum(as.numeric(table(y))))
+  # Create Lambda paths -----------------------------------------------------
+  .Lambdafinder <- function(x, y, family, nlambda, alphalist, ...) {
+    # inspired by the source of cv.glmnet, we get the list of lambdas once,
+    #   by running a glmnet at the required alpha for all data and
+    #   extracting the list of lambdas used.
+    # Previously a wider/more representative range of lambdas was obtained by
+    #   by formulaic calculation of max lambda for random samplings of the
+    #   data (per alpha).
+    # However, 1) this is not done by Hastie et al who uses the run a
+    #             model method in cv.glmnet.
+    #          2) it was time consuming
+    #          3) the calculation of maxlambda from the data is opaque
+    #             and performed by the fortran code.
+    #             there do not appear to be published formula for doing these
+    #             calculations for mgaussian/cox family models.
+    #          4) using fortran avoids rounding errors & excess precision.
+    lapply(alphalist,
+           function(aa) {
+             m <- glmnet(x = x, y = y,
+                         alpha = aa,
+                         family = family,
+                         nlambda = nlambda,
+                         ...)
+             m$lambda
+           } )
   }
-  cat(paste("Cutoff: ", cutoff, "\n"))
 
-  # Main outer loop - for each outer fold run an inner cv loop
+  lambdas <- .Lambdafinder(x = x, y = y,
+                           nlambda = nlambda,
+                           family = family,
+                           alphalist = alphalist,
+                           ...)
+
+
+  # Outer Loop Start --------------------------------------------------------
   outers <- parallel::mclapply(
     seq(along = outfolds),
     mc.cores = getOption("mc.cores", 1L),
     function(i) {
+
       if ( getOption("mc.cores", 1L) > 1 ) {
         cat(paste0("Outerloop:", i, " of ", imax, "\n"))
       } else {
         cat(paste0("\nOuterloop:", i, " of ", imax, "\n"))
       }
 
+      # split & preprocess data ---------------------------------------------
+
       of <- outfolds[[i]]
 
-      # Preprocessing
-      # first split the data into train and test data according to the fold.
       sel_train <- 1:nrow(x) %in% of
       sel_test <- !sel_train
 
@@ -182,13 +197,14 @@ dCVnet <- function(
       testx <- subset(x, sel_test)
       testy <- subset(y, sel_test)
 
-      # next apply scaling (based just on the train data,
-      #                     but applied to the test data)
-      PPx <- caret::preProcess(trainx)
+      # scaling to mean=0, sd=1 (calculated on train data, applied to test data)
+      PPx <- caret::preProcess(trainx, method = c("center", "scale"))
       trainx <- predict(PPx, trainx)
       testx <- predict(PPx, testx)
 
-      # Run the tuning for the training data:
+
+      # inner loop train data -------------------------------------------
+      #   - receives no (outer) test data
       inners <- multialpha.repeated.cv.glmnet(
         nrep = nrep_inner,
         k = k_inner,
@@ -204,37 +220,35 @@ dCVnet <- function(
         opt.uniquefolds = opt.uniquefolds,
         ...)
 
-      # extract the best alpha/lambda based on out of sample performance:
+      # hyperparameter selection --------------------------------------------
+      #   - based on best CV/out-of-sample performance in inner loop
       fit_alpha <- as.numeric(inners$inner_best$alpha)
       fit_lambda <- inners$inner_best$lambda
 
-      # fit a model to ALL the train data using the selected alpha/lambda:
+      # tuned outer-train model ---------------------------------------------
+      #   - tuned wrt best inner alpha
+      #   - full lambda path is fit with subsequent selection
+      #       (see https://web.stanford.edu/~hastie/glmnet/glmnet_beta.html:
+      #       "[single lambda fit] is not recommended and is not the spirit
+      #        of the package."
       model <- glmnet::glmnet(x = trainx,
                               y = trainy,
                               family = family,
                               alpha = fit_alpha,
                               standardize = F,
-                              lambda = lambdas[[which(alphalist == fit_alpha)]])
+                              lambda = lambdas[[which(alphalist == fit_alpha)]],
+                              ...)
 
-      # how well did it do?:
-      newx_prediction <- predict(model,
-                                 newx = testx,
-                                 type = "response",
-                                 s = fit_lambda)
-      # Format results into a data.frame:
-      newx_performance <- data.frame(
-        rowid = rownames(newx_prediction),     # row references
-        foldid = names(outfolds)[[i]],         # fold names
-        label = strsplit(names(outfolds)[[i]],   # repetition groups
+      newx_performance <- tidy_predict.glmnet(
+        mod = model,
+        newx = testx,
+        family = family,
+        newy = testy,
+        binomial_thresh = cutoff,
+        offset = offset,
+        label = strsplit(names(outfolds)[[i]],
                          split = ".", fixed = T)[[1]][2],
-        reference = testy,
-        probability = c(newx_prediction),
-        classification = factor(c(newx_prediction) > cutoff,
-                                levels = c(F, T),
-                                labels = model$classnames),
-        stringsAsFactors = F)
-
-      rownames(newx_performance) <- rownames(newx_prediction)
+        s = fit_lambda)
 
       return(list(tuning = inners,
                   model = model,
@@ -244,6 +258,10 @@ dCVnet <- function(
     }
   )
   names(outers) <- names(outfolds)
+  # Outer Loop End --------------------------------------------------------
+
+
+  # Performance -------------------------------------------------------------
 
   # Gather performance from the outers into a single dataframe.
   performance <- do.call(rbind, lapply(outers, "[[", "performance"))
@@ -256,7 +274,8 @@ dCVnet <- function(
     outers[[ii]]$performance <- NULL
   }
 
-  # Final model:
+
+  # Production (Final) Model ------------------------------------------------
   final_PPx <- caret::preProcess(x)   # preprocessed data (centered & scaled)
   xs <- predict(final_PPx, x)
 
@@ -280,26 +299,19 @@ dCVnet <- function(
   final_model <- glmnet(
     x = xs,
     y = y,
-    family = "binomial",
+    family = family,
     alpha = final_tuning$inner_best$alpha,
     lambda = lambdas[[which(alphalist == final_tuning$inner_best$alpha)]])
 
-  final_prediction <- predict(final_model,
-                              newx = xs,
-                              type = "response",
-                              s = final_tuning$inner_best$lambda)
-
-  final_performance <- data.frame(
-    rowid = rownames(final_prediction),
+  final_performance <- tidy_predict.glmnet(
+    mod = final_model,
+    newx = xs,
+    family = family,
+    newy = y,
+    binomial_thresh = cutoff,
+    offset = offset,
     label = "Final",
-    foldid = "None",
-    reference = y,
-    probability = c(final_prediction),
-    classification = factor(c(final_prediction) > cutoff,
-                            levels = c(F, T),
-                            labels = final_model$classnames))
-
-  rownames(final_performance) <- rownames(final_prediction)
+    s = final_tuning$inner_best$lambda)
 
   final_performance <- structure(final_performance,
                                  class = c("classperformance",
@@ -312,7 +324,8 @@ dCVnet <- function(
   time_stop <- Sys.time()
   run_time_mins <- as.numeric(round( (time_stop - time_start) / 60, 2))
 
-  # The final object:
+
+  # Return object -----------------------------------------------------------
   obj <- structure(list(tuning = outers,
                         performance = performance,
                         folds = outfolds,
@@ -427,8 +440,6 @@ print.dCVnet <- function(x, ...) {
                    yname = "y")
   }
 
-  stab <- table(parsed$y)
-
   nalphas <- length(callenv$alphalist)
   nlambdas <- length(x$input$lambdas[[1]])
 
@@ -467,8 +478,15 @@ print.dCVnet <- function(x, ...) {
 
   cat("Observations:\n")
   cat(paste0("\t", nrow(parsed$x_mat), " subjects\n"))
-  cat(paste0("\t", stab[1], " of outcome: ", names(stab)[1], "\n"))
-  cat(paste0("\t", stab[2], " of outcome: ", names(stab)[2], "\n"))
+  cat("Outcome:\n")
+  if ( callenv$family %in% c("binomial", "multinomial")) {
+    stab <- table(parsed$y)
+    sapply(1:length(stab), function(i) {
+      cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
+    })
+  } else {
+    print(summary(parsed$y)); cat("\n")
+  }
 
   cat("Hyperparameter Tuning:\n")
   cat(paste("\tOptimising: ", typemeas, "\n"))

@@ -36,9 +36,12 @@ a classperformance object, is a dataframe (or list of dataframes)
 with the following columns:
 \itemize{
 \item{reference - the known 'true' class of the observation}
-\item{classification - the predicted class assigned by the model}
-\item{probability - the probability of the non-positive class assigned
+\item{prediction - the model prediction for a case.
+for dCVnet this is the result of predict(model, type = "response")
+for "binary" probability of the non-positive class assigned
 by the model (used for AUROC)}
+\item{classification - for binomial and multinomial models this is
+the predicted class assigned by the model}
 \item{label - a grouping variable when predictions come from more than
 one source, e.g. multiple reps}
 }
