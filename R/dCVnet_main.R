@@ -188,7 +188,7 @@ dCVnet <- function(
 
       of <- outfolds[[i]]
 
-      sel_train <- 1:nrow(x) %in% of
+      sel_train <- seq(nrow(x)) %in% of
       sel_test <- !sel_train
 
       trainx <- subset(x, sel_train)
@@ -270,7 +270,7 @@ dCVnet <- function(
                            class = c("classperformance",
                                      "data.frame"))
   # and remove it in the source:
-  for (ii in 1:length(outers)) {
+  for (ii in seq_along(outers)) {
     outers[[ii]]$performance <- NULL
   }
 
@@ -378,7 +378,7 @@ coef.dCVnet <- function(object, type = "all", ...) {
   # works on the output of the outerloop.
   #   Given the 'best' alpha/lambda from the inner loop,
   #     what were the coefficients in a model selected with the best alpha.
-  R <- lapply(1:length(object$tuning), function(ii) {
+  R <- lapply(seq_along(object$tuning), function(ii) {
     tt <- object$tuning[[ii]]
     coefs <- as.matrix(predict(tt$model,
                                type = "coef",

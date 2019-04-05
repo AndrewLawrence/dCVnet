@@ -65,7 +65,7 @@ repeated.cv.glmnet <- function(x, y,
   #   most arguments are passed straight through to cv.glmnet.
 
   # estimate models:
-  models <- lapply(1:length(folds), function(i) {
+  models <- lapply(seq_along(folds), function(i) {
     f <- folds[[i]]
     glmnet::cv.glmnet(x = x,
                       y = y,
@@ -80,7 +80,7 @@ repeated.cv.glmnet <- function(x, y,
   results <- mapply(cv.glmnet.modelsummary,
                     models,
                     alpha,
-                    as.character(1:length(models)),
+                    as.character(seq_along(models)),
                     SIMPLIFY = F)
   results <- do.call(rbind, results)
 
@@ -220,7 +220,7 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
 
   if ( identical(opt.uniquefolds, TRUE) ) checkForDuplicateCVFolds(folds)
 
-  malist <- lapply(1:length(alphalist),
+  malist <- lapply(seq_along(alphalist),
                    function(i) {
                      if ( getOption("mc.cores", default = 1) == 1 ) {
                        cat(paste("\tInner Alpha", i, "of",

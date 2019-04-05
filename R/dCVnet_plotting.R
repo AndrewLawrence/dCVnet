@@ -161,7 +161,7 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
   #   at different alphas.
 
   # Merge datasets adding foldids:
-  df <- lapply(1:length(object$tuning),
+  df <- lapply(seq_along(object$tuning),
                function(x) {
                  R <- object$tuning[[x]]$tuning$inner_results
                  R$outfold <- names(object$tuning)[x]

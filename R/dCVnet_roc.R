@@ -137,7 +137,7 @@ average_rocdata <- function(rocdata,
 
   # set the fixed alphas (Inf needs special treatment because of findInterval)
   alphas <- c(seq(0, 1, length.out = n - 1), Inf)
-  alphalabs <- 1:length(alphas)
+  alphalabs <- seq_along(alphas)
 
   res <- lapply(ds, function(d) {
     d <- d[order(d$alpha), ]

@@ -303,7 +303,7 @@ lambda_rangefinder <- function(y, x,
   result <- parallel::mclapply(1:niter,
                                mc.cores = getOption("mc.cores", 1L),
                                function(i) {
-                                 subsamp <- sample(1:length(y), size = subsize)
+                                 subsamp <- sample(seq_along(y), size = subsize)
                                  .get_maxlambda(x = x[subsamp, ],
                                                 y = y[subsamp],
                                                 alphalist = alphalist)
@@ -368,7 +368,7 @@ startup_message <- function(k_inner, nrep_inner,
   cat("Outcome:\n")
   if ( family %in% c("binomial", "multinomial")) {
     stab <- table(parsed$y)
-    sapply(1:length(stab), function(i) {
+    sapply(seq_along(stab), function(i) {
       cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
     })
   } else {
@@ -504,8 +504,8 @@ tidy_predict.glmnet <- function(mod,
   }
 
   if ( family == "cox" ) {
-    if ( !is.null(newy) ) p$reference.Time <- a[,1]
-    if ( !is.null(newy) ) p$reference.Status <- a[,2]
+    if ( !is.null(newy) ) p$reference.Time <- a[, 1]
+    if ( !is.null(newy) ) p$reference.Status <- a[, 2]
     p$label <- label
     return(p)
   }
@@ -514,27 +514,12 @@ tidy_predict.glmnet <- function(mod,
     lvl <- mod$classnames
 
     p$classification <- factor(p$prediction > binomial_thresh,
-                               levels = c(F,T),
+                               levels = c(F, T),
                                labels = lvl)
 
     if ( !is.null(newy) ) {
       p$reference <- factor(newy, levels = lvl)
     }
-
-    # if ( is.null(levels(newy)) ) {
-    #   p$classification <- factor(p$prediction > binomial_thresh,
-    #                              levels = c(F,T),
-    #                              labels = unique(as.character(newy)))
-    #
-    #   p$reference <- factor(newy, levels = unique(as.character(newy)))
-    #
-    # } else {
-    #   p$classification <- factor(p$prediction > binomial_thresh,
-    #                              levels = c(F,T),
-    #                              labels = levels(newy))
-    #
-    #   p$reference <- newy
-    # }
 
     p$label <- label
     return(p)

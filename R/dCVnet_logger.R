@@ -109,7 +109,7 @@ log_results_to_excel <- function(object,
   cat(paste0("Opening: ", file, "\n"))
   wb <- openxlsx::createWorkbook()
 
-  for (i in 1:length(sheets)) {
+  for (i in seq_along(sheets)) {
     .wrap_add_worksheet(wb,
                         x = sheets[[i]],
                         sheetname = labs$sheetname[i],

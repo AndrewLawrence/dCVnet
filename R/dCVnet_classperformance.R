@@ -119,7 +119,7 @@ classperformance.glmlist <- function(x, as.data.frame = T, ...) {
   class_list <- c("classperformance", "list")
   class_df <- c("classperformance", "data.frame")
 
-  R <- lapply(1:length(x), function(i) {
+  R <- lapply(seq_along(x), function(i) {
     # for a list we force return of a dataframe as we wrap in a list anyway.
     classperformance.glm(x[[i]],
                          as.data.frame = T,
@@ -212,7 +212,7 @@ summary.classperformance <- function(object, label = NA, ...) {
   }
 
   .multi_cpsummary <- function(performance) {
-    R <- lapply(1:length(unique(performance$label)),
+    R <- lapply(seq_along(unique(performance$label)),
                 function(i){
                   rr <- as.character(unique(performance$label)[i])
                   dd <- performance[performance$label == rr, ]

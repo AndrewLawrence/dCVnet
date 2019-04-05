@@ -64,8 +64,7 @@ reflogreg.dCVnet <- function(object,
                              doPCA = "auto",
                              ncomp = "auto",
                              ...) {
-
-
+  # extract parsed input
   parsed <- parse_dCVnet_input(f = object$input$callenv$f,
                                y = object$input$callenv$y,
                                data = object$input$callenv$data,
@@ -78,11 +77,7 @@ reflogreg.dCVnet <- function(object,
   estncomp <- round(n / 5) # rule of thumb: 5 cases per predictor.
 
   # Settings:
-  if ( ( (doPCA == "auto") && (k > estncomp) ) || identical(doPCA, TRUE) ) {
-    doPCA <- TRUE
-  } else {
-    doPCA <- FALSE
-  }
+  doPCA <- ( ( (doPCA == "auto") && (k > estncomp) ) || identical(doPCA, TRUE) )
   if ( identical(ncomp, "auto") ) ncomp <- estncomp
 
   # Is PCA required?:
