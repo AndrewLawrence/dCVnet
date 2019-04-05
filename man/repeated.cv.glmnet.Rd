@@ -6,7 +6,7 @@
 \usage{
 repeated.cv.glmnet(x, y, folds, lambdas, alpha, family,
   opt.lambda.type = "minimum", opt.lambda.type.value = 1, ...,
-  debug = F)
+  debug = FALSE)
 }
 \arguments{
 \item{x}{input matrix, of dimension nobs x nvars; each row is an

@@ -4,7 +4,7 @@
 \alias{plot.rocdata}
 \title{plot.rocdata}
 \usage{
-\method{plot}{rocdata}(x, legend = F, ...)
+\method{plot}{rocdata}(x, legend = FALSE, ...)
 }
 \arguments{
 \item{x}{\code{\link[=extract_rocdata]{rocdata}} object}

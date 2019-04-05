@@ -6,7 +6,7 @@
 \usage{
 multialpha.repeated.cv.glmnet(alphalist, lambdas, y, k, nrep,
   opt.lambda.type = "minimum", opt.lambda.type.value = 1,
-  opt.ystratify = T, opt.uniquefolds = F, family, ...)
+  opt.ystratify = TRUE, opt.uniquefolds = FALSE, family, ...)
 }
 \arguments{
 \item{alphalist}{a vector of alpha values to search.}

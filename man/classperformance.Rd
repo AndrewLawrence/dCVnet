@@ -12,12 +12,12 @@ classperformance(x, ...)
 
 \method{classperformance}{list}(x, ...)
 
-\method{classperformance}{dCVnet}(x, as.data.frame = T, ...)
+\method{classperformance}{dCVnet}(x, as.data.frame = TRUE, ...)
 
-\method{classperformance}{glm}(x, as.data.frame = T,
+\method{classperformance}{glm}(x, as.data.frame = TRUE,
   label = deparse(substitute(x)), threshold = 0.5, ...)
 
-\method{classperformance}{glmlist}(x, as.data.frame = T, ...)
+\method{classperformance}{glmlist}(x, as.data.frame = TRUE, ...)
 }
 \arguments{
 \item{x}{an object from which binary class performance can be extracted.}

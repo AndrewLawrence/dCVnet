@@ -85,7 +85,7 @@ reflogreg.dCVnet <- function(object,
     #   reduce the number of variables via a (svd)PCA on the data.
     x_pca <- prcomp(parsed$x_mat,
                     rank. = ncomp,
-                    retx = T)
+                    retx = TRUE)
     pglm.data <- data.frame(y = parsed$y, as.data.frame.matrix(x_pca$x))
 
     pglm <- glm(y ~ ., data = pglm.data, family = "binomial")

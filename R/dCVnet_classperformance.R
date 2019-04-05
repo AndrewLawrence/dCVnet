@@ -61,7 +61,7 @@ classperformance.list <- function(x, ...) {
 #' @param as.data.frame return a data.frame instead of
 #'     \code{\link{classperformance}} object.
 #' @export
-classperformance.dCVnet <- function(x, as.data.frame = T, ...) {
+classperformance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
   if ( as.data.frame ) return(x$performance)
   labs <- as.character(unique(x$performance$label))
   names(labs) <- labs
@@ -79,7 +79,7 @@ classperformance.dCVnet <- function(x, as.data.frame = T, ...) {
 #' @param threshold for logistic regression use a threshold other than 0.5.
 #' @export
 classperformance.glm <- function(x,
-                                 as.data.frame = T,
+                                 as.data.frame = TRUE,
                                  label = deparse(substitute(x)),
                                  threshold = 0.5, ...) {
   # Return (labelled) prediction dataframe from a glm
@@ -113,7 +113,7 @@ classperformance.glm <- function(x,
 #' @describeIn classperformance classperformance for glmlist from
 #'     \code{\link{reflogreg}} object
 #' @export
-classperformance.glmlist <- function(x, as.data.frame = T, ...) {
+classperformance.glmlist <- function(x, as.data.frame = TRUE, ...) {
   # applies pobj.glm to a list of glms.
 
   class_list <- c("classperformance", "list")
@@ -122,7 +122,7 @@ classperformance.glmlist <- function(x, as.data.frame = T, ...) {
   R <- lapply(seq_along(x), function(i) {
     # for a list we force return of a dataframe as we wrap in a list anyway.
     classperformance.glm(x[[i]],
-                         as.data.frame = T,
+                         as.data.frame = TRUE,
                          label = names(x)[i], ...)
   })
   names(R) <- names(x)
@@ -222,7 +222,7 @@ summary.classperformance <- function(object, label = NA, ...) {
                   names(R)[2] <- rr #"Value"
                   return(R)
                 })
-    R <- Reduce(function(x, y) merge(x, y, by = "Measure", sort = F), R)
+    R <- Reduce(function(x, y) merge(x, y, by = "Measure", sort = FALSE), R)
     return(R)
   }
   # If we lack a label col assign it and return
@@ -275,15 +275,18 @@ report_classperformance_summary <- function(dCVnet_object) {
   names(summary_measures) <- summary_measures
 
   S <- lapply(summary_measures, function(M) {
-    apply(ols[, -1, drop = F], 1, function(i) {
+    apply(ols[, -1, drop = FALSE], 1, function(i) {
       # suppress warning messages to quietly deal with NaNs in Mcnemar P-value.
-      suppressWarnings(get(M)(i, na.rm = T))
+      suppressWarnings(get(M)(i, na.rm = TRUE))
     })
   } )
 
-  S <- do.call(data.frame, list(Measure = ols[, 1, drop = F], S))
+  S <- do.call(data.frame, list(Measure = ols[, 1, drop = FALSE], S))
 
-  S <- data.frame(S, "..." = " - ", ols[, -1, drop = F], stringsAsFactors = F)
+  S <- data.frame(S,
+                  "..." = " - ",
+                  ols[, -1, drop = FALSE],
+                  stringsAsFactors = FALSE)
 
   return(S)
 }
@@ -330,7 +333,7 @@ casesummary.classperformance <- function(object,
 
   Rleft <- repdata[[1]][, c("rowid", "reference")]
   Rbits <- data.frame(lapply(repdata, function(kk) kk$classification),
-                      stringsAsFactors = F)
+                      stringsAsFactors = FALSE)
   R.data <- data.frame(lapply(Rbits, function(x) {
     as.numeric(x == Rleft$reference)
   } ))
@@ -338,15 +341,15 @@ casesummary.classperformance <- function(object,
   R <- switch(type,
               data = list(Rleft,
                           Rbits,
-                          stringsAsFactors = T),
+                          stringsAsFactors = TRUE),
               summary = list(Rleft,
                              prop_correct = rowMeans(R.data),
-                             stringsAsFactors = T),
+                             stringsAsFactors = TRUE),
               both = list(Rleft,
                           prop_correct = rowMeans(R.data),
                           `...` = "-",
                           Rbits,
-                          stringsAsFactors = T)
+                          stringsAsFactors = TRUE)
   )
 
   return(do.call(data.frame, R))

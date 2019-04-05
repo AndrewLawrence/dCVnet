@@ -52,7 +52,7 @@
 dCVnet <- function(
   y,
   data,
-  f = "~.",
+  f = "~.", # nolint
 
   nrep_outer = 2,
   k_outer = 10,
@@ -213,7 +213,7 @@ dCVnet <- function(
         y = trainy, x = trainx,
         type.measure = type.measure,
         family = family,
-        standardize = F,
+        standardize = FALSE,
         opt.lambda.type = opt.lambda.type,
         opt.lambda.type.value = opt.lambda.type.value,
         opt.ystratify = opt.ystratify,
@@ -235,7 +235,7 @@ dCVnet <- function(
                               y = trainy,
                               family = family,
                               alpha = fit_alpha,
-                              standardize = F,
+                              standardize = FALSE,
                               lambda = lambdas[[which(alphalist == fit_alpha)]],
                               ...)
 
@@ -247,7 +247,7 @@ dCVnet <- function(
         binomial_thresh = cutoff,
         offset = offset,
         label = strsplit(names(outfolds)[[i]],
-                         split = ".", fixed = T)[[1]][2],
+                         split = ".", fixed = TRUE)[[1]][2],
         s = fit_lambda)
 
       return(list(tuning = inners,
@@ -386,7 +386,7 @@ coef.dCVnet <- function(object, type = "all", ...) {
     RR <- data.frame(Predictor = rownames(coefs),
                      Coef = c(coefs),
                      fold = names(object$folds)[[ii]],
-                     stringsAsFactors = F)
+                     stringsAsFactors = FALSE)
     return(RR)
   })
   R <- do.call(rbind, R)
@@ -445,7 +445,7 @@ print.dCVnet <- function(x, ...) {
 
   outerkey <- data.frame(do.call(rbind,
                                  strsplit(names(outerfolds),
-                                          split = ".", fixed = T)))
+                                          split = ".", fixed = TRUE)))
   colnames(outerkey) <- c("Folds", "Reps")
 
   outer_k <- length(unique(outerkey$Folds))
@@ -538,13 +538,13 @@ selected_hyperparameters <- function(object,
 
   # What do the 'best-fitting' results of the inner loops look like:
   R <- lapply(object$tuning, function(x) {
-    summary(x$tuning, print = F)
+    summary(x$tuning, print = FALSE)
   })
   R <- data.frame(do.call(rbind, R))
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
 
-  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = T), "[", 2)
+  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = TRUE), "[", 2)
 
   if ( what == "data") return(list(CVfolds = R, FinalModel = FF))
 
@@ -653,7 +653,7 @@ summary.dCVnet <- function(object, ...) {
   outernreps <- length(unique(object$performance$label))
 
   if ( outernreps == 1 ) {
-    min_outcv <- outcv[outcv$Measure %in% min_vars, "Rep1", drop = F]
+    min_outcv <- outcv[outcv$Measure %in% min_vars, "Rep1", drop = FALSE]
     colnames(min_outcv) <- "Value"
   } else {
     min_outcv <- outcv[outcv$Measure %in% min_vars,
@@ -665,14 +665,14 @@ summary.dCVnet <- function(object, ...) {
 
   # What do the 'best-fitting' results of the inner loops look like:
   R <- lapply(object$tuning, function(x) {
-    summary.multialpha.repeated.cv.glmnet(x$tuning, print = F)
+    summary.multialpha.repeated.cv.glmnet(x$tuning, print = FALSE)
   })
 
   R <- data.frame(do.call(rbind, R))
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
 
-  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = T), "[", 2)
+  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = TRUE), "[", 2)
 
   # summarise lambdas:
   lambda_summary <- c(mean = mean(R$lambda),
@@ -690,7 +690,7 @@ summary.dCVnet <- function(object, ...) {
   names(min_fmp) <- min_vars
 
   # fInal model hyper parameters:
-  fmp_hp <- summary(object$final$tuning, print = F)
+  fmp_hp <- summary(object$final$tuning, print = FALSE)
   fmp_hp <- fmp_hp[fmp_hp$best, ]
 
   fmp_hp_str <- c(alpha = fmp_hp$alpha,
@@ -723,7 +723,7 @@ summary.dCVnet <- function(object, ...) {
   cat("Production Performance (not cross-validated):\n")
   print(min_fmp)
   cat("Production Hyperparameter Tuning:\n")
-  print(fmp_hp_str, quote = F)
+  print(fmp_hp_str, quote = FALSE)
 
   invisible(R)
 }

@@ -60,7 +60,7 @@ repeated.cv.glmnet <- function(x, y,
                                opt.lambda.type = "minimum",
                                opt.lambda.type.value = 1,
                                ...,
-                               debug = F) {
+                               debug = FALSE) {
   # We need to use fixed folds, fixed lambdas and a single fixed alpha
   #   most arguments are passed straight through to cv.glmnet.
 
@@ -81,7 +81,7 @@ repeated.cv.glmnet <- function(x, y,
                     models,
                     alpha,
                     as.character(seq_along(models)),
-                    SIMPLIFY = F)
+                    SIMPLIFY = FALSE)
   results <- do.call(rbind, results)
 
   # mean average results over the repetitions for each lambda:
@@ -100,10 +100,10 @@ repeated.cv.glmnet <- function(x, y,
   # What optimising function should we use?:
 
   # Which is the optimum lambda?
-  av$lambda.min <- F
+  av$lambda.min <- FALSE
   av$lambda.min[match(theLambda, av$lambda)] <- TRUE
 
-  av[order(av$lambda, decreasing = T), ]
+  av[order(av$lambda, decreasing = TRUE), ]
   attr(av, "type.measure") <- measure_name
   attr(av, "family") <- family
   attr(av, "class") <- c("repeated.cv.glmnet", "data.frame")
@@ -157,7 +157,7 @@ summary.repeated.cv.glmnet <- function(object, ...) {
   print(object)
 
   cat("Best fit:\n")
-  print.data.frame(object[object$lambda.min, ], row.names = F)
+  print.data.frame(object[object$lambda.min, ], row.names = FALSE)
   cat(paste0("\n", sum(close), "/", length(close),
              " (", prettyNum(round(mean(close), 2)), "%) ",
              "lambdas with CV fit within 1 S.E. of best fitting\n"))
@@ -203,8 +203,8 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
                                           nrep,
                                           opt.lambda.type = "minimum",
                                           opt.lambda.type.value = 1,
-                                          opt.ystratify = T,
-                                          opt.uniquefolds = F,
+                                          opt.ystratify = TRUE,
+                                          opt.uniquefolds = FALSE,
                                           family,
                                           ...) {
   # Fold generation:
@@ -314,7 +314,7 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 #' @param ... NULL
 #'
 #' @export
-summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
+summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
   .get_nsimilar <- function(marc) {
     kk <- lapply(unique(marc$alpha), function(A){
 
@@ -355,10 +355,10 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = T, ...) {
   if ( print ) {
 
     cat("\nBest fitting alpha:\n")
-    print(R[selected, ], row.names = F)
+    print(R[selected, ], row.names = FALSE)
 
     cat("\n\nAll Alphas:\n")
-    print(R, row.names = F)
+    print(R, row.names = FALSE)
 
     R$best <- selected
     invisible(R)

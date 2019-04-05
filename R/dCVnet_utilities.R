@@ -37,7 +37,7 @@
 parse_dCVnet_input <- function(data,
                                y,
                                family,
-                               f = "~.",
+                               f = "~.", # nolint
                                positive = 1,
                                offset = NULL,
                                yname = "y") {
@@ -47,7 +47,7 @@ parse_dCVnet_input <- function(data,
   fterms <- stats::terms(f, data = data)
 
   if ( !identical(attr(fterms, "intercept"), 1L) ) {
-    stop("Error: formula must have an intercept. See stats::terms")
+    stop("Error: formula must have an intercept. See stats::terms") # nolint
   }
   if ( !identical(attr(fterms, "response"), 0L) ) {
     stop("Error: use a RHS formula to specify in data")
@@ -55,7 +55,7 @@ parse_dCVnet_input <- function(data,
 
   data <- as.data.frame(data)
   vars <- attr(fterms, "term.labels")
-  data <- data[, vars, drop = F]
+  data <- data[, vars, drop = FALSE]
   # remove missing based on data:
   if ( any(!stats::complete.cases(data)) ) {
     cat(paste0("Removing ", sum(!stats::complete.cases(data)),
@@ -147,10 +147,10 @@ parseddata_summary <- function(object) {
   # Next the predictor matrix:
   xdes <- lapply(as.data.frame(object$x_mat),
                  function(x) {
-                   data.frame(mean = mean(x, na.rm = T),
-                              sd = sd(x, na.rm = T),
-                              min = min(x, na.rm = T),
-                              max = max(x, na.rm = T),
+                   data.frame(mean = mean(x, na.rm = TRUE),
+                              sd = sd(x, na.rm = TRUE),
+                              min = min(x, na.rm = TRUE),
+                              max = max(x, na.rm = TRUE),
                               nnz = sum(x != 0))
                  })
   xdes <- do.call(rbind, xdes)
@@ -212,7 +212,7 @@ checkForDuplicateCVFolds <- function(folds) {
 
 
 cvlambdafinder <- function(lambda, cvm, cvsd,
-                           minimise = T,
+                           minimise = TRUE,
                            type = c("minimum", "se", "percentage"),
                            type.value = 1) {
   # Adapted from glmnet.
@@ -412,7 +412,7 @@ cv.glmnet.modelsummary <- function(mod,
                     lambda.1se = mod$lambda == mod$lambda.1se,
                     alpha = alpha,
                     rep = rep,
-                    stringsAsFactors = F))
+                    stringsAsFactors = FALSE))
 }
 
 #' tidy_predict.glmnet
@@ -472,11 +472,11 @@ tidy_predict.glmnet <- function(mod,
                newx = newx,
                type = "response",
                s = s,
-               exact = F,
+               exact = FALSE,
                newoffset = newoffset,
                ...)
   if ( class(p) == "array" ) {
-    p <- p[,,1] # extra dims not needed.
+    p <- p[,,1] # nolint # extra dims not needed.
   }
 
   p <- as.data.frame(p)
@@ -514,7 +514,7 @@ tidy_predict.glmnet <- function(mod,
     lvl <- mod$classnames
 
     p$classification <- factor(p$prediction > binomial_thresh,
-                               levels = c(F, T),
+                               levels = c(FALSE, TRUE),
                                labels = lvl)
 
     if ( !is.null(newy) ) {
@@ -539,7 +539,7 @@ tidy_predict.glmnet <- function(mod,
                                   newx = newx,
                                   type = "class",
                                   s = s,
-                                  exact = F,
+                                  exact = FALSE,
                                   newoffset = newoffset))
     if ( !is.null(newy) ) p$reference <- a[[1]]
     p$label <- label
@@ -572,7 +572,7 @@ tidy_coef.glmnet <- function(mod,
                newx = newx,
                type = "coefficients",
                s = s,
-               exact = F,
+               exact = FALSE,
                newoffset = newoffset)
 
   if ( is.null(dim(p)) ) {
@@ -582,7 +582,7 @@ tidy_coef.glmnet <- function(mod,
       rownames(x) <- paste0(rownames(x), "_", n)
       return(x)
     },
-    x = p, n = nm, SIMPLIFY = F)
+    x = p, n = nm, SIMPLIFY = FALSE)
     p <- do.call(rbind, p)
   } else {
     p <- as.matrix(p)
@@ -610,11 +610,11 @@ tidy_confusionmatrix <- function(mat) {
 
   overall <- data.frame(Measure = names(mat$overall),
                         Value = mat$overall,
-                        stringsAsFactors = F)
+                        stringsAsFactors = FALSE)
 
   byclass <- data.frame(Measure = names(mat$byClass),
                         Value = mat$byClass,
-                        stringsAsFactors = F)
+                        stringsAsFactors = FALSE)
 
   tab <- rbind(tab, overall)
   tab <- rbind(tab, byclass)

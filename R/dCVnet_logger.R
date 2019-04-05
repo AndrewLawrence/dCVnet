@@ -21,19 +21,20 @@
 #' @export
 log_results_to_excel <- function(object,
                                  file,
-                                 referencemodel = T) {
+                                 referencemodel = TRUE) {
   if (!requireNamespace("openxlsx", quietly = TRUE)) {
     stop("Package \"openxlsx\" needed for this function to work.
           Please install it.",
          call. = FALSE)
   }
 
-  if ( !grepl("\\.xlsx$", file, fixed = F) ) file <- paste0(file, ".xlsx")
+  if ( !grepl("\\.xlsx$", file, fixed = FALSE) ) file <- paste0(file, ".xlsx")
   .wrap_add_worksheet <- function(wb,
                                   x,
                                   sheetname,
                                   name = NA,
-                                  colNames = F, ...) {
+                                  colNames = FALSE,
+                                  ...) {
     openxlsx::addWorksheet(wb, sheetname)
     srow <- 1
     if ( !is.na(name) ) {
@@ -58,7 +59,7 @@ log_results_to_excel <- function(object,
                                       "lambda",
                                       "alpha"),
                           Value = NA,
-                          stringsAsFactors = F)
+                          stringsAsFactors = FALSE)
   final.hps[3, 2] <- object$final$tuning$inner_best$lambda
   final.hps[4, 2] <- as.numeric(object$final$tuning$inner_best$alpha)
   final <- rbind(final, final.hps)
@@ -86,8 +87,8 @@ log_results_to_excel <- function(object,
     final = final
   )
 
-  cNames <- c(F, F, T, T, T, T, T, T)
-  rNames <- c(F, F, T, F, F, T, T, F)
+  cNames <- c(FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE)
+  rNames <- c(FALSE, FALSE,  TRUE, FALSE, FALSE,  TRUE,  TRUE, FALSE)
 
   labs <- setNames(
     as.data.frame(
@@ -102,7 +103,7 @@ log_results_to_excel <- function(object,
           "Hyperparameters chosen for outer loop folds/reps"),
         c("Coefficients", "Descriptives of Model coefficients"),
         c("Final Model", "Performance of Final Model (not cross-validated)")
-      ), stringsAsFactors = F),
+      ), stringsAsFactors = FALSE),
     c("sheetname", "name")
   )
 
@@ -118,7 +119,7 @@ log_results_to_excel <- function(object,
                         rowNames = rNames[i])
   }
 
-  openxlsx::saveWorkbook(wb, file = file, overwrite = T)
+  openxlsx::saveWorkbook(wb, file = file, overwrite = TRUE)
   cat(paste0("Write completed\n"))
   return(invisible(NULL))
 }

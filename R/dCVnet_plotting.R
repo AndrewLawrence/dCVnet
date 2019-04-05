@@ -19,7 +19,7 @@ plot.repeated.cv.glmnet <- function(x, ...) {
     ggplot2::geom_point(data = x[x$lambda.min, ],
                         ggplot2::aes_string(y = "cvm", x = "lambda"),
                         shape = 25, size = 2, colour = "red", fill = "black",
-                        inherit.aes = F) +
+                        inherit.aes = FALSE) +
     ggplot2::scale_x_log10() +
     ggplot2::ylab(paste("Metric:", attr(x, "type.measure"))) +
     ggplot2::xlab("lambda (log10)") +
@@ -49,7 +49,7 @@ plot.multialpha.repeated.cv.glmnet <- function(x, ...) {
                         colour = "black", shape = 25) +
     ggplot2::geom_point(data = x[x$best, ],
                         colour = "black", shape = 1, size = 5,
-                        show.legend = F) +
+                        show.legend = FALSE) +
     ggplot2::scale_x_log10() +
     ggplot2::ylab(paste("Metric:", attr(x, "type.measure"))) +
     ggplot2::xlab("Lambda path (log10)") +
@@ -118,7 +118,7 @@ plot.dCVnet <- function(x, type = "tuning", ...) {
 #' @return a ROC plot, as above.
 #'
 #' @export
-plot.rocdata <- function(x, legend = F, ...) {
+plot.rocdata <- function(x, legend = FALSE, ...) {
 
   p <- ggplot2::ggplot(x, ggplot2::aes_string(y = "Sens",
                                               x = "InvSpec",

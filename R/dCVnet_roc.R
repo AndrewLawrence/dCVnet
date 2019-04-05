@@ -40,7 +40,7 @@
 #' @seealso \code{\link{plot.rocdata}}
 #'
 #' @export
-extract_rocdata <- function(classperformance, ROCR.invertprob = T) {
+extract_rocdata <- function(classperformance, ROCR.invertprob = TRUE) {
   # First ensure it is in list format, not dataframe:
   if ( "data.frame" %in% class(classperformance) ) {
     lvls <- as.character(unique(classperformance$label))
@@ -143,7 +143,8 @@ average_rocdata <- function(rocdata,
     d <- d[order(d$alpha), ]
     dinf <- d[is.infinite(d$alpha), ] # set aside Inf
 
-    d <- d[findInterval(alphas, vec = d$alpha, all.inside = T, left.open = T), ]
+    d <- d[findInterval(alphas, vec = d$alpha,
+                        all.inside = TRUE, left.open = TRUE), ]
 
     d[is.infinite(alphas), ] <- dinf  # add inf back in.
 
@@ -160,7 +161,7 @@ average_rocdata <- function(rocdata,
   # add a run label
   av$run <- "Average"
 
-  av <- av[order(av$alpha, decreasing = T), -1]
+  av <- av[order(av$alpha, decreasing = TRUE), -1]
   av <- unique(av)
   rownames(av) <- NULL
   # Use this to return a combined dataset: rbind(rocdata, av)

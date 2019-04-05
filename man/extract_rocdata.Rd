@@ -4,7 +4,7 @@
 \alias{extract_rocdata}
 \title{extract_rocdata}
 \usage{
-extract_rocdata(classperformance, ROCR.invertprob = T)
+extract_rocdata(classperformance, ROCR.invertprob = TRUE)
 }
 \arguments{
 \item{classperformance}{a \code{\link{classperformance}} object.}
