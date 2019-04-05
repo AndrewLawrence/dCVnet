@@ -44,10 +44,10 @@ parse_dCVnet_input <- function(data,
 
   # Check input:
   f <- as.formula(f)
-  fterms <- terms(f, data = data)
+  fterms <- stats::terms(f, data = data)
 
   if ( !identical(attr(fterms, "intercept"), 1L) ) {
-    stop("Error: formula must have an intercept. See terms(f)")
+    stop("Error: formula must have an intercept. See stats::terms")
   }
   if ( !identical(attr(fterms, "response"), 0L) ) {
     stop("Error: use a RHS formula to specify in data")

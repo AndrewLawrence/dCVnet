@@ -322,7 +322,7 @@ dCVnet <- function(
                 model = final_model)
 
   time_stop <- Sys.time()
-  run_time_mins <- as.numeric(round( (time_stop - time_start) / 60, 2))
+  run_time <- difftime(time_stop, time_start, units = "hours")
 
 
   # Return object -----------------------------------------------------------
@@ -331,7 +331,7 @@ dCVnet <- function(
                         folds = outfolds,
                         final = final,
                         input = list(callenv = callenv,
-                                     runtime.mins = run_time_mins,
+                                     runtime = run_time,
                                      lambdas = lambdas)),
                    class = c("dCVnet", "list"))
 
@@ -340,7 +340,7 @@ dCVnet <- function(
   cat("\n")
   cat(paste0("Finished.\n"))
   cat(paste0(time_stop, "\n"))
-  cat(paste0("Runtime: ", run_time_mins, " mins\n"))
+  cat(paste0("Runtime: ", sprintf("%.2f", run_time), " hours\n"))
   cat("------------")
 
   return(obj)
@@ -429,16 +429,11 @@ print.dCVnet <- function(x, ...) {
 
   callenv <- x$input$callenv
 
-  if ( is.null(callenv$y) ) {
-    parsed <- parse_dCVnet_input(f = callenv$f,
-                                 data = callenv$data,
-                                 family = callenv$family,
-                                 positive = callenv$positive)
-  } else {
-    parsed <- list(x_mat = callenv$data,
-                   y = callenv$y,
-                   yname = "y")
-  }
+  parsed <- parse_dCVnet_input(f = callenv$f,
+                               y = callenv$y,
+                               data = callenv$data,
+                               family = callenv$family,
+                               positive = callenv$positive)
 
   nalphas <- length(callenv$alphalist)
   nlambdas <- length(x$input$lambdas[[1]])
@@ -470,7 +465,7 @@ print.dCVnet <- function(x, ...) {
   cat("A dCVnet object, from the dCVnet Package\n\n")
   print(callenv[[1]]) # the call.
   cat("\n")
-  cat(paste0("Runtime: ", as.numeric(x$input$runtime.mins), " mins\n\n"))
+  cat(paste0("Runtime: ", sprintf("%.2f", x$input$runtime), " hours\n\n"))
 
   cat("Input\n-----\n")
   cat("Features:\n")
@@ -481,7 +476,7 @@ print.dCVnet <- function(x, ...) {
   cat("Outcome:\n")
   if ( callenv$family %in% c("binomial", "multinomial")) {
     stab <- table(parsed$y)
-    sapply(1:length(stab), function(i) {
+    sapply(seq_along(stab), function(i) {
       cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
     })
   } else {
