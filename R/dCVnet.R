@@ -4,7 +4,7 @@
 #' dCVnet: Doubly Cross-Validated Elastic-Net Regularised (Generalised)
 #'     Linear Models
 #'
-#' dCVnet runs binary logistic regression with elastic-net regulatisation.
+#' dCVnet runs binary logistic regression with elastic-net regularisation.
 #' Optimal hyperparameters are selected by double (nested) cross-validation with
 #' model performance evaluated in an independent outer loop.
 #'

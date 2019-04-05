@@ -10,7 +10,7 @@ dCVnet(y, data, f = "~.", nrep_outer = 2, k_outer = 10,
   positive = 1, offset = NULL, opt.lambda.type = c("minimum", "se",
   "percentage"), opt.lambda.type.value = 1,
   opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
-  opt.ystratify = TRUE, ...)
+  opt.ystratify = TRUE, opt.impute = FALSE, ...)
 }
 \arguments{
 \item{y}{the outcome (can be numeric vector,
@@ -66,22 +66,26 @@ scaled by a factor, e.g. allowing lambda+3pc}
 \item{opt.lambda.type.value}{determines the se multiplier or percentage
 for \code{opt.lambda.type}.}
 
-\item{opt.empirical_cutoff}{Boolian.
+\item{opt.empirical_cutoff}{Boolean.
 Use the empirical proportion of cases as the cutoff for outer CV
 classification (affects outer CV performance only).
 Otherwise classify at 50\% probability.}
 
-\item{opt.uniquefolds}{Boolian.
+\item{opt.uniquefolds}{Boolean.
 In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
 Currently it warns if non-unique values are found.}
 
-\item{opt.ystratify}{Boolian.
+\item{opt.ystratify}{Boolean.
 Outer and inner sampling is stratified by outcome.
 This is implemented with \code{\link[caret]{createFolds}}}
 
+\item{opt.impute}{development feature for \code{\link[mice]{mice}} imputation
+within the inner loops.
+WARNING: do not use this.}
+
 \item{...}{Arguments to pass through to cv.glmnet
-(beware, making use of this may break things).}
+(may break things).}
 }
 \value{
 a dCVnet object.

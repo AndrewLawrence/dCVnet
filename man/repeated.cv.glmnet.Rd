@@ -61,7 +61,7 @@ for \code{opt.lambda.type}.}
 }
 \value{
 a data.frame object of class \code{\link{repeated.cv.glmnet}}
-containting averaged metrics. Has the following columns:
+containing averaged metrics. Has the following columns:
 \itemize{
 \item{lambda - lambda at which performance evaluated}
 \item{cvm - average performance metric}

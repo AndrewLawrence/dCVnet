@@ -5,13 +5,14 @@ Version: 1.0.1
 Authors@R: c(person("Andrew J.", "Lawrence", 
                     email = "lawrenceajl@gmail.com",
                     role = c("aut", "cre")))
-Description: A wrapper for glmnet to fit elastic-net regularised two-class logistic regresion.
+Description: A wrapper for glmnet to fit elastic-net regularised two-class logistic regression.
     The double cross-validation has two functions: 
     1) selects elasticnet hyperparameters (alpha and lambda) by (inner) cross-validation.
     2) Produces rigorous estimates of out-of-sample classification performance 
     via an independent (outer) cross-validation.
 License: GPL (>=3)
 Encoding: UTF-8
+Language: en-GB
 LazyData: true
 Imports: glmnet (>= 2.0-1),
     e1071,
@@ -23,6 +24,7 @@ Imports: glmnet (>= 2.0-1),
     scales
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 6.1.1
-Suggests: knitr,
+Suggests:
+    knitr,
     rmarkdown,
     openxlsx

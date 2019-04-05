@@ -46,11 +46,11 @@ scaled by a factor, e.g. allowing lambda+3pc}
 \item{opt.lambda.type.value}{determines the se multiplier or percentage
 for \code{opt.lambda.type}.}
 
-\item{opt.ystratify}{Boolian.
+\item{opt.ystratify}{Boolean.
 Outer and inner sampling is stratified by outcome.
 This is implemented with \code{\link[caret]{createFolds}}}
 
-\item{opt.uniquefolds}{Boolian.
+\item{opt.uniquefolds}{Boolean.
 In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
 Currently it warns if non-unique values are found.}

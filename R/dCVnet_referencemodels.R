@@ -11,7 +11,7 @@
 #'     \itemize{
 #'     \item{a logistic regression using all variables (if \eqn{n > 5 * p}),
 #'         otherwise a logistic regression on the first \eqn{round(n / 5)}
-#'         principal compoments}
+#'         principal components}
 #'     \item{a series of logistic regressions, one for each column in the
 #'         design matrix - a mass univariate approach}
 #'     }
@@ -49,7 +49,7 @@ reflogreg.default <- function(object, ...) {
 #' @describeIn reflogreg reflogreg for \code{\link{dCVnet}} object
 #'
 #' @param univariate calculate per-variable logistic-regression models.
-#' @param doPCA first run PCA on the features can be "auto" or a boolian.
+#' @param doPCA first run PCA on the features can be "auto" or a boolean.
 #'                  \itemize{
 #'                  \item{\code{"auto"} determines based on ratio of
 #'                             observations to predictors}

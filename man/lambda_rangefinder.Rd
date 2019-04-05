@@ -26,7 +26,7 @@ for each alpha requested.
 }
 \description{
 What range of lambda penalty amounts should we consider for a dataset?
-The maximum for a given dataset is detemined by a simple formula,
+The maximum for a given dataset is determined by a simple formula,
 but this can vary from subset to subset. This code bootstraps
 the calculation of max-lambda for subsets of the input data.
 }

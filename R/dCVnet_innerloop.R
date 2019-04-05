@@ -38,7 +38,7 @@
 #' @param debug if TRUE return models and unaveraged results (default: FALSE).
 #'
 #' @return a data.frame object of class \code{\link{repeated.cv.glmnet}}
-#'     containting averaged metrics. Has the following columns:
+#'     containing averaged metrics. Has the following columns:
 #'     \itemize{
 #'     \item{lambda - lambda at which performance evaluated}
 #'     \item{cvm - average performance metric}
@@ -180,10 +180,10 @@ summary.repeated.cv.glmnet <- function(object, ...) {
 #' @param k the number of folds for k-fold cross-validation.
 #' @param nrep the number of repetitions
 #'
-#' @param opt.ystratify Boolian.
+#' @param opt.ystratify Boolean.
 #'     Outer and inner sampling is stratified by outcome.
 #'     This is implemented with \code{\link[caret]{createFolds}}
-#' @param opt.uniquefolds Boolian.
+#' @param opt.uniquefolds Boolean.
 #'     In most circumstances folds will be unique. This requests
 #'     that random folds are checked for uniqueness in inner and outer loops.
 #'     Currently it warns if non-unique values are found.

@@ -29,7 +29,7 @@ circumstances.
 Properly conducted 
 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)) 
 gives estimates of model performance which are unaffected by the optimism 
-inherrent in overfitting. Cross-validated estimates better reflect performance 
+inherent in overfitting. Cross-validated estimates better reflect performance 
 for unseen data. *dCVnet* implements k-fold cross-validation (which is 
 optionally repeated).
 However, cross-validation itself can only tell you if overfitting is occurring, 

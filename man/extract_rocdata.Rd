@@ -9,7 +9,7 @@ extract_rocdata(classperformance, ROCR.invertprob = TRUE)
 \arguments{
 \item{classperformance}{a \code{\link{classperformance}} object.}
 
-\item{ROCR.invertprob}{boolian. Should class probabilities be inverted?
+\item{ROCR.invertprob}{boolean. Should class probabilities be inverted?
 This will depend on what your 'positive' class is.
 The internal \link[ROCR]{prediction} uses opposing convention to the
 rest of this package, so normally this should be TRUE.

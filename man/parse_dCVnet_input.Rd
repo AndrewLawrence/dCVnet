@@ -5,7 +5,7 @@
 \title{parse_dCVnet_input}
 \usage{
 parse_dCVnet_input(data, y, family, f = "~.", positive = 1,
-  offset = NULL, yname = "y")
+  offset = NULL, yname = "y", imputeflag = FALSE)
 }
 \arguments{
 \item{data}{a data.frame containing all terms in f.}
@@ -30,6 +30,9 @@ Can be a numeric indicating which of \code{levels(y)} to use
 \item{offset}{optional model offset (see \code{\link{glmnet}})}
 
 \item{yname}{an optional label for the outcome / y variable.}
+
+\item{imputeflag}{Imputation of predictors can be performed
+in the inner loop, should NA values be included in the parsed data?}
 }
 \value{
 \itemize{

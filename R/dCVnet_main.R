@@ -28,7 +28,7 @@
 #'     This sets the metric used for hyperparameter optimisation in the
 #'     inner cross-validation. Options: \code{"deviance"}, \code{"class"},
 #'     \code{"mse"}, \code{"mae"}
-#' @param opt.empirical_cutoff Boolian.
+#' @param opt.empirical_cutoff Boolean.
 #'     Use the empirical proportion of cases as the cutoff for outer CV
 #'     classification (affects outer CV performance only).
 #'     Otherwise classify at 50\% probability.

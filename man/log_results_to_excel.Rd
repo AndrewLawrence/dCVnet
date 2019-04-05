@@ -15,7 +15,7 @@ log_results_to_excel(object, file, referencemodel = TRUE)
 reference models, or pass a pre-calculated \code{\link{reflogreg}}
 object.
 Any other values (e.g. \code{FALSE}) suppress the
-reference model caculations.}
+reference model calcuations.}
 }
 \value{
 No return value.
