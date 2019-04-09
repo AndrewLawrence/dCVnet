@@ -1,33 +1,26 @@
 
 
 # S3 class: rocdata --------
-#   acts on classperformance to produce data for a ROC.
-#   which is a table of:
+#   data for a ROC analysis, acts on classperformance to produce a table of:
 #     Sens : Sensitivity (tpr),
 #     InvSpec : one-minus Specificity (fpr)
 #   for assorted thresholds of the model class thresholds.
 # Uses ROCR.
+#
 
 
 #' extract_rocdata
 #'
-#' Function converts a classperformance data.frame to the values required for
-#'     calculating a ROC curve. It does this by calculating sensitivity and
-#'     specificity at incrementing class probability thresholds.
+#' Function reads ROC data from a \code{\link{classperformance}} object.
+#'     Sensitivity and specificity are calculated
+#'     at incrementing class probability thresholds.
 #'
 #' Uses \pkg{ROCR} functions: \code{\link[ROCR]{prediction}}, and
 #'     \code{\link[ROCR]{performance}}
 #'
 #' @name extract_rocdata
 #' @param classperformance a \code{\link{classperformance}} object.
-#' @param ROCR.invertprob boolean. Should class probabilities be inverted?
-#'     This will depend on what your 'positive' class is.
-#'     The internal \link[ROCR]{prediction} uses opposing convention to the
-#'     rest of this package, so normally this should be TRUE.
-#'     \itemize{
-#'         \item{ROCR}{last level is 'positive'}
-#'         \item{typical}{first level is 'positive'}
-#'     }
+#' @param invertprob boolean. Should class probabilities be inverted?
 #'     If the ROC curve appears under the diagonal then toggle this option.
 #' @return a data.frame object of class "rocdata" which can be plotted. Contents:
 #'     \itemize{
@@ -40,7 +33,8 @@
 #' @seealso \code{\link{plot.rocdata}}
 #'
 #' @export
-extract_rocdata <- function(classperformance, ROCR.invertprob = TRUE) {
+extract_rocdata <- function(classperformance,
+                            invertprob = FALSE) {
   # First ensure it is in list format, not dataframe:
   if ( "data.frame" %in% class(classperformance) ) {
     lvls <- as.character(unique(classperformance$label))
@@ -68,8 +62,8 @@ extract_rocdata <- function(classperformance, ROCR.invertprob = TRUE) {
     return(outer.df)
   }
 
-  .extract_pred <- function(x, mode) {
-    if ( mode ) {
+  .extract_pred <- function(x, invert) {
+    if ( invert ) {
       return(1 - x$prediction)
     } else {
       return(x$prediction)
@@ -80,8 +74,9 @@ extract_rocdata <- function(classperformance, ROCR.invertprob = TRUE) {
     # Invert class probabilities if needed:
     predictions = lapply(classperformance,
                          .extract_pred,
-                         mode = ROCR.invertprob),
-    labels = lapply(classperformance, "[[", "reference"))
+                         invert = invertprob),
+    labels = lapply(classperformance, "[[", "reference"),
+    label.ordering = levels(classperformance[[1]]$reference))
   outer.perf <- ROCR::performance(outer.pred, "tpr", "fpr")
 
   R <- .performance_to_data_frame(outer.perf, names(classperformance))

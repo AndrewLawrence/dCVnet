@@ -4,19 +4,12 @@
 \alias{extract_rocdata}
 \title{extract_rocdata}
 \usage{
-extract_rocdata(classperformance, ROCR.invertprob = TRUE)
+extract_rocdata(classperformance, invertprob = FALSE)
 }
 \arguments{
 \item{classperformance}{a \code{\link{classperformance}} object.}
 
-\item{ROCR.invertprob}{boolean. Should class probabilities be inverted?
-This will depend on what your 'positive' class is.
-The internal \link[ROCR]{prediction} uses opposing convention to the
-rest of this package, so normally this should be TRUE.
-\itemize{
-\item{ROCR}{last level is 'positive'}
-\item{typical}{first level is 'positive'}
-}
+\item{invertprob}{boolean. Should class probabilities be inverted?
 If the ROC curve appears under the diagonal then toggle this option.}
 }
 \value{
@@ -29,9 +22,9 @@ a data.frame object of class "rocdata" which can be plotted. Contents:
 }
 }
 \description{
-Function converts a classperformance data.frame to the values required for
-calculating a ROC curve. It does this by calculating sensitivity and
-specificity at incrementing class probability thresholds.
+Function reads ROC data from a \code{\link{classperformance}} object.
+Sensitivity and specificity are calculated
+at incrementing class probability thresholds.
 }
 \details{
 Uses \pkg{ROCR} functions: \code{\link[ROCR]{prediction}}, and
