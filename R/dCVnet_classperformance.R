@@ -56,20 +56,37 @@ classperformance.list <- function(x, ...) {
   classperformance.dCVnet(x, ...)
 }
 
+
+#' classperformance.classperformance
+#' @describeIn classperformance returns self (allows list/dataframe conversion)
+#' @export
+classperformance.classperformance <- function(x, as.data.frame = TRUE, ...) {
+  if ( as.data.frame && ! "data.frame" %in% class(x) ) {
+
+    xfac <- as.factor(unlist(lapply(x, '[[', "label"), use.names = F))
+    return(structure(unsplit(x, xfac),
+                     class = c("classperforamnce", "data.frame")))
+  }
+  if ( ! as.data.frame && "data.frame" %in% class(x) ) {
+    x <- split(x, x$label)
+    return(structure(x, class = c("classperformance", "list")))
+  }
+  return(x)
+}
+
+
 #' classperformance.dCVnet
 #' @describeIn classperformance classperformance for \code{\link{dCVnet}} object
-#' @param as.data.frame return a data.frame instead of
-#'     \code{\link{classperformance}} object.
+#' @param as.data.frame return a data.frame instead of a list of
+#'     \code{\link{classperformance}} objects.
 #' @export
 classperformance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
-  if ( as.data.frame ) return(x$performance)
-  labs <- as.character(unique(x$performance$label))
-  names(labs) <- labs
-  R <- lapply(labs,
-              function(k) {
-                x$performance[x$performance$label == k, ]
-              })
-  return(structure(R, class = c("classperformance", "list")))
+  if ( identical(as.data.frame, TRUE) ) {
+    return(x$performance)
+  } else {
+    R <- split(x$performance, x$performance$label)
+    return(structure(R, class = c("classperformance", "list")))
+  }
 }
 
 #' classperformance.glm

@@ -1,7 +1,9 @@
 ---
 output:
   html_document: default
-  pdf_document: default
+  pdf_document:
+    highlight: tango
+urlcolor: blue
 ---
 # dCVnet
 
@@ -11,21 +13,21 @@ This is the source code of the R Package 'dCVnet' which estimates
 ### Overview & Rationale
 
 The motivating problem behind dCVnet is prediction modelling in datasets 
-with relatively few observations (*n*)<sup>[1](#fn1)</sup> for the number of 
+with relatively few observations (*n*)^[1](#fn1)^ for the number of 
 predictors (*p*), especially where there may be uninformative or redundant 
 predictors which the analyst isn't willing, or able, to remove.
 
 In an ideal world we would collect more data, but this is often impractical
 or too expensive.
 
-The described circumstances give a number of related statistical problems which 
-become worse with greater ratios of *p*/*n*:<sup>[2](#fn2)</sup>
+The described circumstances produce several interelated problems which 
+become worse^[2](#fn2)^ with greater ratios of *p*/*n*.
 
 * [Overfitting](https://en.wikipedia.org/wiki/Overfitting)
 * [Multicollinearity](https://en.wikipedia.org/wiki/Multicollinearity)
 * [Variable Selection](https://en.wikipedia.org/wiki/Feature_selection)
 
-*dCVnet* implements *double cross-validation*<sup>[3](#fn3)</sup> and 
+*dCVnet* implements *double cross-validation*^[3](#fn3)^ and 
 *elastic-net regularisation* to combat these problems.
 
 Properly conducted 
@@ -70,7 +72,7 @@ Elastic-net regularisation requires two hyperparameters be specified:
 there are no default values for these parameters, and suitable values 
 vary depending on the problem.
 
-Double cross-validation<sup>[4](#fn4)</sup> is implemented in *dCVnet*
+Double cross-validation^[4](#fn4)^ is implemented in *dCVnet*
 to allow principled and independent selection 
 of the optimal hyperparameters for generalisability, and estimation of 
 performance in out-of-sample data when hyperparameters are estimated in this 
@@ -110,7 +112,7 @@ devtools::install_github("AndrewLawrence/dCVnet", dependencies = TRUE)
 #### from Archive
 ```
 if ( ! require("devtools") ) install.packages("devtools")
-devtools::install_local("path/to/dCVnet_1.0.1.zip", dependencies = TRUE)
+devtools::install_local("path/to/dCVnet_1.0.2.tar.gz", dependencies = TRUE)
 ```
 
 #### Quickstart example:
@@ -138,26 +140,25 @@ This project is licensed under the
 * **Andrew Lawrence** - [AndrewLawrence](https://github.com/AndrewLawrence)
 
 
-<br><br>
-<hr>
+\newpage
 
-<a name="fn1">1</a>: For two-class prediction problems like binary logistic
+<a name="fn1">^1^</a> For two-class prediction problems like binary logistic
 regression any class-imbalance has an impact on the effective sample size. 
 *n* should be number of the rarer of the two outcomes.
 
 
-<a name="fn2">2</a>: Where *p*/*n* > 1, the standard least-squares solutions 
+<a name="fn2">^2^</a> Where *p*/*n* > 1, the standard least-squares solutions 
 for continuous outcomes are not defined. For generalised models 
 convergence problems are likely. In both cases predictors will have
 perfect mutlicollinearity. Where *p*/*n* > 0.1,
-conventional [rules of thumb](https://en.wikipedia.org/wiki/One_in_ten_rule) 
+common [rules of thumb](https://en.wikipedia.org/wiki/One_in_ten_rule) 
 for logistic regression sample size are violated.
 
 
-<a name="fn3">3</a>: Double cross-validation is also called *nested* 
+<a name="fn3">^3^</a> Double cross-validation is also called *nested* 
 or *nested-loop* cross-validation.
 
-<a name="fn4">4</a>: Other examples of nested CV in R:
+<a name="fn4">^4^</a> Other examples of nested CV in R:
 [MLR](https://pat-s.github.io/mlr/articles/tutorial/devel/nested_resampling.html),
 [TANDEM](https://www.rdocumentation.org/packages/TANDEM/versions/1.0.2/topics/nested.cv),
 [nlcv](https://cran.r-project.org/web/packages/nlcv/vignettes/nlcv.pdf),

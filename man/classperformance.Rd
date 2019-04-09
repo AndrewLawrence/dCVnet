@@ -3,6 +3,7 @@
 \name{classperformance}
 \alias{classperformance}
 \alias{classperformance.list}
+\alias{classperformance.classperformance}
 \alias{classperformance.dCVnet}
 \alias{classperformance.glm}
 \alias{classperformance.glmlist}
@@ -11,6 +12,8 @@
 classperformance(x, ...)
 
 \method{classperformance}{list}(x, ...)
+
+\method{classperformance}{classperformance}(x, as.data.frame = TRUE, ...)
 
 \method{classperformance}{dCVnet}(x, as.data.frame = TRUE, ...)
 
@@ -24,8 +27,8 @@ classperformance(x, ...)
 
 \item{...}{arguments to pass on}
 
-\item{as.data.frame}{return a data.frame instead of
-\code{\link{classperformance}} object.}
+\item{as.data.frame}{return a data.frame instead of a list of
+\code{\link{classperformance}} objects.}
 
 \item{label}{specify a label for the output}
 
@@ -53,6 +56,8 @@ extracts a standardised classification performance table for a model.
 \itemize{
 \item \code{list}: classperformance for \code{\link{list}} object
 (treats it as a \code{\link{dCVnet}} object)
+
+\item \code{classperformance}: returns self (allows list/dataframe conversion)
 
 \item \code{dCVnet}: classperformance for \code{\link{dCVnet}} object
 
