@@ -66,8 +66,8 @@ classperformance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
   labs <- as.character(unique(x$performance$label))
   names(labs) <- labs
   R <- lapply(labs,
-              function(x) {
-                x$performance[x$performance$label == x, ]
+              function(k) {
+                x$performance[x$performance$label == k, ]
               })
   return(structure(R, class = c("classperformance", "list")))
 }
