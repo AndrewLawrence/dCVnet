@@ -18,7 +18,7 @@ for the outcome factor}
 }
 }
 \description{
-Simple descriptives for a dCVnet parsed dataset.
+Simple descriptives for dCVnet's input (parsed dataset).
 }
 \details{
 This acts on a model matrix, so factor variables will be indicator coded.

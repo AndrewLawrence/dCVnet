@@ -74,7 +74,8 @@ plot.multialpha.repeated.cv.glmnet <- function(x, ...) {
 #' @param x a \code{\link{dCVnet}} object
 #' @param type one of
 #'     \itemize{
-#'     \item{\code{"tuning"} - outer tuning coefficients (\code{\link{plot_outerloop_coefs}})}
+#'     \item{\code{"tuning"} - hyperparameter tuning plots
+#'          (\code{\link{tuning_plot_dCVnet}})}
 #'     \item{\code{"roc"} - a roc plot (\code{\link{plot.rocdata}})}
 #'     }
 #' @param ... additional arguments passed to plot functions above.

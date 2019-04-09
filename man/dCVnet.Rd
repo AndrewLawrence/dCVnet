@@ -10,7 +10,7 @@ dCVnet(y, data, f = "~.", nrep_outer = 2, k_outer = 10,
   positive = 1, offset = NULL, opt.lambda.type = c("minimum", "se",
   "percentage"), opt.lambda.type.value = 1,
   opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
-  opt.ystratify = TRUE, opt.impute = FALSE, ...)
+  opt.ystratify = TRUE, ...)
 }
 \arguments{
 \item{y}{the outcome (can be numeric vector,
@@ -80,10 +80,6 @@ Currently it warns if non-unique values are found.}
 Outer and inner sampling is stratified by outcome.
 This is implemented with \code{\link[caret]{createFolds}}}
 
-\item{opt.impute}{development feature for \code{\link[mice]{mice}} imputation
-within the inner loops.
-WARNING: do not use this.}
-
 \item{...}{Arguments to pass through to cv.glmnet
 (may break things).}
 }
@@ -102,13 +98,59 @@ and \bold{alpha} (the balance of L1 and L2 regularisation types).
 }
 \examples{
 \dontrun{
-iris_class <- dCVnet(f = Species ~ Sepal.Length + Sepal.Width +
-                         Petal.Length + Petal.Width,
-                     data = subset(iris, iris$Species != "versicolor"),
-                     alphalist = 0.5)
-#Note: in most circumstances larger values of nrep_inner and nrep_outer
-#      will be required.
-summary(classperformance(iris_class))
-plot(iris_class)
+
+# Iris example: Setosa vs. Virginica
+#
+# This example is fast to run, but not very informative because it is a
+#  simple problem without overfitting and the predictors work 'perfectly'.
+# `help(iris)` for more infomation on the data.
+
+# Make a two-class problem from the iris dataset:
+siris <- droplevels(subset(iris, iris$Species != "versicolor"))
+# scale the iris predictors:
+siris[,1:4] <- scale(siris[,1:4])
+
+set.seed(1) # for reproducibility
+model <- dCVnet(y = siris$Species,
+                     f = ~ Sepal.Length + Sepal.Width +
+                           Petal.Length + Petal.Width,
+                     data = siris,
+                     alphalist = c(0.0, 0.5, 1.0),
+                     opt.lambda.type = "se")
+
+#Note: in most circumstances non-default (larger) values of
+#      nrep_inner and nrep_outer will be required.
+
+# Input summary:
+dCVnet::parseddata_summary(model)
+
+# Model summary:
+summary(model)
+
+# Detailed cross-validated model performance summary:
+summary(classperformance(model))
+
+# hyperparameter tuning plot:
+plot(model)
+# as above, but zoomed in:
+plot(model)$plot + ggplot2::coord_cartesian(ylim = c(0,0.03), xlim=c(-4, -2))
+
+# Performance ROC plot:
+plot(model, type = "roc")
+
+# predictor importance (better with more outer reps):
+dCVnet::coefficients_summary(model)
+#    show variability over both folds and reps:
+dCVnet::plot_outerloop_coefs(model, "all")
+
+# selected hyperparameters:
+dCVnet::selected_hyperparameters(model, what = "data")
+
+# Reference logistic regressions (unregularised & univariate):
+ref_model <- dCVnet::reflogreg(model)
+
+dCVnet::report_reference_classperformance_summary(ref_model)
+
+
 }
 }

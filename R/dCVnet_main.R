@@ -33,18 +33,64 @@
 #'     classification (affects outer CV performance only).
 #'     Otherwise classify at 50\% probability.
 #' @param ... Arguments to pass through to cv.glmnet
-#'     (beware, making use of this may break things).
+#'     (may break things).
 #' @return a dCVnet object.
 #' @examples
 #' \dontrun{
-#' iris_class <- dCVnet(f = Species ~ Sepal.Length + Sepal.Width +
-#'                          Petal.Length + Petal.Width,
-#'                      data = subset(iris, iris$Species != "versicolor"),
-#'                      alphalist = 0.5)
-#' #Note: in most circumstances larger values of nrep_inner and nrep_outer
-#' #      will be required.
-#' summary(classperformance(iris_class))
-#' plot(iris_class)
+#'
+#' # Iris example: Setosa vs. Virginica
+#' #
+#' # This example is fast to run, but not very informative because it is a
+#' #  simple problem without overfitting and the predictors work 'perfectly'.
+#' # `help(iris)` for more infomation on the data.
+#'
+#' # Make a two-class problem from the iris dataset:
+#' siris <- droplevels(subset(iris, iris$Species != "versicolor"))
+#' # scale the iris predictors:
+#' siris[,1:4] <- scale(siris[,1:4])
+#'
+#' set.seed(1) # for reproducibility
+#' model <- dCVnet(y = siris$Species,
+#'                      f = ~ Sepal.Length + Sepal.Width +
+#'                            Petal.Length + Petal.Width,
+#'                      data = siris,
+#'                      alphalist = c(0.0, 0.5, 1.0),
+#'                      opt.lambda.type = "se")
+#'
+#' #Note: in most circumstances non-default (larger) values of
+#' #      nrep_inner and nrep_outer will be required.
+#'
+#' # Input summary:
+#' dCVnet::parseddata_summary(model)
+#'
+#' # Model summary:
+#' summary(model)
+#'
+#' # Detailed cross-validated model performance summary:
+#' summary(classperformance(model))
+#'
+#' # hyperparameter tuning plot:
+#' plot(model)
+#' # as above, but zoomed in:
+#' plot(model)$plot + ggplot2::coord_cartesian(ylim = c(0,0.03), xlim=c(-4, -2))
+#'
+#' # Performance ROC plot:
+#' plot(model, type = "roc")
+#'
+#' # predictor importance (better with more outer reps):
+#' dCVnet::coefficients_summary(model)
+#' #    show variability over both folds and reps:
+#' dCVnet::plot_outerloop_coefs(model, "all")
+#'
+#' # selected hyperparameters:
+#' dCVnet::selected_hyperparameters(model, what = "data")
+#'
+#' # Reference logistic regressions (unregularised & univariate):
+#' ref_model <- dCVnet::reflogreg(model)
+#'
+#' dCVnet::report_reference_classperformance_summary(ref_model)
+#'
+#'
 #' }
 #' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
 #' @importFrom stats predict sd terms var
@@ -81,9 +127,10 @@ dCVnet <- function(
   time_start <- force(Sys.time()) # for logging.
   parsed <- parse_dCVnet_input(f = f,
                                y = y,
-                               data = as.data.frame(data),
+                               data = data,
                                family = family,
-                               positive = positive)
+                               positive = positive,
+                               passNA = FALSE)
   x <- parsed$x_mat
   y <- parsed$y
 
@@ -197,20 +244,21 @@ dCVnet <- function(
       testx <- subset(x, sel_test)
       testy <- subset(y, sel_test)
 
-      # scaling to mean=0, sd=1 (calculated on train data, applied to test data)
+      # scaling to mean=0, sd=1
+      #   (scaling calculated on completecases train data, applied to test data)
       PPx <- caret::preProcess(trainx, method = c("center", "scale"))
       trainx <- predict(PPx, trainx)
       testx <- predict(PPx, testx)
 
-
       # inner loop train data -------------------------------------------
       #   - receives no (outer) test data
       inners <- multialpha.repeated.cv.glmnet(
+        y = trainy,
+        x = trainx,
         nrep = nrep_inner,
         k = k_inner,
         alphalist = alphalist,
         lambdas = lambdas,
-        y = trainy, x = trainx,
         type.measure = type.measure,
         family = family,
         standardize = FALSE,
@@ -563,10 +611,11 @@ selected_hyperparameters <- function(object,
   } )
   J <- do.call(rbind, J)
 
-  if ( what == "summary") {
+  if ( what == "summary" ) {
     return(list(alpha = A, lambda = L, joint = J, FinalModel = FF.summary))
   } else {
-    return(list(data = R,
+    return(list(data = list(CVfolds = R,
+                            FinalModel = FF),
                 summary = list(alpha = A, lambda = L, joint = J,
                                FinalModel = FF.summary)))
   }

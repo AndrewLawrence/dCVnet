@@ -15,7 +15,10 @@ with relatively few observations (*n*)<sup>[1](#fn1)</sup> for the number of
 predictors (*p*), especially where there may be uninformative or redundant 
 predictors which the analyst isn't willing, or able, to remove.
 
-These circumstances lead to a number of related statistical problems which 
+In an ideal world we would collect more data, but this is often impractical
+or too expensive.
+
+The described circumstances give a number of related statistical problems which 
 become worse with greater ratios of *p*/*n*:<sup>[2](#fn2)</sup>
 
 * [Overfitting](https://en.wikipedia.org/wiki/Overfitting)
@@ -23,28 +26,27 @@ become worse with greater ratios of *p*/*n*:<sup>[2](#fn2)</sup>
 * [Variable Selection](https://en.wikipedia.org/wiki/Feature_selection)
 
 *dCVnet* implements *double cross-validation*<sup>[3](#fn3)</sup> and 
-*elastic-net regularisation* to appropriately analyse data in these
-circumstances.
+*elastic-net regularisation* to combat these problems.
 
 Properly conducted 
 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)) 
-gives estimates of model performance which are unaffected by the optimism 
-inherent in overfitting. Cross-validated estimates better reflect performance 
-for unseen data. *dCVnet* implements k-fold cross-validation (which is 
-optionally repeated).
-However, cross-validation itself can only tell you if overfitting is occurring, 
-it is not a treatment for overfitting. More cautious models which 
-generalise better to new data are required.
+gives estimates of model performance unaffected by the optimism 
+caused by overfitting. Cross-validated estimates reflect the likely performance 
+of the model in unseen data.
+*dCVnet* implements repeated k-fold cross-validation.
+However, cross-validation only tells the analyst if overfitting is occurring, 
+it cannot correct overfitting. Regularisation produces more cautious models 
+which will generalise better to new data.
 
 [Regularisation](https://en.wikipedia.org/wiki/Regularization_\(mathematics\)) 
 adds a cost to the complexity of the model. This results in [shrinkage](https://en.wikipedia.org/wiki/Shrinkage_estimator) of 
-model coefficients. This makes models more cautious and can substantially 
-improve generalisation to unseen data. 
-*dCVnet* uses elastic-net regularisation provided by the [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html) package for
+model coefficients towards zero. This makes models more cautious and can 
+substantially improve generalisation to unseen data. 
+*dCVnet* uses elastic-net regularisation from the  [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html) package for
 R.
 
-Adding regularisation to a model introduces algorithm 
-[hyperparameters](https://en.wikipedia.org/wiki/Hyperparameter_(machine_learning))
+Adding regularisation to a model introduces "algorithm 
+[hyperparameters](https://en.wikipedia.org/wiki/Hyperparameter_(machine_learning))"
 - settings which which must be tuned/optimised to each problem.
 Cross-validation allows this tuning to select hyperparameters which produce 
 models that give the best performance for unseen data.
@@ -57,8 +59,8 @@ for a description of the issue.
 
 The type of regularisation employed by *dCVnet* ([Elastic-net](https://en.wikipedia.org/wiki/Elastic_net_regularization))
 permits predictors with perfect *collinearity*
-and performs *variable selection* (through *L1*-penalisation - 
-the Least Absolute Shrinkage and Selection Operator; LASSO).
+and performs *variable selection* (by incorporating *L1*-penalisation - 
+also called the Least Absolute Shrinkage and Selection Operator; LASSO).
 
 Elastic-net regularisation requires two hyperparameters be specified:
 
@@ -83,10 +85,10 @@ performed by the R package
 package depends on.
 
 The development of this package was motivated by a lack of options for 
-double/nested cross-validation. Although it currently only works with two-class
-outcomes a future development goal is to implement for other outcome 
-families catered for by glmnet (`gaussian`, `poisson`, `multinomial`, `cox`,
-`mgaussian`).
+double/nested cross-validation. Although it currently only works with 
+the binary logistic model for two-class outcomes the aim is to eventually 
+implement the other outcome families in glmnet 
+(`gaussian`, `poisson`, `multinomial`, `cox`, `mgaussian`).
 
 ## Getting Started
 
@@ -99,11 +101,20 @@ The commands below will install missing package dependencies
 (see the [DESCRIPTION](DESCRIPTION) file *Imports* section). It will then
 run a toy example from the package's main function.
 
-
+#### from Github
 ```
 if ( ! require("devtools") ) install.packages("devtools")
 devtools::install_github("AndrewLawrence/dCVnet", dependencies = TRUE)
+```
 
+#### from Archive
+```
+if ( ! require("devtools") ) install.packages("devtools")
+devtools::install_local("path/to/dCVnet_1.0.1.zip", dependencies = TRUE)
+```
+
+#### Quickstart example:
+```
 library(dCVnet)
 
 example(dCVnet, run.dontrun = T)
@@ -113,6 +124,7 @@ example(dCVnet, run.dontrun = T)
 * This package is not affiliated with the glmnet package.
 * This package is under active development and comes with 
 ABSOLUTELY NO WARRANTY - use at your own risk.
+* This software represents independent research part funded by the National Institute for Health Research (NIHR) Biomedical Research Centre at South London and Maudsley NHS Foundation Trust and King’s College London. The views expressed are those of the author(s) and not necessarily those of the NIHR or the Department of Health and Social Care.
 
 ## License
 
@@ -129,20 +141,20 @@ This project is licensed under the
 <br><br>
 <hr>
 
-<a name="fn1">1</a>: For two-class prediction problems 
-(e.g. binary logistic regression) the class-balance impacts sample size, 
-the rarer of the two outcomes should be used.
+<a name="fn1">1</a>: For two-class prediction problems like binary logistic
+regression any class-imbalance has an impact on the effective sample size. 
+*n* should be number of the rarer of the two outcomes.
 
 
-<a name="fn2">2</a>: Where *p*/*n* > 1 standard least-squares solutions 
-(for continuous outcomes) are not defined. For binary logistic models 
+<a name="fn2">2</a>: Where *p*/*n* > 1, the standard least-squares solutions 
+for continuous outcomes are not defined. For generalised models 
 convergence problems are likely. In both cases predictors will have
 perfect mutlicollinearity. Where *p*/*n* > 0.1,
 conventional [rules of thumb](https://en.wikipedia.org/wiki/One_in_ten_rule) 
 for logistic regression sample size are violated.
 
 
-<a name="fn3">3</a>: Double cross-validation is alternatively known as *nested* 
+<a name="fn3">3</a>: Double cross-validation is also called *nested* 
 or *nested-loop* cross-validation.
 
 <a name="fn4">4</a>: Other examples of nested CV in R:

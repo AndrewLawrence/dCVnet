@@ -25,6 +25,7 @@
 #'     (i.e. 1 | 2). Alternatively a character specifying the exact level
 #'     (e.g. \code{"patient"}).
 #' @param yname an optional label for the outcome / y variable.
+#' @param passNA should NA values be excluded (FALSE) or passed through (TRUE)?
 #'
 #' @return \itemize{
 #'     \item{ \code{y} - outcome factor
@@ -40,10 +41,11 @@ parse_dCVnet_input <- function(data,
                                f = "~.", # nolint
                                positive = 1,
                                offset = NULL,
-                               yname = "y") {
-
+                               yname = "y",
+                               passNA = FALSE) {
   # Check input:
   f <- as.formula(f)
+  data <- as.data.frame(data)
   fterms <- stats::terms(f, data = data)
 
   if ( !identical(attr(fterms, "intercept"), 1L) ) {
@@ -56,15 +58,17 @@ parse_dCVnet_input <- function(data,
   data <- as.data.frame(data)
   vars <- attr(fterms, "term.labels")
   data <- data[, vars, drop = FALSE]
-  # remove missing based on data:
-  if ( any(!stats::complete.cases(data)) ) {
+
+  # remove missing based on data (unless imputing):
+  if ( !passNA && any(!stats::complete.cases(data)) ) {
     cat(paste0("Removing ", sum(!stats::complete.cases(data)),
                " of ", NROW(data),
                " subjects due to missing data.\n"))
     y <- subset(y, stats::complete.cases(data))
     data <- subset(data, stats::complete.cases(data))
+
   }
-  # remove missing based on y:
+  # always remove missing based on y:
   if ( any(!stats::complete.cases(y)) ) {
     cat(paste0("Removing ", sum(!stats::complete.cases(y)),
                " of ", NROW(y),
@@ -73,10 +77,11 @@ parse_dCVnet_input <- function(data,
     y <- subset(y, stats::complete.cases(y))
   }
 
+  # special treatment if the outcome should be factor:
   if ( family %in% c("binomial", "multinomial")) {
     y <- as.factor(y) # extract y variable & coerce to factor.
 
-    # Recode levels.
+    # relevel s.t. 'positive' is first:
     lvl <- levels(y)
     if ( is.numeric(positive) ) {
       positive <- lvl[positive]
@@ -88,7 +93,8 @@ parse_dCVnet_input <- function(data,
 
   # Make a model matrix of RHS variables
   #   i.e. parse dummy coding / interaction terms & drop intercept:
-  x_mat <- model.matrix(f, data = data)[, -1]
+  xf <- model.frame(formula = f, data = data, na.action = "na.pass")
+  x_mat <- model.matrix(f, data = xf)[, -1]
 
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,
@@ -100,7 +106,7 @@ parse_dCVnet_input <- function(data,
 
 #' parseddata_summary
 #'
-#' Simple descriptives for a dCVnet parsed dataset.
+#' Simple descriptives for dCVnet's input (parsed dataset).
 #'
 #' This acts on a model matrix, so factor variables will be indicator coded.
 #'     nnz should be informative for such variables.
@@ -151,6 +157,8 @@ parseddata_summary <- function(object) {
                               sd = sd(x, na.rm = TRUE),
                               min = min(x, na.rm = TRUE),
                               max = max(x, na.rm = TRUE),
+                              skew = e1071::skewness(x, na.rm = TRUE, type = 2),
+                              kurt = e1071::kurtosis(x, na.rm = TRUE, type = 2),
                               nnz = sum(x != 0))
                  })
   xdes <- do.call(rbind, xdes)

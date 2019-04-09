@@ -5,7 +5,7 @@
 \title{parse_dCVnet_input}
 \usage{
 parse_dCVnet_input(data, y, family, f = "~.", positive = 1,
-  offset = NULL, yname = "y", imputeflag = FALSE)
+  offset = NULL, yname = "y", passNA = FALSE)
 }
 \arguments{
 \item{data}{a data.frame containing all terms in f.}
@@ -31,8 +31,7 @@ Can be a numeric indicating which of \code{levels(y)} to use
 
 \item{yname}{an optional label for the outcome / y variable.}
 
-\item{imputeflag}{Imputation of predictors can be performed
-in the inner loop, should NA values be included in the parsed data?}
+\item{passNA}{should NA values be excluded (FALSE) or passed through (TRUE)?}
 }
 \value{
 \itemize{
