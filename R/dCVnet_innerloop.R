@@ -148,10 +148,12 @@ summary.repeated.cv.glmnet <- function(object, ...) {
   best_up <- object$cvup[object$lambda.min]
   best_lo <- object$cvlo[object$lambda.min]
 
-  close <- sapply(unique(object$lambda), function(x) {
-    probe <- object$cvm[object$lambda == x]
-    return(probe < best_up & probe > best_lo)
-  })
+  close <- vapply(X = unique(object$lambda),
+                  FUN = function(x) {
+                    probe <- object$cvm[object$lambda == x]
+                    return((probe < best_up) & (probe > best_lo))
+                  },
+                  FUN.VALUE = c(TRUE))
 
   cat("Summary of ")
   print(object)
@@ -277,9 +279,9 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
   alpha <- unique(x$alpha)
   lambdas <- lapply(alpha, function(i) x$lambda[x$alpha == i]  )
 
-  l_lengths <- sapply(lambdas, length)
-  l_min <- prettyNum(sapply(lambdas, min))
-  l_max <- prettyNum(sapply(lambdas, max))
+  l_lengths <- vapply(lambdas, length, FUN.VALUE = c(1.0))
+  l_min <- prettyNum(vapply(lambdas, min, FUN.VALUE = c(1.0)))
+  l_max <- prettyNum(vapply(lambdas, max, FUN.VALUE = c(1.0)))
   l_ranges <- paste(l_min, l_max, "\n")
 
   rcols <- c("alpha", "lambda", "nzero", "cvm", "cvsd", "cvup", "cvlo")
@@ -321,10 +323,12 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
       tdf <- marc[marc$alpha == A, ]
       best_up <- tdf$cvup[tdf$lambda.min]
       best_lo <- tdf$cvlo[tdf$lambda.min]
-      close <- sapply(unique(tdf$lambda), function(x) {
-        probe <- tdf$cvm[tdf$lambda == x]
-        return(probe < best_up & probe > best_lo)
-      })
+      close <- vapply(X = unique(tdf$lambda),
+                      FUN = function(x) {
+                        probe <- tdf$cvm[tdf$lambda == x]
+                        return( (probe < best_up) & (probe > best_lo) )
+                      },
+                      FUN.VALUE = c(TRUE))
       nclose <- sum(close)
       ntotal <- length(close)
       pclose <- nclose / ntotal

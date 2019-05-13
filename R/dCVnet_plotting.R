@@ -172,8 +172,14 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
   df <- do.call(rbind, df)
   rownames(df) <- NULL
 
-  df$Fold <- sapply(strsplit(df$outfold, split = "\\."), "[", 1)
-  df$Rep <- sapply(strsplit(df$outfold, split = "\\."), "[", 2)
+  df$Fold <- vapply(X = strsplit(df$outfold, split = "\\."),
+                    FUN = "[",
+                    FUN.VALUE = c(""),
+                    1)
+  df$Rep <- vapply(X = strsplit(df$outfold, split = "\\."),
+                   FUN = "[",
+                   FUN.VALUE = c(""),
+                   2)
 
   plotReps <- unique(df$Rep)
   if ( n.random > 0 ) plotReps <- sample(plotReps, size = n.random)

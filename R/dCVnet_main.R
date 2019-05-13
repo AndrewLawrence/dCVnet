@@ -444,7 +444,10 @@ coef.dCVnet <- function(object, type = "all", ...) {
                                    object$tuning[[1]]$model$beta@Dimnames[[1]]))
   R$fold <- factor(R$fold, levels = unique(R$fold))
 
-  R$Rep <- sapply(strsplit(as.character(R$fold), split = "\\."), "[", 2)
+  R$Rep <- vapply(X = strsplit(as.character(R$fold), split = "\\."),
+                  FUN = "[",
+                  FUN.VALUE = c(""),
+                  2)
 
   if (type == "all") return(R)
   # Aggregate by Repetition:
@@ -524,9 +527,11 @@ print.dCVnet <- function(x, ...) {
   cat("Outcome:\n")
   if ( callenv$family %in% c("binomial", "multinomial")) {
     stab <- table(parsed$y)
-    sapply(seq_along(stab), function(i) {
-      cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
-    })
+    vapply(X = seq_along(stab),
+           FUN = function(i) {
+             cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
+           },
+           FUN.VALUE = c(""))
   } else {
     print(summary(parsed$y)); cat("\n")
   }
@@ -592,7 +597,10 @@ selected_hyperparameters <- function(object,
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
 
-  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = TRUE), "[", 2)
+  R$Rep <- vapply(X = strsplit(rownames(R), split = ".", fixed = TRUE),
+                  FUN = "[",
+                  FUN.VALUE = c(""),
+                  2)
 
   if ( what == "data") return(list(CVfolds = R, FinalModel = FF))
 
@@ -721,7 +729,10 @@ summary.dCVnet <- function(object, ...) {
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
 
-  R$Rep <- sapply(strsplit(rownames(R), split = ".", fixed = TRUE), "[", 2)
+  R$Rep <- vapply(X = strsplit(rownames(R), split = ".", fixed = TRUE),
+                  FUN = "[",
+                  FUN.VALUE = c(""),
+                  2)
 
   # summarise lambdas:
   lambda_summary <- c(mean = mean(R$lambda),

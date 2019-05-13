@@ -376,9 +376,11 @@ startup_message <- function(k_inner, nrep_inner,
   cat("Outcome:\n")
   if ( family %in% c("binomial", "multinomial")) {
     stab <- table(parsed$y)
-    sapply(seq_along(stab), function(i) {
-      cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
-    })
+    vapply(X = seq_along(stab),
+           FUN = function(i) {
+             cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
+           },
+           FUN.VALUE = c(""))
   } else {
     print(summary(parsed$y)); cat("\n")
   }

@@ -52,7 +52,7 @@ extract_rocdata <- function(classperformance,
 
   # Utility subfunction convert a ROC performance object to a dataframe.
   .performance_to_data_frame <- function(perf, names) {
-    ns <- sapply(perf@y.values, length)
+    ns <- vapply(perf@y.values, length, c(1.0))
     runs <- rep(names, ns)
     # convert to dataframe for ggplot:
     outer.df <- data.frame(Sens = do.call(c, perf@y.values),

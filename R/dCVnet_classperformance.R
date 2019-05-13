@@ -63,7 +63,7 @@ classperformance.list <- function(x, ...) {
 classperformance.classperformance <- function(x, as.data.frame = TRUE, ...) {
   if ( as.data.frame && ! "data.frame" %in% class(x) ) {
 
-    xfac <- as.factor(unlist(lapply(x, '[[', "label"), use.names = F))
+    xfac <- as.factor(unlist(lapply(x, "[[", "label"), use.names = FALSE))
     return(structure(unsplit(x, xfac),
                      class = c("classperforamnce", "data.frame")))
   }

@@ -182,7 +182,10 @@ coef_reflogreg <- function(refobj) {
     G <- coef(refobj$glm)
   }
   if ( b ) {
-    U <- c(NA, sapply(refobj$univariate, function(x) coef(x)[2]))
+    U <- c(NA,
+           vapply(X = refobj$univariate,
+                  FUN = function(x) coef(x)[2],
+                  FUN.VALUE = c(1.0)))
     names(U) <- c("(Intercept)", names(refobj$univariate))
   }
 
