@@ -53,29 +53,49 @@
 #'         and cv-type (\code{type.measure})
 #' @export
 repeated.cv.glmnet <- function(x, y,
-                               folds,
-                               lambdas,
-                               alpha,
-                               family,
+                               folds = NULL,
+                               lambdas = NULL,
+                               alpha = 1,
+                               nfolds = NULL,
+                               family = c("gaussian", "binomial",
+                                          "poisson", "multinomial",
+                                          "cox", "mgaussian"),
                                opt.lambda.type = "minimum",
                                opt.lambda.type.value = 1,
                                ...,
                                debug = FALSE) {
-  # We need to use fixed folds, fixed lambdas and a single fixed alpha
-  #   most arguments are passed straight through to cv.glmnet.
+  cl <- as.list(match.call())
+  # We typically want to use fixed folds and fixed lambda sequence, but for
+  #   convenience/generality include fallback modes (with warnings):
+  if ( missing(lambdas) ) {
+    warning("no lambdas provided: extracting glmnet default lambdas")
+    # get elements of call suitable for glmnet:
+    cl.gnet <- cl[names(cl) %in% methods::formalArgs(glmnet::glmnet)]
+    lambdas <- do.call(glmnet::glmnet, cl.gnet)$lambda # extract lambda list
+  }
+  if ( missing(folds) ) {  # nolint
+    warning("no folds provided: generating 5x10-fold")
+    if ( missing(nfolds) ) nfolds <- 10
+    folds <- lapply(seq.int(5),
+                    function(i) {
+                      caret::createFolds(y = y,
+                                         k = nfolds,
+                                         list = FALSE)
+                    })
+  }
 
-  # estimate models:
+  # prepare a safe call to cv.glmnet:
+  cl.cvgnet <- cl[names(cl) %in% c(methods::formalArgs(glmnet::cv.glmnet),
+                                   methods::formalArgs(glmnet::glmnet))]
+  cl.cvgnet$lambda <- lambdas
+
+  # estimate models over folds:
   models <- lapply(seq_along(folds), function(i) {
-    f <- folds[[i]]
-    glmnet::cv.glmnet(x = x,
-                      y = y,
-                      lambda = lambdas,
-                      family = family,
-                      foldid = f,
-                      alpha = alpha,
-                      ...)
+    cl.cvgnet$foldid <- folds[[i]]
+    do.call(glmnet::cv.glmnet, cl.cvgnet)
   } )
   measure_name <- names(models[[1]]$name)
+
   # extract results:
   results <- mapply(cv.glmnet.modelsummary,
                     models,
@@ -85,11 +105,9 @@ repeated.cv.glmnet <- function(x, y,
   results <- do.call(rbind, results)
 
   # mean average results over the repetitions for each lambda:
-  av <- aggregate(
-    x = results[, !names(results) %in% c("lambda", "rep",
-                                         "lambda.min", "lambda.1se")],
-    by = list(lambda = results$lambda),
-    FUN = mean)
+  av <- aggregate(x = results[, c("cvm", "cvsd", "cvup", "cvlo", "nzero")],
+                  by = list(lambda = results$lambda),
+                  FUN = mean)
 
   theLambda <- cvlambdafinder(lambda = av$lambda,
                               cvm = av$cvm,
@@ -116,7 +134,6 @@ repeated.cv.glmnet <- function(x, y,
                 results = results,
                 models = models))
   }
-
 }
 
 #' @export
@@ -178,6 +195,7 @@ summary.repeated.cv.glmnet <- function(object, ...) {
 #'     returns averaged results, selects the 'best' alpha.
 #'     *This is intended to be a dCVnet internal function*
 #' @inheritParams repeated.cv.glmnet
+#' @param lambdas a list of lambda sequences corresponding to alphalist
 #' @param alphalist a vector of alpha values to search.
 #' @param k the number of folds for k-fold cross-validation.
 #' @param nrep the number of repetitions
@@ -198,51 +216,69 @@ summary.repeated.cv.glmnet <- function(object, ...) {
 #'     \item{inner_folds - record of folds used}
 #'     }
 #' @export
-multialpha.repeated.cv.glmnet <- function(alphalist,
-                                          lambdas,
-                                          y,
-                                          k,
-                                          nrep,
-                                          opt.lambda.type = "minimum",
-                                          opt.lambda.type.value = 1,
-                                          opt.ystratify = TRUE,
-                                          opt.uniquefolds = FALSE,
-                                          family,
-                                          ...) {
+multialpha.repeated.cv.glmnet <- function(
+  y,
+  alphalist = round(seq(0.2, 1, len = 6) ^ exp(1), 2),
+  lambdas = NULL,
+  k = 10,
+  nrep = 5,
+  opt.lambda.type = "minimum",
+  opt.lambda.type.value = 1,
+  opt.ystratify = TRUE,
+  opt.uniquefolds = FALSE,
+  family,
+  ...) {
+  cl <- as.list(match.call())
+  # We typically want to use a fixed lambda sequence over all folds of the
+  #   outer CV, but for convenience/generality include a fallback mode:
+  if ( missing(lambdas) ) {
+    warning("no lambdas provided: extracting glmnet default lambdas")
+    # extract lambda lists
+    lambdas <- lapply(alphalist,
+                      function(ii) {
+                        # get elements of call suitable for glmnet:
+                        cl.gnet <- cl[names(cl) %in%
+                                        methods::formalArgs(glmnet::glmnet)]
+                        cl.gnet$alpha <- ii
+                        return(do.call(glmnet::glmnet, cl.gnet)$lambda)
+                        })
+  }
+
   # Fold generation:
   ystrat <- y
   if ( identical(opt.ystratify, FALSE) | family %in% c("cox", "mgaussian") ) {
     # caret stratification isn't sensible for cox / mgauss:
     ystrat <- rep("x", NROW(y))
   }
-
   folds <- lapply(1:nrep, function(i) {
     caret::createFolds(y = ystrat, k = k, list = FALSE, returnTrain = FALSE)
   })
 
   if ( identical(opt.uniquefolds, TRUE) ) checkForDuplicateCVFolds(folds)
 
+  # prepare the repeated.cv.glmnet call:
+  cl.rcvglm <- cl[names(cl) %in% c(methods::formalArgs(repeated.cv.glmnet),
+                                   methods::formalArgs(glmnet::glmnet),
+                                   methods::formalArgs(glmnet::cv.glmnet))]
+  cl.rcvglm$folds <- folds
+
+  # run for each alpha/lambdas pair:
   malist <- lapply(seq_along(alphalist),
                    function(i) {
                      if ( getOption("mc.cores", default = 1) == 1 ) {
                        cat(paste("\tInner Alpha", i, "of",
                                  length(alphalist), Sys.time(), "\n"))
                      }
-                     a <- alphalist[[i]]
+                     cl.rcvglm$alpha <- alphalist[[i]]
+                     cl.rcvglm$lambdas <- lambdas[[i]]
 
-                     repeated <- repeated.cv.glmnet(
-                       alpha = a,
-                       lambdas = lambdas[[i]],
-                       y = y,
-                       folds = folds,
-                       opt.lambda.type = opt.lambda.type,
-                       opt.lambda.type.value = opt.lambda.type.value,
-                       family = family,
-                       ...)
-                     repeated$alpha <- as.character(a)
+                     repeated <- do.call(repeated.cv.glmnet, cl.rcvglm)
+                     repeated$alpha <- as.character(alphalist[[i]])
 
                      return(repeated)
                    })
+
+  # assemble results:
   tmeas <- attr(malist[[1]], "type.measure")
   tfam  <- attr(malist[[1]], "family")
 
@@ -250,12 +286,12 @@ multialpha.repeated.cv.glmnet <- function(alphalist,
   attr(malist, "type.measure") <- tmeas
   attr(malist, "family") <- tfam
 
+  # pick the optimal alpha:
   bestfun <- ifelse(tmeas == "auc", max, min)
   bestcandidates <- malist[malist$lambda.min, ]
   best <- bestcandidates[bestcandidates$cvm == bestfun(bestcandidates$cvm), ]
 
-  # ties are broken by smaller cvsd followed by
-  #   sparser solutions.
+  # ties are broken by smaller cvsd followed by sparser solutions (unlikely)
   if ( nrow(best) > 1 ) {
     best <- best[order(best$cvsd, best$nzero), ]
     best <- best[1, ]

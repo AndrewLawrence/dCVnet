@@ -29,6 +29,7 @@
 #' @importFrom caret confusionMatrix
 #' @importFrom graphics plot
 #' @importFrom stats median prcomp relevel setNames
+#' @importFrom methods formalArgs
 #'
 #' @docType package
 #' @name dCVnet-package

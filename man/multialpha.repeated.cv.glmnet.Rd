@@ -4,16 +4,12 @@
 \alias{multialpha.repeated.cv.glmnet}
 \title{multialpha.repeated.cv.glmnet}
 \usage{
-multialpha.repeated.cv.glmnet(alphalist, lambdas, y, k, nrep,
+multialpha.repeated.cv.glmnet(y, alphalist = round(seq(0.2, 1, len =
+  6)^exp(1), 2), lambdas = NULL, k = 10, nrep = 5,
   opt.lambda.type = "minimum", opt.lambda.type.value = 1,
   opt.ystratify = TRUE, opt.uniquefolds = FALSE, family, ...)
 }
 \arguments{
-\item{alphalist}{a vector of alpha values to search.}
-
-\item{lambdas}{use a fixed, user supplied lambda sequence (descending)
-see \code{\link[glmnet]{glmnet}}}
-
 \item{y}{response variable. Quantitative for \code{family="gaussian"},
   or \code{family="poisson"} (non-negative counts). For
   \code{family="binomial"} should be either a factor with two levels, or
@@ -29,6 +25,10 @@ see \code{\link[glmnet]{glmnet}}}
   with '1' indicating death, and '0' indicating right censored. The
   function \code{Surv()} in package \pkg{survival} produces such a
   matrix. For  \code{family="mgaussian"}, \code{y} is a matrix of quantitative responses.}
+
+\item{alphalist}{a vector of alpha values to search.}
+
+\item{lambdas}{a list of lambda sequences corresponding to alphalist}
 
 \item{k}{the number of folds for k-fold cross-validation.}
 

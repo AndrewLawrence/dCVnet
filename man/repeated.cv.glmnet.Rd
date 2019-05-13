@@ -4,9 +4,10 @@
 \alias{repeated.cv.glmnet}
 \title{repeated.cv.glmnet}
 \usage{
-repeated.cv.glmnet(x, y, folds, lambdas, alpha, family,
-  opt.lambda.type = "minimum", opt.lambda.type.value = 1, ...,
-  debug = FALSE)
+repeated.cv.glmnet(x, y, folds = NULL, lambdas = NULL, alpha = 1,
+  nfolds = NULL, family = c("gaussian", "binomial", "poisson",
+  "multinomial", "cox", "mgaussian"), opt.lambda.type = "minimum",
+  opt.lambda.type.value = 1, ..., debug = FALSE)
 }
 \arguments{
 \item{x}{input matrix, of dimension nobs x nvars; each row is an
@@ -40,6 +41,10 @@ see \code{\link[glmnet]{glmnet}}}
     \eqn{0\le\alpha\le 1}. The penalty is defined
     as \deqn{(1-\alpha)/2||\beta||_2^2+\alpha||\beta||_1.} \code{alpha=1}
     is the lasso penalty, and \code{alpha=0} the ridge penalty.}
+
+\item{nfolds}{number of folds - default is 10. Although \code{nfolds}
+    can be as large as the sample size (leave-one-out CV), it is not
+    recommended for large datasets. Smallest value allowable is \code{nfolds=3}}
 
 \item{family}{Response type (see above)}
 
