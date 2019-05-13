@@ -53,7 +53,7 @@ fitting. Cross-validated estimates of model performance are unaffected by the
 optimism caused by overfitting and reflect the likely performance of the model 
 in unseen data.
 
-There are different forms of cross-valdidation, *dCVnet* implements repeated 
+There are different forms of cross-validation, *dCVnet* implements repeated 
 k-fold cross-validation.
 
 However, cross-validation only tells the analyst if overfitting is occurring, 
@@ -100,7 +100,7 @@ selection.
 
 If the cross-validation for hyperparameter selection is combined with the 
 cross-validation to estimate generalisation error this will add back in 
-optimisim to our estimates of the generalisation error. 
+optimism to our estimates of the generalisation error. 
 
 To combat this cross-validation for generalisation error must be completely 
 independent of the cross-validation for hyperparameter selection, see 

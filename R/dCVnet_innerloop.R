@@ -168,7 +168,7 @@ summary.repeated.cv.glmnet <- function(object, ...) {
   close <- vapply(X = unique(object$lambda),
                   FUN = function(x) {
                     probe <- object$cvm[object$lambda == x]
-                    return((probe < best_up) & (probe > best_lo))
+                    return( (probe < best_up) & (probe > best_lo) )
                   },
                   FUN.VALUE = c(TRUE))
 

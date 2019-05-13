@@ -14,7 +14,7 @@
 #'      reference models, or pass a pre-calculated \code{\link{reflogreg}}
 #'      object.
 #'      Any other values (e.g. \code{FALSE}) suppress the
-#'      reference model calcuations.
+#'      reference model calculations.
 #'
 #' @name log_results_to_excel
 #' @return No return value.
