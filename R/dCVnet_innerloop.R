@@ -64,7 +64,8 @@ repeated.cv.glmnet <- function(x, y,
                                opt.lambda.type.value = 1,
                                ...,
                                debug = FALSE) {
-  cl <- as.list(match.call())
+  cl <- c(as.list(environment()), list(...))
+
   # We typically want to use fixed folds and fixed lambda sequence, but for
   #   convenience/generality include fallback modes (with warnings):
   if ( missing(lambdas) ) {
@@ -85,8 +86,11 @@ repeated.cv.glmnet <- function(x, y,
   }
 
   # prepare a safe call to cv.glmnet:
-  cl.cvgnet <- cl[names(cl) %in% c(methods::formalArgs(glmnet::cv.glmnet),
-                                   methods::formalArgs(glmnet::glmnet))]
+  cvgnet_args <- unique(c(methods::formalArgs(glmnet::cv.glmnet),
+                          methods::formalArgs(glmnet::glmnet)))
+  cvgnet_args <- cvgnet_args[!(cvgnet_args %in% "...")]
+
+  cl.cvgnet <- cl[names(cl) %in% cvgnet_args]
   cl.cvgnet$lambda <- lambdas
 
   # estimate models over folds:
@@ -228,7 +232,8 @@ multialpha.repeated.cv.glmnet <- function(
   opt.uniquefolds = FALSE,
   family,
   ...) {
-  cl <- as.list(match.call())
+  cl <- c(as.list(environment()), list(...))
+
   # We typically want to use a fixed lambda sequence over all folds of the
   #   outer CV, but for convenience/generality include a fallback mode:
   if ( missing(lambdas) ) {
