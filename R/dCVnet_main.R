@@ -54,7 +54,7 @@
 #'                      f = ~ Sepal.Length + Sepal.Width +
 #'                            Petal.Length + Petal.Width,
 #'                      data = siris,
-#'                      alphalist = c(0.0, 0.5, 1.0),
+#'                      alphalist = c(0.2, 0.5, 1.0),
 #'                      opt.lambda.type = "se")
 #'
 #' #Note: in most circumstances non-default (larger) values of
@@ -527,11 +527,9 @@ print.dCVnet <- function(x, ...) {
   cat("Outcome:\n")
   if ( callenv$family %in% c("binomial", "multinomial")) {
     stab <- table(parsed$y)
-    vapply(X = seq_along(stab),
-           FUN = function(i) {
-             cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
-           },
-           FUN.VALUE = c(""))
+    for ( i in seq_along(stab) ) {
+      cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
+    }
   } else {
     print(summary(parsed$y)); cat("\n")
   }

@@ -376,11 +376,9 @@ startup_message <- function(k_inner, nrep_inner,
   cat("Outcome:\n")
   if ( family %in% c("binomial", "multinomial")) {
     stab <- table(parsed$y)
-    vapply(X = seq_along(stab),
-           FUN = function(i) {
-             cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
-           },
-           FUN.VALUE = c(""))
+    for ( i in seq_along(stab) ) {
+      cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
+    }
   } else {
     print(summary(parsed$y)); cat("\n")
   }
@@ -424,6 +422,10 @@ cv.glmnet.modelsummary <- function(mod,
                     rep = rep,
                     stringsAsFactors = FALSE))
 }
+
+
+
+
 
 #' tidy_predict.glmnet
 #'

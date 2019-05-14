@@ -115,7 +115,7 @@ model <- dCVnet(y = siris$Species,
                      f = ~ Sepal.Length + Sepal.Width +
                            Petal.Length + Petal.Width,
                      data = siris,
-                     alphalist = c(0.0, 0.5, 1.0),
+                     alphalist = c(0.2, 0.5, 1.0),
                      opt.lambda.type = "se")
 
 #Note: in most circumstances non-default (larger) values of
