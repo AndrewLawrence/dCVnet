@@ -108,29 +108,37 @@ repeated.cv.glmnet <- function(x, y,
                     SIMPLIFY = FALSE)
   results <- as.data.frame(data.table::rbindlist(results))
 
+  # we want to average variances not sd:
+  results$cvsd <- results$cvsd ^ 2
+
   # mean average results over the repetitions for each lambda:
-  av <- aggregate(x = results[, c("cvm", "cvsd", "cvup", "cvlo", "nzero")],
+  av <- aggregate(x = results[, c("cvm", "cvsd", "nzero")],
                   by = list(lambda = results$lambda),
                   FUN = mean)
+  # convert variance back to SD:
+  av$cvsd <- sqrt(av$cvsd)
+  # calculate average cvup, cvlo:
+  av$cvup <- av$cvm + av$cvsd
+  av$cvlo <- av$cvm - av$cvsd
+  # reorder
+  av <- av[,c("lambda", "cvm", "cvsd", "cvup", "cvlo", "nzero")]
 
+  # find "best" lambda:
   theLambda <- cvlambdafinder(lambda = av$lambda,
                               cvm = av$cvm,
                               cvsd = av$cvsd,
                               minimise = !("auc" %in% measure_name),
                               type = opt.lambda.type,
                               type.value = opt.lambda.type.value)
-  # What optimising function should we use?:
-
   # Which is the optimum lambda?
   av$lambda.min <- FALSE
   av$lambda.min[match(theLambda, av$lambda)] <- TRUE
 
-  av[order(av$lambda, decreasing = TRUE), ]
   attr(av, "type.measure") <- measure_name
   attr(av, "family") <- family
   attr(av, "class") <- c("repeated.cv.glmnet", "data.frame")
 
-  # models and results could be useful, but we do not usually want these.
+  # models and full results could be useful, but we do not usually want these.
   if ( !debug ) {
     return(av)
   } else {
@@ -139,6 +147,7 @@ repeated.cv.glmnet <- function(x, y,
                 models = models))
   }
 }
+
 
 #' @export
 print.repeated.cv.glmnet <- function(x, ...) {
