@@ -23,6 +23,7 @@ Imports:
     ggplot2,
     ModelMetrics,
     parallel,
+    data.table,
     ROCR,
     scales,
     methods,

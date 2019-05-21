@@ -161,7 +161,7 @@ parseddata_summary <- function(object) {
                               kurt = e1071::kurtosis(x, na.rm = TRUE, type = 2),
                               nnz = sum(x != 0))
                  })
-  xdes <- do.call(rbind, xdes)
+  xdes <- as.data.frame(data.table::rbindlist(xdes))
   return(list(OutcomeData = stry,
               PredictorData = xdes))
 }
@@ -316,7 +316,7 @@ lambda_rangefinder <- function(y, x,
                                                 y = y[subsamp],
                                                 alphalist = alphalist)
                                })
-  result <- do.call(rbind, result)
+  result <- as.data.frame(data.table::rbindlist(result))
 
   if ( length(alphalist) == 1 ) {
     return(max(result))
@@ -595,7 +595,7 @@ tidy_coef.glmnet <- function(mod,
       return(x)
     },
     x = p, n = nm, SIMPLIFY = FALSE)
-    p <- do.call(rbind, p)
+    p <- as.data.frame(data.table::rbindlist(p))
   } else {
     p <- as.matrix(p)
   }

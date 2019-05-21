@@ -169,7 +169,7 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
                  return(R)
                })
 
-  df <- do.call(rbind, df)
+  df <- as.data.frame(data.table::rbindlist(df))
   rownames(df) <- NULL
 
   df$Fold <- vapply(X = strsplit(df$outfold, split = "\\."),

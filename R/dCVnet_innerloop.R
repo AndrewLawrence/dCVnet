@@ -106,7 +106,7 @@ repeated.cv.glmnet <- function(x, y,
                     alpha,
                     as.character(seq_along(models)),
                     SIMPLIFY = FALSE)
-  results <- do.call(rbind, results)
+  results <- as.data.frame(data.table::rbindlist(results))
 
   # mean average results over the repetitions for each lambda:
   av <- aggregate(x = results[, c("cvm", "cvsd", "cvup", "cvlo", "nzero")],
@@ -287,7 +287,7 @@ multialpha.repeated.cv.glmnet <- function(
   tmeas <- attr(malist[[1]], "type.measure")
   tfam  <- attr(malist[[1]], "family")
 
-  malist <- do.call(rbind, malist)
+  malist <- as.data.frame(data.table::rbindlist(malist))
   attr(malist, "type.measure") <- tmeas
   attr(malist, "family") <- tfam
 
@@ -378,7 +378,7 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
                   ntotal = ntotal,
                   pclose = pclose))
     })
-    kk <- as.data.frame(do.call(rbind, kk))
+    kk <- as.data.frame(data.table::rbindlist(kk))
     return(kk)
   }
 

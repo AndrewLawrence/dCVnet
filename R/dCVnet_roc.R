@@ -147,7 +147,7 @@ average_rocdata <- function(rocdata,
     return(d)
   } )
   # merge results:
-  res <- as.data.frame(do.call(rbind, res))
+  res <- as.data.frame(data.table::rbindlist(res))
 
   # average results for threshold values:
   av <- aggregate(res[, !names(res) %in% c("run", "alab")],

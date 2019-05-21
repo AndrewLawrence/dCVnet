@@ -94,6 +94,7 @@
 #' }
 #' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
 #' @importFrom stats predict sd terms var
+#' @importFrom data.table rbindlist
 #' @export
 dCVnet <- function(
   y,
@@ -312,7 +313,11 @@ dCVnet <- function(
   # Performance -------------------------------------------------------------
 
   # Gather performance from the outers into a single dataframe.
-  performance <- do.call(rbind, lapply(outers, "[[", "performance"))
+  performance <- as.data.frame(
+    data.table::rbindlist(
+      lapply(outers, "[[", "performance")
+    )
+  )
   rownames(performance) <- NULL
   performance <- structure(performance,
                            class = c("classperformance",
@@ -437,7 +442,7 @@ coef.dCVnet <- function(object, type = "all", ...) {
                      stringsAsFactors = FALSE)
     return(RR)
   })
-  R <- do.call(rbind, R)
+  R <- as.data.frame(data.table::rbindlist(R))
 
   R$Predictor <- factor(R$Predictor,
                         levels = c("(Intercept)",
@@ -615,7 +620,7 @@ selected_hyperparameters <- function(object,
                `lambda min` = min(R$lambda[R$alpha == a]),
                `lambda max` = max(R$lambda[R$alpha == a]))
   } )
-  J <- do.call(rbind, J)
+  J <- as.data.frame(data.table::rbindlist(J))
 
   if ( what == "summary" ) {
     return(list(alpha = A, lambda = L, joint = J, FinalModel = FF.summary))
@@ -653,7 +658,7 @@ coefficients_summary <- function(object, ...) {
                       propnz = sum(kk != 0) / length(kk)))
   } )
   names(Range) <- names(Range.preds)
-  Range <- do.call(rbind, Range)
+  Range <- as.data.frame(data.table::rbindlist(Range))
 
   FinalModel <- coef(object$final$model,
                      s = object$final$tuning$inner_best$lambda)

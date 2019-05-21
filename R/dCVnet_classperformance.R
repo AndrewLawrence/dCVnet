@@ -144,7 +144,7 @@ classperformance.glmlist <- function(x, as.data.frame = TRUE, ...) {
   })
   names(R) <- names(x)
   if ( !as.data.frame ) return(structure(R, class = class_list))
-  R <- do.call(rbind, R)
+  R <- as.data.frame(data.table::rbindlist(R))
   rownames(R) <- NULL
   return(structure(R, class = class_df))
 }
