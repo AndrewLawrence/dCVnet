@@ -4,10 +4,9 @@
 \alias{repeated.cv.glmnet}
 \title{repeated.cv.glmnet}
 \usage{
-repeated.cv.glmnet(x, y, folds = NULL, lambdas = NULL, alpha = 1,
-  nfolds = NULL, family = c("gaussian", "binomial", "poisson",
-  "multinomial", "cox", "mgaussian"), opt.lambda.type = "minimum",
-  opt.lambda.type.value = 1, ..., debug = FALSE)
+repeated.cv.glmnet(x, y, folds = NULL, lambda = NULL, alpha = 1,
+  nfolds = NULL, nreps = NULL, family = c("gaussian", "binomial",
+  "poisson", "multinomial", "cox", "mgaussian"), ..., debug = FALSE)
 }
 \arguments{
 \item{x}{input matrix, of dimension nobs x nvars; each row is an
@@ -34,7 +33,7 @@ of length \emph{n_cases}. The integer for each case labels it as belonging
 to a fold \emph{1:n_folds}. This argument implicitly sets the number of repeats
 and the k in repeated k-fold cv.}
 
-\item{lambdas}{use a fixed, user supplied lambda sequence (descending)
+\item{lambda}{use a fixed, user supplied lambda sequence (descending)
 see \code{\link[glmnet]{glmnet}}}
 
 \item{alpha}{The elasticnet mixing parameter, with
@@ -48,21 +47,7 @@ see \code{\link[glmnet]{glmnet}}}
 
 \item{family}{Response type (see above)}
 
-\item{opt.lambda.type}{Method for selecting optimum lambda. One of
-\itemize{
-\item{\code{"minimum"} - returns the lambda with best
-CV score.}
-\item{\code{"se"} - returns the +1 se lambda}
-\item{\code{"percentage"} - returns minimum lambda
-scaled by a factor, e.g. allowing lambda+3pc}
-}}
-
-\item{opt.lambda.type.value}{determines the se multiplier or percentage
-for \code{opt.lambda.type}.}
-
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
-
-\item{debug}{if TRUE return models and unaveraged results (default: FALSE).}
 }
 \value{
 a data.frame object of class \code{\link{repeated.cv.glmnet}}
@@ -87,4 +72,10 @@ results. \emph{This is intended as a dCVnet internal function}.
 \details{
 The code will run for any glmnet family, but folds & lambdas must be
 correctly specified.
+}
+\examples{
+\dontrun{
+data("CoxExample", package = "glmnet") # x and y
+mod <- repeated.cv.glmnet(x = x, y = y, family = "cox")
+}
 }

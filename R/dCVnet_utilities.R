@@ -424,7 +424,200 @@ cv.glmnet.modelsummary <- function(mod,
 }
 
 
+#' extract_glmnet_alpha
+#'
+#' glmnet model objects do not explicitly include the alpha value which was
+#' used when the model was fit. This utility function tries to extract the
+#' value of alpha used to fit a glmnet object - this is not always
+#' possible (e.g. if a named variable in another script is used to set alpha
+#' in the call to glmnet)
+#'
+#' Note: dCVnet will quietly extend the glmnet models it fits to include
+#'    additional information. This information includes the alpha value
+#'    (see \code{\link{set_glmnet_alpha}}). This dCVnet specified
+#'    alpha value will be extracted with priority over alpha values implied
+#'    in the model without checking.
+#'    The dCVnet extension of the (cv.)glmnet S3 class is very basic.
+#'
+#' @param mod a \code{\link[glmnet]{glmnet}} or \code{\link[glmnet]{cv.glmnet}}
+#'     model
+#' @export
+#' @seealso \code{\link{set_glmnet_alpha}}
+extract_glmnet_alpha <- function(mod) {
+  if ( "cv.glmnet" %in% class(mod) ) { mod <- mod$glmnet.fit }
+  # If alpha has been set by dCVnet then use this value:
+  if ( ! is.null(mod$alpha) ) return(mod$alpha)
+  # Otherwise we must use information provided by glmnet.
+  # If there is no alpha in the call, then return the fxn default:
+  if ( is.null(mod$call$alpha) ) return( base::formals(glmnet::glmnet)$alpha )
+  alpha <- mod$call$alpha
+  # If alpha evaluates to a valid numeric then return this:
+  if ( is.numeric(alpha) && identical(length(alpha), 1L) ) return(alpha)
+  # otherwise look for the named object in the environment and if found
+  #   warn and return what it points to:
+  if ( is.name(alpha) ) {
+    warning("alpha in model call is a named object,
+              an object of this name was found in the environment,
+              but it is not guaranteed to be the correct alpha.")
+    try( return( get(as.character(alpha)) ) )
+  }
+  # as a fall back, stop and print name of missing object:
+  stop(
+    paste0("alpha in model call is a named object
+              which could not be found in the environment.
+             object name was: ", alpha))
+  return(NULL)
+}
 
+
+
+
+#' set_glmnet_alpha
+#'
+#' glmnet model objects do not explicitly include the alpha value which was
+#' used when the model was fit. This utility function extends the glmnet S3
+#' class by adding a slot for 'alpha'. This can be manually specified (setalpha)
+#' or extracted from the model object (\code{\link{extract_glmnet_alpha}}).
+#'
+#' Note: This extension of the (cv.)glmnet S3 class is very basic.
+#'
+#' @inheritParams extract_glmnet_alpha
+#' @param setalpha Specify an alpha value
+#'
+#' @export
+#' @seealso \code{\link{extract_glmnet_alpha}}, \code{\link[glmnet]{glmnet}}
+set_glmnet_alpha <- function(mod, setalpha = NULL) {
+  if ( "cv.glmnet" %in% class(mod) ) {
+    if ( missing(setalpha) ) setalpha <- extract_glmnet_alpha(mod$glmnet.fit)
+    mod$glmnet.fit$alpha <- setalpha
+  } else {
+    if ( missing(setalpha) ) setalpha <- extract_glmnet_alpha(mod)
+    mod$alpha <- setalpha
+  }
+  return(mod)
+}
+
+
+#' amalgamate_cv.glmnet
+#'
+#' Gathers results from a list of \code{\link[glmnet]{cv.glmnet}} objects
+#'     and returns a merged, averaged object.
+#'
+#' The arithmetic mean k-fold cross-validated loss (i.e. type.measure) is taken
+#' over the models (with the sd averaged via variance).
+#' The cv SE upper and lower limits (used in lambda.1se calculation) are then
+#' calculated from on the averaged data and finally the cv optimal lambda.1se
+#' and lambda.min values calculated for the averaged performance.
+#'
+#' Consistent with cv.glmnet, the model coefficients within folds are not
+#' made available, averaged or otherwise investigable, but a whole data model
+#' is returned in the \code{glmnet.fit} slot.
+#'
+#' The cvglmlist must contain cv.glmnet models suitable for averaging together.
+#'     This typically means all models having the same:
+#'     \itemize{
+#'     \item{family}
+#'     \item{x and y data}
+#'     \item{alpha value}
+#'     \item{lambda sequence}
+#'     \item{type.measure}
+#'     \item{number of k-fold CV folds}
+#'     \item{other cv.glmnet options}
+#'     }
+#'     in order for the amalgamated results to "make sense".
+#'     Essentially the models in the list should only differ on the random
+#'     allocation of folds to cases (usually specified in foldid).
+#'
+#' Some limited checks are implemented to ensure alpha, lambda and type.measure
+#'     are identical. There is an option to turn these checks off, but this is
+#'     not recommended.
+#'
+#' This function presently does not honour the "keep" argument of cv.glmnet and
+#'     all additional arrays/vectors are silently dropped.
+#'
+#' @param cvglmlist a list of cv.glmnet models
+#' @param checks should any checks be suppressed (typically not)
+#' @inherit glmnet::cv.glmnet return
+#' @importFrom glmnet getmin
+#' @examples
+#' \dontrun{
+#' data("CoxExample", package = "glmnet") # x and y
+#' # folds for unstratified 10x-repeated 5-fold cv:
+#' foldlist <- replicate(10,
+#' sample(1:5, size = NROW(x), replace = TRUE),
+#' simplify = FALSE)
+#' names(foldlist) <- paste0("Rep", 1:10) # label the replications.
+#' lambdaseq <- glmnet::cv.glmnet(x=x, y=y, family = "cox")$lambda
+#' # create a list of models:
+#' modellist <- lapply(foldlist, function(ff) {
+#' glmnet::cv.glmnet(x = x, y = y, family = "cox", foldid = ff, lambda = lambdaseq) } )
+#'
+#' # use amalgamate to average results:
+#' mod <- amalgamate_cv.glmnet(modellist)
+#'
+#' # compare rep-rep performance variability with the average performance:
+#' # rep1:
+#' glmnet::plot.cv.glmnet(modellist[[1]], main = "rep1")
+#' # rep2:
+#' glmnet::plot.cv.glmnet(modellist[[2]], main = "rep2")
+#' # etc...
+#' # mean:
+#' glmnet::plot.cv.glmnet(mod, main = "averaged")
+#' }
+#' @seealso \code{\link[glmnet]{cv.glmnet}}
+#' @export
+amalgamate_cv.glmnet <- function(cvglmlist,
+                                 checks = list(alpha = TRUE,
+                                               lambda = TRUE,
+                                               type.measure = TRUE)) {
+  # apply with base::Reduce to check all element of a list are identical:
+  .reducing_identical <- function(x,y) { if (identical(x,y)) x else FALSE }
+
+  # check lambdas:
+  lambda <- base::Reduce(.reducing_identical, lapply(cvglmlist, "[[", "lambda"))
+  if ( checks$lambda && identical(lambda, FALSE) ) {
+    stop("lambda lists are not identical")
+  }
+  # check alphas
+  alphas <- vapply(cvglmlist,
+                   FUN = extract_glmnet_alpha,
+                   FUN.VALUE = numeric(1))
+  if (checks$alpha && !identical(length(unique(alphas)),1L)) {
+    stop("alphas must be identical")
+  }
+  # check names (i.e. type.measure)
+  cvname <- base::Reduce(.reducing_identical, lapply(cvglmlist, "[[", "name"))
+  if ( checks$type.measure && identical(cvname, FALSE) ) {
+    stop("all models must use the same name/type.measure")
+  }
+
+  # merge the list of results:
+  cvm <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "cvm")))
+  cvsd <- as.data.frame(base::Map("[[", cvglmlist, "cvsd"))
+  cvsd <- cvsd^2  # for sd take variance, average and return to sd.
+  cvsd <- sqrt(rowMeans(cvsd))
+  nz <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "nzero")))
+  # format nzero:
+  nm <- paste0("s", seq.int(from = 0, length.out = length(lambda)))
+  names(nz) <- nm
+  # lookup lambda.min/lambda.1se
+  lamin <- if (cvname == "AUC") {
+    glmnet::getmin(lambda, -cvm, cvsd)
+  } else {
+    glmnet::getmin(lambda, cvm, cvsd)
+  }
+  return(structure(c(list(lambda = lambda,
+                          cvm = cvm,
+                          cvsd = cvsd,
+                          cvup = cvm + cvsd,
+                          cvlo = cvm - cvsd,
+                          nzero = nz,
+                          name = cvname,
+                          glmnet.fit = cvglmlist[[1]]$glmnet.fit),
+                     as.list(lamin)),
+                   nrep = length(cvglmlist),
+                   class = "cv.glmnet"))
+}
 
 
 #' tidy_predict.glmnet

@@ -4,12 +4,15 @@
 \alias{multialpha.repeated.cv.glmnet}
 \title{multialpha.repeated.cv.glmnet}
 \usage{
-multialpha.repeated.cv.glmnet(y, alphalist = round(seq(0.2, 1, len =
+multialpha.repeated.cv.glmnet(x, y, alphalist = round(seq(0.2, 1, len =
   6)^exp(1), 2), lambdas = NULL, k = 10, nrep = 5,
   opt.lambda.type = "minimum", opt.lambda.type.value = 1,
   opt.ystratify = TRUE, opt.uniquefolds = FALSE, family, ...)
 }
 \arguments{
+\item{x}{input matrix, of dimension nobs x nvars; each row is an
+  observation vector. Can be in sparse matrix format (inherit from class \code{"sparseMatrix"} as in package \code{Matrix}; not yet available for \code{family="cox"})}
+
 \item{y}{response variable. Quantitative for \code{family="gaussian"},
   or \code{family="poisson"} (non-negative counts). For
   \code{family="binomial"} should be either a factor with two levels, or
@@ -28,7 +31,8 @@ multialpha.repeated.cv.glmnet(y, alphalist = round(seq(0.2, 1, len =
 
 \item{alphalist}{a vector of alpha values to search.}
 
-\item{lambdas}{a list of lambda sequences corresponding to alphalist}
+\item{lambdas}{a list of lambda sequence lists
+(corresponding to alphas given in alphalist)}
 
 \item{k}{the number of folds for k-fold cross-validation.}
 
@@ -44,7 +48,9 @@ scaled by a factor, e.g. allowing lambda+3pc}
 }}
 
 \item{opt.lambda.type.value}{determines the se multiplier or percentage
-for \code{opt.lambda.type}.}
+for \code{opt.lambda.type}.
+e.g. 'percentage' & type.value = 1.03 gives lambda + 3%.
+e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.}
 
 \item{opt.ystratify}{Boolean.
 Outer and inner sampling is stratified by outcome.
@@ -72,4 +78,7 @@ additional columns indicating \emph{alpha} and logical for \emph{best} overall}
 Runs a \code{\link{repeated.cv.glmnet}} for a list of alpha values and
 returns averaged results, selects the 'best' alpha.
 \emph{This is intended to be a dCVnet internal function}
+}
+\seealso{
+\code{\link{repeated.cv.glmnet}}
 }

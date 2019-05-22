@@ -64,7 +64,9 @@ scaled by a factor, e.g. allowing lambda+3pc}
 }}
 
 \item{opt.lambda.type.value}{determines the se multiplier or percentage
-for \code{opt.lambda.type}.}
+for \code{opt.lambda.type}.
+e.g. 'percentage' & type.value = 1.03 gives lambda + 3%.
+e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.}
 
 \item{opt.empirical_cutoff}{Boolean.
 Use the empirical proportion of cases as the cutoff for outer CV
