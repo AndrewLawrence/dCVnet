@@ -56,17 +56,22 @@ repeated.cv.glmnet <- function(x, y,
                                ...,
                                debug = FALSE) {
   # use as.list(environment()) to capture named/default values
-  cl <- c(as.list(environment()), list(...))
-  if ( ! is.name(cl$x) ) cl$x <- substitute(x) # save space using substitute for data variables
-  if ( ! is.name(cl$y) ) cl$y <- substitute(y)
+  cl <- as.list(match.call())[-1]
+  #  c(as.list(environment()), list(...))
+  #cl$x <- substitute(x) # save space using substitute for data variables
+  #cl$y <- substitute(y)
   # We typically want to use fixed folds and fixed lambda sequence, but for
   #   convenience/generality include fallback modes (with warnings):
-  if ( missing(lambda) ) {
+  if ( is.null(lambda) || missing(lambda) ) {
     warning("no lambda sequence provided: extracting glmnet default")
     # get elements of call suitable for glmnet:
     cl.gnet <- cl[names(cl) %in% methods::formalArgs(glmnet::glmnet)]
-    lambda <- do.call(glmnet::glmnet, cl.gnet)$lambda # extract lambda list
+    lambdaseq <- do.call(glmnet::glmnet, cl.gnet)$lambda # extract lambda list
+  } else {
+    lambdaseq <- lambda
   }
+  cl$lambda <- quote(lambdaseq)
+
   if ( missing(folds) ) {  # nolint
     if ( missing(nfolds) ) nfolds <- 10
     if ( missing(nreps) ) nreps <- 5
@@ -85,13 +90,11 @@ repeated.cv.glmnet <- function(x, y,
   cvgnet_args <- unique(c(methods::formalArgs(glmnet::cv.glmnet),
                           methods::formalArgs(glmnet::glmnet)))
   cvgnet_args <- cvgnet_args[!(cvgnet_args %in% "...")]
-
   cl.cvgnet <- cl[names(cl) %in% cvgnet_args]
-  cl.cvgnet$lambda <- substitute(lambda) # space, can extract these from object
 
   # estimate models over folds:
   models <- lapply(seq_along(folds), function(i) {
-    cl.cvgnet$foldid <- folds[[i]]
+    cl.cvgnet$foldid <- quote(folds[[i]])
     return(set_glmnet_alpha(do.call(glmnet::cv.glmnet, cl.cvgnet),
                             setalpha = alpha))
   } )
@@ -156,14 +159,15 @@ multialpha.repeated.cv.glmnet <- function(
   opt.uniquefolds = FALSE,
   family,
   ...) {
-  # use as.list(environment()) to capture named/default values
-  cl <- c(as.list(environment()), list(...))
-  #cl$x <- substitute(x) # save space using substitute for data variables
-  #cl$y <- substitute(y)
+#  # use as.list(environment()) to capture named/default values
+#  cl <- c(as.list(environment()), list(...))
+#  cl$x <- substitute(x) # save space using substitute for data variables
+#  cl$y <- substitute(y)
+  cl <- as.list(match.call())[-1]
 
   # We typically want to use a fixed lambda sequence over all folds of the
   #   outer CV, but for convenience/generality include a fallback mode:
-  if ( missing(lambdas) ) {
+  if ( missing(lambdas) || is.null(lambdas) ) {
     warning("no lambdas provided: extracting glmnet default lambdas")
     # extract lambda lists
     lambdas <- lapply(alphalist,
@@ -204,21 +208,22 @@ multialpha.repeated.cv.glmnet <- function(
                        cat(paste("\tInner Alpha", i, "of",
                                  length(alphalist), Sys.time(), "\n"))
                      }
+
                      cl.rcvglm$alpha <- alphalist[[i]]
-                     cl.rcvglm$lambda <- substitute(lambdas[[i]]) # save space
+                     cl.rcvglm$lambda <- lambdas[[i]]
 
-                     repeated <- do.call(repeated.cv.glmnet, cl.rcvglm)
-                     #repeated$alpha <- as.character(alphalist[[i]])
-
+                     repeated <- do.call("repeated.cv.glmnet", cl.rcvglm)
                      return(repeated)
                    })
 
   return(malist)
 
   # assemble results:
-  tmeas <- attr(malist[[1]], "type.measure")
-  tfam  <- attr(malist[[1]], "family")
+  tmeas <- names(malist[[1]]$name)
+  tfam  <- malist[[1]]$glmnet.fit$call$family
 
+  # HERE:
+  #
   malist <- as.data.frame(data.table::rbindlist(malist))
   attr(malist, "type.measure") <- tmeas
   attr(malist, "family") <- tfam
