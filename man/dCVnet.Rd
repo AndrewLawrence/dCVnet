@@ -7,8 +7,7 @@
 dCVnet(y, data, f = "~.", nrep_outer = 2, k_outer = 10,
   nrep_inner = 5, k_inner = 10, alphalist = c(0.2, 0.5, 0.8),
   nlambda = 100, type.measure = "deviance", family = "binomial",
-  positive = 1, offset = NULL, opt.lambda.type = c("minimum", "se",
-  "percentage"), opt.lambda.type.value = 1,
+  positive = 1, offset = NULL, opt.lambda.type = c("min", "1se"),
   opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
   opt.ystratify = TRUE, ...)
 }
@@ -56,17 +55,10 @@ Can be a numeric indicating which of \code{levels(y)} to use
 
 \item{opt.lambda.type}{Method for selecting optimum lambda. One of
 \itemize{
-\item{\code{"minimum"} - returns the lambda with best
+\item{\code{"min"} - returns the lambda with best
 CV score.}
-\item{\code{"se"} - returns the +1 se lambda}
-\item{\code{"percentage"} - returns minimum lambda
-scaled by a factor, e.g. allowing lambda+3pc}
+\item{\code{"1se"} - returns the +1 se lambda}
 }}
-
-\item{opt.lambda.type.value}{determines the se multiplier or percentage
-for \code{opt.lambda.type}.
-e.g. 'percentage' & type.value = 1.03 gives lambda + 3%.
-e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.}
 
 \item{opt.empirical_cutoff}{Boolean.
 Use the empirical proportion of cases as the cutoff for outer CV
@@ -118,7 +110,7 @@ model <- dCVnet(y = siris$Species,
                            Petal.Length + Petal.Width,
                      data = siris,
                      alphalist = c(0.2, 0.5, 1.0),
-                     opt.lambda.type = "se")
+                     opt.lambda.type = "1se")
 
 #Note: in most circumstances non-default (larger) values of
 #      nrep_inner and nrep_outer will be required.

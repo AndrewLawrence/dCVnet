@@ -20,11 +20,12 @@ with relatively few observations (*n*) for the number of
 predictors (*p*), especially where there may be uninformative or redundant 
 predictors which the analyst isn't willing, or able, to remove.
 
-In an ideal world we would collect more observations (i.e. increase n), 
+In an ideal world we would collect more observations (i.e. increase *n*), 
 or better understand which predictors to include/exclude or how to best model 
-them (i.e. reduce p), but this can be impractical/expensive.
+them (i.e. reduce *p*), but this can be impractical/expensive.
 It is often a necessary step to justify funding for further research to
-increase n or reduce p. An analysis of limited data can help support this.
+increase *n* or reduce *p*. An analysis of albeit limited data can help 
+to support this.
 
 With few observations and many predictors several inter-related 
 statistical problems arise and these become worse^[2](#fn2)^ with greater ratios

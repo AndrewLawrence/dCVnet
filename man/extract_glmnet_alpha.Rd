@@ -14,8 +14,8 @@ model}
 glmnet model objects do not explicitly include the alpha value which was
 used when the model was fit. This utility function tries to extract the
 value of alpha used to fit a glmnet object - this is not always
-possible (e.g. if a named variable in another script is used to set alpha
-in the call to glmnet)
+possible (e.g. if alpha was set by a named variable no-longer in the
+environment)
 }
 \details{
 Note: dCVnet will quietly extend the glmnet models it fits to include

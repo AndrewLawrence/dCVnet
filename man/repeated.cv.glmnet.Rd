@@ -41,29 +41,20 @@ see \code{\link[glmnet]{glmnet}}}
     as \deqn{(1-\alpha)/2||\beta||_2^2+\alpha||\beta||_1.} \code{alpha=1}
     is the lasso penalty, and \code{alpha=0} the ridge penalty.}
 
-\item{nfolds}{number of folds - default is 10. Although \code{nfolds}
-    can be as large as the sample size (leave-one-out CV), it is not
-    recommended for large datasets. Smallest value allowable is \code{nfolds=3}}
+\item{nfolds}{if folds are not specified, how many folds should be used in
+cross-validation? The default (nfolds=NULL) uses 10-fold.}
+
+\item{nreps}{if folds are not specified, how many times to repeat k-fold
+cross-validation? The default (nreps=NULL) uses 5 repeats.}
 
 \item{family}{Response type (see above)}
 
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
+
+\item{debug}{return an unmerged list.}
 }
 \value{
-a data.frame object of class \code{\link{repeated.cv.glmnet}}
-containing averaged metrics. Has the following columns:
-\itemize{
-\item{lambda - lambda at which performance evaluated}
-\item{cvm - average performance metric}
-\item{cvsd - average sd of performance metric}
-\item{cvup - average cvm + cvsd}
-\item{cvlo - average cvm - cvsd}
-\item{nzero - average number of nonzero predictors}
-\item{lambda.min - logical indicating 'best' performing lambda
-(see opt.lambda.type and opt.lambda.type.value)}
-}
-Also contains attributes for the response family (\code{family})
-and cv-type (\code{type.measure})
+a \code{\link{cv.glmnet}} object with cv performance averaged.
 }
 \description{
 Repeatedly runs a \code{\link[glmnet]{cv.glmnet}} and returns averaged
@@ -78,4 +69,7 @@ correctly specified.
 data("CoxExample", package = "glmnet") # x and y
 mod <- repeated.cv.glmnet(x = x, y = y, family = "cox")
 }
+}
+\seealso{
+\code{\link{amalgamate_cv.glmnet}}
 }

@@ -2,12 +2,18 @@
 % Please edit documentation in R/dCVnet_plotting.R
 \name{plot.multialpha.repeated.cv.glmnet}
 \alias{plot.multialpha.repeated.cv.glmnet}
-\title{plot.repeated.cv.glmnet}
+\title{plot.multialpha.repeated.cv.glmnet}
 \usage{
-\method{plot}{multialpha.repeated.cv.glmnet}(x, ...)
+\method{plot}{multialpha.repeated.cv.glmnet}(x, xvar = c("lambda", "s"),
+  errorbars = FALSE, ...)
 }
 \arguments{
 \item{x}{a \code{\link{multialpha.repeated.cv.glmnet}} object.}
+
+\item{xvar}{what to plot on x-axis. Either the log10 lambda value, or the
+proportion of the lambda sequence (for that alpha).}
+
+\item{errorbars}{boolean. Add errorbars to the plot?}
 
 \item{...}{NULL}
 }

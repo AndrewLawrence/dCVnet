@@ -5,12 +5,12 @@
 \title{amalgamate_cv.glmnet}
 \usage{
 amalgamate_cv.glmnet(cvglmlist, checks = list(alpha = TRUE, lambda =
-  TRUE, type.measure = TRUE))
+  FALSE, type.measure = TRUE))
 }
 \arguments{
 \item{cvglmlist}{a list of cv.glmnet models}
 
-\item{checks}{should any checks be suppressed (typically not)}
+\item{checks}{which input checks to run}
 }
 \value{
 an object of class \code{"cv.glmnet"} is returned, which is a

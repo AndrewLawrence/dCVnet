@@ -4,7 +4,6 @@
 #   pass back results along with selected best performing lambdas.
 #   as suggested by the name, only one alpha is present.
 
-
 #' repeated.cv.glmnet
 #'
 #' Repeatedly runs a \code{\link[glmnet]{cv.glmnet}} and returns averaged
@@ -22,22 +21,16 @@
 #'     of length *n_cases*. The integer for each case labels it as belonging
 #'     to a fold *1:n_folds*. This argument implicitly sets the number of repeats
 #'     and the k in repeated k-fold cv.
+#' @param nreps if folds are not specified, how many times to repeat k-fold
+#'     cross-validation? The default (nreps=NULL) uses 5 repeats.
+#' @param nfolds if folds are not specified, how many folds should be used in
+#'     cross-validation? The default (nfolds=NULL) uses 10-fold.
 #' @param ... arguments passed to \code{\link[glmnet]{cv.glmnet}}
+#' @param debug return an unmerged list.
 #'
-#' @return a data.frame object of class \code{\link{repeated.cv.glmnet}}
-#'     containing averaged metrics. Has the following columns:
-#'     \itemize{
-#'     \item{lambda - lambda at which performance evaluated}
-#'     \item{cvm - average performance metric}
-#'     \item{cvsd - average sd of performance metric}
-#'     \item{cvup - average cvm + cvsd}
-#'     \item{cvlo - average cvm - cvsd}
-#'     \item{nzero - average number of nonzero predictors}
-#'     \item{lambda.min - logical indicating 'best' performing lambda
-#'         (see opt.lambda.type and opt.lambda.type.value)}
-#'     }
-#'     Also contains attributes for the response family (\code{family})
-#'         and cv-type (\code{type.measure})
+#' @return a \code{\link{cv.glmnet}} object with cv performance averaged.
+#'
+#' @seealso \code{\link{amalgamate_cv.glmnet}}
 #' @examples
 #' \dontrun{
 #' data("CoxExample", package = "glmnet") # x and y
@@ -55,18 +48,16 @@ repeated.cv.glmnet <- function(x, y,
                                           "cox", "mgaussian"),
                                ...,
                                debug = FALSE) {
-  # use as.list(environment()) to capture named/default values
   cl <- as.list(match.call())[-1]
-  #  c(as.list(environment()), list(...))
-  #cl$x <- substitute(x) # save space using substitute for data variables
-  #cl$y <- substitute(y)
+
   # We typically want to use fixed folds and fixed lambda sequence, but for
   #   convenience/generality include fallback modes (with warnings):
   if ( is.null(lambda) || missing(lambda) ) {
     warning("no lambda sequence provided: extracting glmnet default")
     # get elements of call suitable for glmnet:
     cl.gnet <- cl[names(cl) %in% methods::formalArgs(glmnet::glmnet)]
-    lambdaseq <- do.call(glmnet::glmnet, cl.gnet)$lambda # extract lambda list
+    # extract lambda list
+    lambdaseq <- do.call(glmnet::glmnet, cl.gnet)$lambda #nolint
   } else {
     lambdaseq <- lambda
   }
@@ -86,11 +77,11 @@ repeated.cv.glmnet <- function(x, y,
                     })
   }
 
-  # prepare a safe call to cv.glmnet:
+  # prepare a 'safe' call to cv.glmnet:
   cvgnet_args <- unique(c(methods::formalArgs(glmnet::cv.glmnet),
                           methods::formalArgs(glmnet::glmnet)))
   cvgnet_args <- cvgnet_args[!(cvgnet_args %in% "...")]
-  cl.cvgnet <- cl[names(cl) %in% cvgnet_args]
+  cl.cvgnet <- cl[names(cl) %in% cvgnet_args] #nolint
 
   # estimate models over folds:
   models <- lapply(seq_along(folds), function(i) {
@@ -99,6 +90,7 @@ repeated.cv.glmnet <- function(x, y,
                             setalpha = alpha))
   } )
   # merge and return:
+  if (debug) return(models)
   return(amalgamate_cv.glmnet(models))
 }
 
@@ -119,17 +111,10 @@ repeated.cv.glmnet <- function(x, y,
 #'
 #' @param opt.lambda.type Method for selecting optimum lambda. One of
 #'                         \itemize{
-#'                         \item{\code{"minimum"} - returns the lambda with best
+#'                         \item{\code{"min"} - returns the lambda with best
 #'                         CV score.}
-#'                         \item{\code{"se"} - returns the +1 se lambda}
-#'                         \item{\code{"percentage"} - returns minimum lambda
-#'                         scaled by a factor, e.g. allowing lambda+3pc}
+#'                         \item{\code{"1se"} - returns the +1 se lambda}
 #'                         }
-#' @param opt.lambda.type.value determines the se multiplier or percentage
-#'                               for \code{opt.lambda.type}.
-#'     e.g. 'percentage' & type.value = 1.03 gives lambda + 3%.
-#'     e.g. 'se' & type.value = 1.0 gives the 'standard' lambda+1se.
-#'
 #' @param opt.ystratify Boolean.
 #'     Outer and inner sampling is stratified by outcome.
 #'     This is implemented with \code{\link[caret]{createFolds}}
@@ -137,13 +122,15 @@ repeated.cv.glmnet <- function(x, y,
 #'     In most circumstances folds will be unique. This requests
 #'     that random folds are checked for uniqueness in inner and outer loops.
 #'     Currently it warns if non-unique values are found.
+#' @param opt.keep_models Boolean.
+#'     Should models be returned, or just cross-validated results (default)?
 #'
 #' @return an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
 #'     This is a 3 item list: \itemize{
-#'     \item{inner_results - merged \code{\link{repeated.cv.glmnet}} with
+#'     \item{results - merged \code{\link{repeated.cv.glmnet}} with
 #'         additional columns indicating *alpha* and logical for *best* overall}
-#'     \item{inner_best - best selected row from inner_results}
-#'     \item{inner_folds - record of folds used}
+#'     \item{best - best selected row from results}
+#'     \item{folds - record of folds used}
 #'     }
 #' @seealso \code{\link{repeated.cv.glmnet}}
 #' @export
@@ -153,17 +140,18 @@ multialpha.repeated.cv.glmnet <- function(
   lambdas = NULL,
   k = 10,
   nrep = 5,
-  opt.lambda.type = "minimum",
-  opt.lambda.type.value = 1,
+  opt.lambda.type = c("min", "1se"),
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
   family,
+  opt.keep_models = FALSE,
   ...) {
-#  # use as.list(environment()) to capture named/default values
-#  cl <- c(as.list(environment()), list(...))
-#  cl$x <- substitute(x) # save space using substitute for data variables
-#  cl$y <- substitute(y)
+
   cl <- as.list(match.call())[-1]
+  opt.lambda.type <- match.arg(opt.lambda.type)
+
+  # check & name alphas:
+  alphalist <- parse_alphalist(alphalist)
 
   # We typically want to use a fixed lambda sequence over all folds of the
   #   outer CV, but for convenience/generality include a fallback mode:
@@ -215,22 +203,22 @@ multialpha.repeated.cv.glmnet <- function(
                      repeated <- do.call("repeated.cv.glmnet", cl.rcvglm)
                      return(repeated)
                    })
-
-  return(malist)
+  names(malist) <- base::prettyNum(alphalist)
 
   # assemble results:
+  mods <- lapply(malist, "[[", "glmnet.fit")
   tmeas <- names(malist[[1]]$name)
-  tfam  <- malist[[1]]$glmnet.fit$call$family
 
-  # HERE:
-  #
+  malist <- mapply(cv.glmnet.modelsummary,
+                   mod = malist,
+                   alpha = alphalist,
+                   SIMPLIFY = FALSE)
   malist <- as.data.frame(data.table::rbindlist(malist))
-  attr(malist, "type.measure") <- tmeas
-  attr(malist, "family") <- tfam
 
   # pick the optimal alpha:
   bestfun <- ifelse(tmeas == "auc", max, min)
-  bestcandidates <- malist[malist$lambda.min, ]
+  lselector <- ifelse(opt.lambda.type == "min", "lambda.min", "lambda.1se")
+  bestcandidates <- malist[malist[[lselector]], ]
   best <- bestcandidates[bestcandidates$cvm == bestfun(bestcandidates$cvm), ]
 
   # ties are broken by smaller cvsd followed by sparser solutions (unlikely)
@@ -242,17 +230,47 @@ multialpha.repeated.cv.glmnet <- function(
   # add column to the multialpha list.
   malist$best <- (malist$alpha == best$alpha) & (malist$lambda == best$lambda)
 
-  return(structure(list(inner_results = malist,
-                        inner_best = best,
-                        inner_folds = folds),
-                   class = "multialpha.repeated.cv.glmnet"))
+  R <- structure(list(results = malist,
+                      best = best,
+                      alphas = alphalist,
+                      folds = folds),
+                 class = "multialpha.repeated.cv.glmnet",
+                 type.measure = tmeas,
+                 family = family,
+                 type.lambda = lselector)
+  if ( opt.keep_models ) {
+    return(structure(list(models = mods,
+                          cvresults = R),
+                     class = "multialpha.repeated.cv.glmnet",
+                     type.measure = tmeas,
+                     family = family,
+                     type.lambda = lselector
+                     ))
+  } else {
+    return(R)
+  }
 }
 
 #' @export
 print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 
-  best <- x$inner_best
-  x <- x$inner_results
+  has_models <- FALSE
+  if ( !is.null(x[["models"]]) ) {
+    has_models <- TRUE
+    x <- x$cvresults
+  }
+
+  type.lambda <- attr(x, "type.lambda")
+
+  cat("A dCVnet::multialpha.repeated.cv.glmnet object\n\n")
+  if ( has_models ) cat("(includes fitted models for each alpha.)\n\n")
+  cat(paste0("Model family:\t\t", attr(x, "family"), "\n"))
+  cat(paste0("Tuning metric (cvm):\t", attr(x, "type.measure"), "\n"))
+  cat(paste0("Lambda Selection:\t", type.lambda, "\n"))
+  cat("\n")
+
+  best <- x$best
+  x <- x$results
 
   alpha <- unique(x$alpha)
   lambdas <- lapply(alpha, function(i) x$lambda[x$alpha == i]  )
@@ -262,25 +280,22 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
   l_max <- prettyNum(vapply(lambdas, max, FUN.VALUE = c(1.0)))
   l_ranges <- paste(l_min, l_max, "\n")
 
-  rcols <- c("alpha", "lambda", "nzero", "cvm", "cvsd", "cvup", "cvlo")
+  rcols <- c("s", "alpha", "lambda", "nzero", "cvm", "cvsd", "cvup", "cvlo")
 
-  R <- x[x$lambda.min, rcols]
+  R <- x[x[[type.lambda]], rcols]
   attr(R, "class") <- "data.frame"
 
   selected <- (R$alpha == best$alpha) & (R$lambda == best$lambda)
+  R$best <- selected
 
-  cat("A dCVnet::multialpha.repeated.cv.glmnet object\n")
-  cat(paste("Model family:", attr(x, "family"), "\n"))
-  cat(paste("Tuning metric (cvm):", attr(x, "type.measure"), "\n\n"))
-  cat(paste0("\t", length(alpha), " alpha(s): ",
+  cat(paste0("    ", length(alpha), " alpha(s): ",
              paste(alpha, collapse = ", "), "\n\n"))
-  cat(paste0("\tLambda Counts:\n"))
-  cat(paste0("\t", l_lengths))
-  cat(paste0("\n\n\tLambda Ranges:\n"))
+  cat(paste0("    Lambda Counts:\n"))
+  cat(paste0("    ", l_lengths))
+  cat(paste0("\n\n    Lambda Ranges:\n"))
   cat(paste0("\t", l_ranges))
   cat("\n")
 
-  R$best <- selected
   invisible(R)
 }
 
@@ -295,51 +310,33 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 #'
 #' @export
 summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
-  .get_nsimilar <- function(marc) {
-    kk <- lapply(unique(marc$alpha), function(A){
-
-      tdf <- marc[marc$alpha == A, ]
-      best_up <- tdf$cvup[tdf$lambda.min]
-      best_lo <- tdf$cvlo[tdf$lambda.min]
-      close <- vapply(X = unique(tdf$lambda),
-                      FUN = function(x) {
-                        probe <- tdf$cvm[tdf$lambda == x]
-                        return( (probe < best_up) & (probe > best_lo) )
-                      },
-                      FUN.VALUE = c(TRUE))
-      nclose <- sum(close)
-      ntotal <- length(close)
-      pclose <- nclose / ntotal
-      return(list(alpha = A,
-                  nclose = nclose,
-                  ntotal = ntotal,
-                  pclose = pclose))
-    })
-    kk <- as.data.frame(data.table::rbindlist(kk))
-    return(kk)
-  }
 
   if ( print ) {
     cat("Summary of ")
     print(object)
   }
 
-  best <- object$inner_best
-  object <- object$inner_results
+  type.lambda <- attr(object, "type.lambda")
+
+  if ( !is.null(object[["models"]]) ) {
+    object <- object$cvresults
+  }
+
+  best <- object$best
+  object <- object$results
 
   rcols <- c("alpha", "lambda", "nzero", "cvm", "cvsd", "cvup", "cvlo")
 
-  R <- object[object$lambda.min, rcols]
-  R <- merge(R, .get_nsimilar(object), by = "alpha")
+  R <- object[object[[type.lambda]], rcols]
 
   selected <- (R$alpha == best$alpha) & (R$lambda == best$lambda)
 
   if ( print ) {
 
     cat("\nBest fitting alpha:\n")
-    print(R[selected, ], row.names = FALSE)
+    print(best[, rcols], row.names = FALSE)
 
-    cat("\n\nAll Alphas:\n")
+    cat("\n\nBest per-alpha:\n")
     print(R, row.names = FALSE)
 
     R$best <- selected
@@ -351,4 +348,66 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
     return(R)
   }
 
+}
+
+#' predict.multialpha.repeated.cv.glmnet
+#'
+#' obtain predictions from a
+#'     \code{\link{multialpha.repeated.cv.glmnet}} object.
+#'     Uses the 'best' lambda (lambda.min or lambda.1se) determined by
+#'     type.lambda (unless requested otherwise).
+#'
+#' @inheritParams glmnet::predict.glmnet
+#' @param object a a \code{\link{multialpha.repeated.cv.glmnet}} object.
+#' @param alpha the penalty type alpha at which prediction is required.
+#'     Leave NULL to use the cv-optimised value.
+#' @param s The penalty amount lambda at which prediction is required.
+#'     Leave NULL to use the cv-optimised value.
+#' @param ... passed to \code{\link[glmnet]{predict.glmnet}}
+#'
+#' @seealso \code{\link[glmnet]{predict.cv.glmnet}},
+#'     \code{\link[glmnet]{predict.glmnet}}
+#'
+#' @export
+predict.multialpha.repeated.cv.glmnet <- function(object,
+                                                  alpha = NULL,
+                                                  s = NULL,
+                                                  ...) {
+  # function to return "best" predictions from a multi-alpha object
+  if ( is.null(object[["models"]]) ) {
+    stop(paste0("The object ", deparse(substitute(object)),
+                " does not include the fitted models required for predict.\n",
+                "Rerun multialpha.repeated.cv.glmnet with ",
+                "opt.keep_models = TRUE"))
+
+  }
+
+  # if an alpha value was specified:
+  if ( !missing(alpha) ) {
+    if ( alpha %in% object$cvresults$alphas ) {
+      mod <- object$models[[match(alpha, object$cvresults$alphas)]]
+      if ( missing(s) ) {
+        type.lambda <- attr(object, "type.lambda")
+        sel <- (object$cvresults$results$alpha == alpha) &
+          (object$cvresults$results[[type.lambda]])
+        if ( sum(sel) != 1 ) stop("ERROR: this should be unique.")
+        s <- object$cvresults$results$lambda[sel]
+      }
+      return(predict(mod, s = s, ...))
+    } else {
+      stop("Requested alpha not present")
+    }
+  }
+
+  # index of best alpha:
+  bestalpha <- match(object$cvresults$best$alpha,
+                     object$cvresults$alphas)
+  # use model with best alpha:
+  mod <- object$models[[bestalpha]]
+
+  # if s missing use best s:
+  if ( missing(s) ) s <- object$cvresults$best$lambda
+
+  # run the prediction:
+  predict(mod, s = s, ...)
 }

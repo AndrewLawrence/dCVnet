@@ -4,21 +4,21 @@
 #' dCVnet: Doubly Cross-Validated Elastic-Net Regularised (Generalised)
 #'     Linear Models
 #'
-#' dCVnet runs binary logistic regression with elastic-net regularisation.
-#' Optimal hyperparameters are selected by double (nested) cross-validation with
-#' model performance evaluated in an independent outer loop.
+#' dCVnet fits and cross-validates regression with elastic-net regularisation.
+#' Optimal hyperparameters (lambda & alpha) are selected by double (nested)
+#' cross-validation with model performance evaluated in an independent outer
+#' cross-validation loop.
 #'
 #' The \code{lambda} and \code{alpha} hyperparameters of the elastic-net
-#' allow models to
+#' allow models to freely
 #' range from effectively unregularised, to heavily-regularised. Further a
 #' mixture of two types of regularisation: L2 (ridge) and L1 (LASSO) are
 #' possible. This regularisation produces dimensionality reduction and
 #' variable selection in the predictors.
 #'
-#' The values of the hyperparameters and thereby the amount and type of
-#' regularisation is selected on the basis of what
-#' hyperparameter combinations produce performance which generalises the best
-#' in the inner cross-validation.
+#' The values of the hyperparameters (and thereby the amount and type of
+#' regularisation) are selected on the basis of cross-validated model
+#' performance - i.e. data-driven.
 #'
 #' The fully nested cross-validation keeps the final performance estimates
 #' 'honest' by reducing optimism bias.

@@ -4,23 +4,31 @@
 \alias{parse_alphalist}
 \title{parse_alphalist}
 \usage{
-parse_alphalist(alphalist)
+parse_alphalist(alphalist, stripNA = FALSE, dedupe = FALSE)
 }
 \arguments{
 \item{alphalist}{a numeric of alpha values.}
+
+\item{stripNA}{missing values either throw an error or are discarded.}
+
+\item{dedupe}{duplicate alpha values either throw an error or are discarded.}
 }
 \value{
-non-duplicated, non-missing alpha values between (0, 1] -
-i.e. excluding zero.
+a named numeric vector of, de-duplicated,
+alpha values between (0, 1] - i.e. excluding zero.
 }
 \description{
-Check and process a numeric of alpha values.
+Check / standardise a numeric vector of alpha values for a multi-alpha
+glmnet model.
 }
 \details{
 \itemize{
-\item{Zero alphas (i.e. pure L2 / ridge penalty) do not currently work
-due to a bug in glmnet. Zeros are replaced with a small non-zero value.
-For a 'pure' L2/ridge regression use a different package.}
-\item{it is often the case that small alphas (<0.1) are slow to fit.}
+\item{At last time of testing alpha=0 (i.e. a pure L2 / ridge penalty)
+did not work for dCVnet due to a bug in glmnet.
+As a quick 'fix' Zeros are replaced with a small non-zero value.
+A solution outside of dCvnet is required to get results for a
+'pure' L2/ridge regression model.}
+\item{It is often the case that smaller alphas are slow to fit.}
+\item{}
 }
 }

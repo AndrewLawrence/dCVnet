@@ -55,7 +55,7 @@
 #'                            Petal.Length + Petal.Width,
 #'                      data = siris,
 #'                      alphalist = c(0.2, 0.5, 1.0),
-#'                      opt.lambda.type = "se")
+#'                      opt.lambda.type = "1se")
 #'
 #' #Note: in most circumstances non-default (larger) values of
 #' #      nrep_inner and nrep_outer will be required.
@@ -112,8 +112,7 @@ dCVnet <- function(
   positive = 1,
   offset = NULL,
 
-  opt.lambda.type = c("minimum", "se", "percentage"),
-  opt.lambda.type.value = 1.0,
+  opt.lambda.type = c("min", "1se"),
   opt.empirical_cutoff = FALSE,
   opt.uniquefolds = FALSE,
   opt.ystratify = TRUE,
@@ -153,7 +152,7 @@ dCVnet <- function(
   # how many alphas did we feed in:
   nalpha <- length(alphalist)
 
-  # are we working with empirical cutoffs?
+  # are we reporting performance at 0.5 or the empirical cutoff?
   cutoff <- 0.5
   if ( opt.empirical_cutoff ) {
     cutoff <- (as.numeric(table(y)[1]) / sum(as.numeric(table(y))))
@@ -194,14 +193,15 @@ dCVnet <- function(
     # Previously a wider/more representative range of lambdas was obtained by
     #   by formulaic calculation of max lambda for random samplings of the
     #   data (per alpha).
-    # However, 1) this is not done by Hastie et al who uses the run a
-    #             model method in cv.glmnet.
+    # However, 1) this is not done by Hastie et al who instead use the
+    #             "run a whole data model" method in cv.glmnet.
     #          2) it was time consuming
     #          3) the calculation of maxlambda from the data is opaque
     #             and performed by the fortran code.
     #             there do not appear to be published formula for doing these
     #             calculations for mgaussian/cox family models.
-    #          4) using fortran avoids rounding errors & excess precision.
+    #          4) using fortran avoids inconsistency in rounding
+    #             and excess precision.
     lapply(alphalist,
            function(aa) {
              m <- glmnet(x = x, y = y,
@@ -264,7 +264,6 @@ dCVnet <- function(
         family = family,
         standardize = FALSE,
         opt.lambda.type = opt.lambda.type,
-        opt.lambda.type.value = opt.lambda.type.value,
         opt.ystratify = opt.ystratify,
         opt.uniquefolds = opt.uniquefolds,
         ...)
@@ -344,7 +343,6 @@ dCVnet <- function(
     family = family,
     type.measure = type.measure,
     opt.lambda.type = opt.lambda.type,
-    opt.lambda.type.value = opt.lambda.type.value,
     opt.ystratify = opt.ystratify,
     opt.uniquefolds = opt.uniquefolds
   )
@@ -516,7 +514,6 @@ print.dCVnet <- function(x, ...) {
   opts.uniquefolds <- callenv[["opt.uniquefolds"]]
   opts.lambdatype <- callenv[["opt.lambda.type"]]
   if ( length(opts.lambdatype) > 1 ) opts.lambdatype <- opts.lambdatype[1]
-  opts.lambdatypevalue <- callenv[["opt.lambda.type.value"]]
 
   cat("A dCVnet object, from the dCVnet Package\n\n")
   print(callenv[[1]]) # the call.
@@ -554,9 +551,6 @@ print.dCVnet <- function(x, ...) {
   cat(paste("\t\tnrep =\t", outer_nrep, "\n"))
 
   cat("Options:\n")
-  cat(paste0("\tOptimal Lambda selection (and parameter): \"",
-            opts.lambdatype, "\" (", opts.lambdatypevalue, ")\n"
-            ))
   cat(paste("\tUse Empirical Thresholding for LogReg Classification: ",
             opts.empirical, "\n"))
   cat(paste("\tStratify k-fold sampling by outcome: ",

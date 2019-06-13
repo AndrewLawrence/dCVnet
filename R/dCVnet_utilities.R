@@ -435,7 +435,8 @@ startup_message <- function(k_inner, nrep_inner,
 cv.glmnet.modelsummary <- function(mod,
                                    alpha=NA,
                                    rep=NA) {
-  return(data.frame(lambda = mod$lambda,
+  return(data.frame(s = names(mod$nzero),
+                    lambda = mod$lambda,
                     cvm = mod$cvm,
                     cvsd = mod$cvsd,
                     cvup = mod$cvup,
@@ -454,8 +455,8 @@ cv.glmnet.modelsummary <- function(mod,
 #' glmnet model objects do not explicitly include the alpha value which was
 #' used when the model was fit. This utility function tries to extract the
 #' value of alpha used to fit a glmnet object - this is not always
-#' possible (e.g. if a named variable in another script is used to set alpha
-#' in the call to glmnet)
+#' possible (e.g. if alpha was set by a named variable no-longer in the
+#' environment)
 #'
 #' Note: dCVnet will quietly extend the glmnet models it fits to include
 #'    additional information. This information includes the alpha value
@@ -469,7 +470,7 @@ cv.glmnet.modelsummary <- function(mod,
 #' @export
 #' @seealso \code{\link{set_glmnet_alpha}}
 extract_glmnet_alpha <- function(mod) {
-  if ( "cv.glmnet" %in% class(mod) ) { mod <- mod$glmnet.fit }
+  if ( "cv.glmnet" %in% class(mod) ) mod <- mod$glmnet.fit
   # If alpha has been set by dCVnet then use this value:
   if ( ! is.null(mod$alpha) ) return(mod$alpha)
   # Otherwise we must use information provided by glmnet.
@@ -486,7 +487,7 @@ extract_glmnet_alpha <- function(mod) {
               but it is not guaranteed to be the correct alpha.")
     try( return( get(as.character(alpha)) ) )
   }
-  # as a fall back, stop and print name of missing object:
+  # as a fallback, stop and print name of missing object:
   stop(
     paste0("alpha in model call is a named object
               which could not be found in the environment.

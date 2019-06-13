@@ -4,56 +4,75 @@
 
 #  ~ for S3 classes -------------------------------------------------------
 
-#' plot.repeated.cv.glmnet
-#'
-#' Plot averaged and best innerloop model performance for a (single alpha)
-#'     \code{\link{repeated.cv.glmnet}}
-#'
-#' @param x a \code{\link{repeated.cv.glmnet}} object.
-#' @param ... NULL
-#' @export
-plot.repeated.cv.glmnet <- function(x, ...) {
-  p <- ggplot2::ggplot(x,
-                       ggplot2::aes_string(y = "cvm", x = "lambda")) +
-    ggplot2::geom_line(data = x, colour = "grey", size = 1.2) +
-    ggplot2::geom_point(data = x[x$lambda.min, ],
-                        ggplot2::aes_string(y = "cvm", x = "lambda"),
-                        shape = 25, size = 2, colour = "red", fill = "black",
-                        inherit.aes = FALSE) +
-    ggplot2::scale_x_log10() +
-    ggplot2::ylab(paste("Metric:", attr(x, "type.measure"))) +
-    ggplot2::xlab("lambda (log10)") +
-    ggplot2::theme_light()
-  print(p)
-
-  invisible(p)
-}
-
-#' plot.repeated.cv.glmnet
+#' plot.multialpha.repeated.cv.glmnet
 #'
 #' Plot averaged and best innerloop model performance highlighting
 #'     the final selected alpha for a
 #'     \code{\link{multialpha.repeated.cv.glmnet}}
 #'
 #' @param x a \code{\link{multialpha.repeated.cv.glmnet}} object.
+#' @param xvar what to plot on x-axis. Either the log10 lambda value, or the
+#'     proportion of the lambda sequence (for that alpha).
+#' @param errorbars boolean. Add errorbars to the plot?
 #' @param ... NULL
 #' @export
-plot.multialpha.repeated.cv.glmnet <- function(x, ...) {
-  x <- x$inner_results # only need the inner_results dataframe.
+plot.multialpha.repeated.cv.glmnet <- function(x,
+                                               xvar = c("lambda", "s"),
+                                               errorbars = FALSE,
+                                               ...) {
+  xvar <- match.arg(xvar)
+  # store attributes:
+  type.lambda <- attr(x, "type.lambda")
+  type.measure <- attr(x, "type.measure")
+
+  if ( !is.null(x[["models"]]) ) {
+    x <- x$cvresults$results
+  } else {
+    x <- x$results # only need the results dataframe.
+  }
+  # proc data:
+  x$alpha <- as.factor(x$alpha)
+  if ( identical(xvar, "s") ) { #nolint
+    x$s <- as.numeric(gsub("s", "", x$s))
+
+    smax <- aggregate(x$s, by = list(alpha = x$alpha), FUN = max)
+
+    x$s <- x$s / smax$x[match(x$alpha, smax$alpha)]
+  }
 
   p <- ggplot2::ggplot(x,
-                       ggplot2::aes_string(y = "cvm", x = "lambda",
-                                           colour = "alpha", fill = "alpha")) +
-    ggplot2::geom_line() +
-    ggplot2::geom_point(data = x[x$lambda.min, ],
+                       ggplot2::aes_string(y = "cvm",
+                                           ymin = "cvlo",
+                                           ymax = "cvup",
+                                           x = xvar,
+                                           colour = "alpha",
+                                           fill = "alpha")) +
+    ggplot2::geom_line()
+
+  # error-bars?
+  if ( errorbars ) {
+    p <- p + ggplot2::geom_linerange()
+  }
+
+  p <- p +
+    ggplot2::geom_point(shape = 6) +
+    ggplot2::geom_point(data = x[x[[type.lambda]], ],
                         colour = "black", shape = 25) +
     ggplot2::geom_point(data = x[x$best, ],
                         colour = "black", shape = 1, size = 5,
                         show.legend = FALSE) +
-    ggplot2::scale_x_log10() +
-    ggplot2::ylab(paste("Metric:", attr(x, "type.measure"))) +
-    ggplot2::xlab("Lambda path (log10)") +
+    ggplot2::ylab(paste("Metric:", type.measure)) +
     ggplot2::theme_light()
+
+  # x-axis options:
+  if ( identical(xvar, "lambda") ) {
+    p <- p +
+      ggplot2::scale_x_log10() +
+      ggplot2::xlab(paste0("Lambda (log10)\nSelection: ", type.lambda))
+  } else {
+    p <- p +
+      ggplot2::xlab(paste0("Lambda path fraction\nSelection: ", type.lambda))
+  }
   print(p)
 
   invisible(list(plot = p,
@@ -164,7 +183,7 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
   # Merge datasets adding foldids:
   df <- lapply(seq_along(object$tuning),
                function(x) {
-                 R <- object$tuning[[x]]$tuning$inner_results
+                 R <- object$tuning[[x]]$tuning$results
                  R$outfold <- names(object$tuning)[x]
                  return(R)
                })
