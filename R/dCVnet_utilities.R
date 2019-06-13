@@ -168,28 +168,49 @@ parseddata_summary <- function(object) {
 
 #' parse_alphalist
 #'
-#' Check and process a numeric of alpha values.
+#' Check / standardise a numeric vector of alpha values for a multi-alpha
+#'     glmnet model.
 #'
 #' \itemize{
-#' \item{Zero alphas (i.e. pure L2 / ridge penalty) do not currently work
-#'     due to a bug in glmnet. Zeros are replaced with a small non-zero value.
-#'     For a 'pure' L2/ridge regression use a different package.}
-#' \item{it is often the case that small alphas (<0.1) are slow to fit.}
+#' \item{At last time of testing alpha=0 (i.e. a pure L2 / ridge penalty)
+#'     did not work for dCVnet due to a bug in glmnet.
+#'     As a quick 'fix' Zeros are replaced with a small non-zero value.
+#'     A solution outside of dCvnet is required to get results for a
+#'     'pure' L2/ridge regression model.}
+#' \item{It is often the case that smaller alphas are slow to fit.}
+#' \item{}
 #' }
 #'
 #' @name parse_alphalist
 #' @param alphalist a numeric of alpha values.
+#' @param stripNA missing values either throw an error or are discarded.
+#' @param dedupe duplicate alpha values either throw an error or are discarded.
 #'
-#' @return non-duplicated, non-missing alpha values between (0, 1] -
-#'     i.e. excluding zero.
+#' @return a named numeric vector of, de-duplicated,
+#'     alpha values between (0, 1] - i.e. excluding zero.
 #'
 #' @export
-parse_alphalist <- function(alphalist) {
-  # no duplicates:
-  alphalist <- unique(alphalist)
+parse_alphalist <- function(alphalist,
+                            stripNA = FALSE,
+                            dedupe = FALSE) {
+  # coerce numeric:
+  alphalist <- base::unname(as.numeric(alphalist))
+  # Missing values:
+  if ( stripNA ) {
+    alphalist <- alphalist[is.na(alphalist)]
+  } else {
+    if ( any(is.na(alphalist)) ) stop("Error: missing value(s) in alphalist")
+  }
+  # duplicates:
+  if ( dedupe ) {
+    alphalist <- unique(alphalist)
+  } else {
+    if ( length(alphalist) != length(unique(alphalist)) ) {
+      stop("Error: alphalist has duplicates")
+    }
+  }
 
-  # check no missing values & within [0,1]
-  if ( any(is.na(alphalist)) ) stop("Error: missing value(s) in alphalist")
+  # check within [0,1]
   if ( min(alphalist) < 0.0 ) stop("Error: alphas must be positive")
   if ( max(alphalist) > 1L ) stop("Error: alphas must be <= 1")
 
@@ -199,7 +220,11 @@ parse_alphalist <- function(alphalist) {
     alphalist[alphalist == 0.0] <- replacement_alpha
     warning(paste0("BUGFIX: alpha=0.0 replaced with: ", replacement_alpha))
   }
-  return(alphalist)
+  # add sensible names:
+  nm <- prettyNum(alphalist)
+  # fallback mode - longer names:
+  if ( max(table(nm)) != 1 ) nm <- as.character(nm)
+  return(stats::setNames(alphalist, nm))
 }
 
 checkForDuplicateCVFolds <- function(folds) {
