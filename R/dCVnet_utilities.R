@@ -561,7 +561,7 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #'     all additional arrays/vectors are silently dropped.
 #'
 #' @param cvglmlist a list of cv.glmnet models
-#' @param checks should any checks be suppressed (typically not)
+#' @param checks which input checks to run
 #' @inherit glmnet::cv.glmnet return
 #' @importFrom glmnet getmin
 #' @examples
@@ -593,21 +593,43 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #' @export
 amalgamate_cv.glmnet <- function(cvglmlist,
                                  checks = list(alpha = TRUE,
-                                               lambda = TRUE,
+                                               lambda = FALSE,
                                                type.measure = TRUE)) {
   # apply with base::Reduce to check all element of a list are identical:
-  .reducing_identical <- function(x,y) { if (identical(x,y)) x else FALSE }
+  .reducing_identical <- function(x, y) if (identical(x, y)) x else FALSE
 
-  # check lambdas:
+  # Sometimes the glmnet path fit stops before all lambdas are tested.
+  #  we will filter down to lambdas found in every repetition.
   lambda <- base::Reduce(.reducing_identical, lapply(cvglmlist, "[[", "lambda"))
-  if ( checks$lambda && identical(lambda, FALSE) ) {
-    stop("lambda lists are not identical")
+  if ( identical(lambda, FALSE) ) {
+    # get commmon lambdas:
+    lambda <- base::Reduce(base::intersect, lapply(cvglmlist, "[[", "lambda"))
+    if ( checks$lambda ) {
+      warning("lambda lists are not identical")
+      cat("lambda count per repetition:")
+      vapply(cvglmlist, function(x) length(x$lambda), FUN.VALUE = c(1))
+    }
+    # filter results to common set:
+    common <- lapply(cvglmlist, function(x) x[["lambda"]] %in% lambda)
+    cvglmlist <- mapply(function(mod, sel) {
+      mod$lambda <- mod$lambda[sel]
+      mod$cvm <- mod$cvm[sel]
+      mod$cvsd <- mod$cvsd[sel]
+      mod$cvup <- mod$cvup[sel]
+      mod$cvlo <- mod$cvlo[sel]
+      mod$nzero <- mod$nzero[sel]
+      return(mod)
+    },
+    mod = cvglmlist,
+    sel = common,
+    SIMPLIFY = FALSE)
   }
+
   # check alphas
   alphas <- vapply(cvglmlist,
                    FUN = extract_glmnet_alpha,
                    FUN.VALUE = numeric(1))
-  if (checks$alpha && !identical(length(unique(alphas)),1L)) {
+  if (checks$alpha && !identical(length(unique(alphas)), 1L)) {
     stop("alphas must be identical")
   }
   # check names (i.e. type.measure)
@@ -619,8 +641,13 @@ amalgamate_cv.glmnet <- function(cvglmlist,
   # merge the list of results:
   cvm <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "cvm")))
   cvsd <- as.data.frame(base::Map("[[", cvglmlist, "cvsd"))
-  cvsd <- cvsd^2  # for sd take variance, average and return to sd.
+  cvsd <- cvsd ^ 2  # for sd take variance, average and return to sd.
   cvsd <- sqrt(rowMeans(cvsd))
+  # Note: cv.glmnet (2.0.16) gets nzero from the reference glmnet (prior to
+  #       cross-validation), it doesn't measure nzero independently for each
+  #       fold.
+  #       This makes the below averaging unneccesary when dealing with
+  #       a list of calls to cv.glmnet with different folds.
   nz <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "nzero")))
   # format nzero:
   nm <- paste0("s", seq.int(from = 0, length.out = length(lambda)))
