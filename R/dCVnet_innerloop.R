@@ -62,6 +62,8 @@ repeated.cv.glmnet <- function(x, y,
     lambdaseq <- lambda
   }
   cl$lambda <- quote(lambdaseq)
+  cl$x <- quote(x)
+  cl$y <- quote(y)
 
   if ( missing(folds) ) {  # nolint
     if ( missing(nfolds) ) nfolds <- 10

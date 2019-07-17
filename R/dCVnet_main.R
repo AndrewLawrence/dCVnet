@@ -365,8 +365,7 @@ dCVnet <- function(
   final <- list(
     tuning = final_tuning$cvresults,
     performance = final_performance,
-    model = final_tuning$models[[match(final_tuning$cvresults$best$alpha,
-                                       final_tuning$cvresults$alphas)]])
+    model = final_tuning)
 
   time_stop <- Sys.time()
   run_time <- difftime(time_stop, time_start, units = "hours")
