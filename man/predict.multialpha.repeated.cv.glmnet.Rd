@@ -4,11 +4,14 @@
 \alias{predict.multialpha.repeated.cv.glmnet}
 \title{predict.multialpha.repeated.cv.glmnet}
 \usage{
-\method{predict}{multialpha.repeated.cv.glmnet}(object, alpha = NULL,
-  s = NULL, ...)
+\method{predict}{multialpha.repeated.cv.glmnet}(object, newx,
+  alpha = NULL, s = NULL, ...)
 }
 \arguments{
 \item{object}{a a \code{\link{multialpha.repeated.cv.glmnet}} object.}
+
+\item{newx}{matrix of new values for x at which predictions are required.
+Note: no impact when type is "coefficients", "class" or "nonzero".}
 
 \item{alpha}{the penalty type alpha at which prediction is required.
 Leave NULL to use the cv-optimised value.}
@@ -21,8 +24,9 @@ Leave NULL to use the cv-optimised value.}
 \description{
 obtain predictions from a
 \code{\link{multialpha.repeated.cv.glmnet}} object.
-Uses the 'best' lambda (lambda.min or lambda.1se) determined by
-type.lambda (unless requested otherwise).
+Uses the 'best' alpha & lambda hyperparameters determined by the
+internal cross-validation results. For lambda this will be lambda.min
+or lambda.1se (determined at model runtime) unless requested otherwise.
 }
 \seealso{
 \code{\link[glmnet]{predict.cv.glmnet}},

@@ -365,7 +365,8 @@ dCVnet <- function(
   final <- list(
     tuning = final_tuning$cvresults,
     performance = final_performance,
-    model = final_tuning)
+    model = final_tuning,
+    preprocess = final_PPx) # include the preprocessing for predict method.
 
   time_stop <- Sys.time()
   run_time <- difftime(time_stop, time_start, units = "hours")
@@ -778,4 +779,37 @@ summary.dCVnet <- function(object, ...) {
   print(fmp_hp_str, quote = FALSE)
 
   invisible(R)
+}
+
+#' predict.dCVnet
+#'
+#' predict method for a \code{\link{dCVnet}} object.
+#'     predictions come from the "final" model fitted to the full data.
+#'     As a result they do not reflect cross-validated/out-of-sample
+#'     performance.
+#'
+#' @param object a a \code{\link{dCVnet}} object.
+#' @param ... passed to \code{\link{predict.multialpha.repeated.cv.glmnet}},
+#'     then \code{\link[glmnet]{predict.glmnet}}
+#' @inheritParams predict.multialpha.repeated.cv.glmnet
+#' @inheritParams glmnet::predict.glmnet
+#'
+#' @return predictions of the requested type.
+#'
+#' @importFrom utils getFromNamespace
+#'
+#' @export
+predict.dCVnet <- function(object,
+                           newx,
+                           ...) {
+  # apply the preprocessing from the final model:
+
+  preProcessPredict <- utils::getFromNamespace(x = "predict.preProcess",
+                                               ns = "caret")
+  newx <- as.matrix(newx) # coerce to matrix (this fixed a random bug...)
+  newx <- preProcessPredict(object$final$preprocessing, newx)
+  # run the prediction:
+  predict.multialpha.repeated.cv.glmnet(object$final$model,
+                                        newx = newx,
+                                        ...)
 }

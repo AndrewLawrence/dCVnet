@@ -356,11 +356,14 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
 #'
 #' obtain predictions from a
 #'     \code{\link{multialpha.repeated.cv.glmnet}} object.
-#'     Uses the 'best' lambda (lambda.min or lambda.1se) determined by
-#'     type.lambda (unless requested otherwise).
+#'     Uses the 'best' alpha \& lambda hyperparameters determined by the
+#'     internal cross-validation results. For lambda this will be lambda.min
+#'     or lambda.1se (determined at model runtime) unless requested otherwise.
 #'
 #' @inheritParams glmnet::predict.glmnet
 #' @param object a a \code{\link{multialpha.repeated.cv.glmnet}} object.
+#' @param newx matrix of new values for x at which predictions are required.
+#'     Note: no impact when type is "coefficients", "class" or "nonzero".
 #' @param alpha the penalty type alpha at which prediction is required.
 #'     Leave NULL to use the cv-optimised value.
 #' @param s The penalty amount lambda at which prediction is required.
@@ -372,6 +375,7 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
 #'
 #' @export
 predict.multialpha.repeated.cv.glmnet <- function(object,
+                                                  newx,
                                                   alpha = NULL,
                                                   s = NULL,
                                                   ...) {
@@ -411,5 +415,5 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
   if ( missing(s) ) s <- object$cvresults$best$lambda
 
   # run the prediction:
-  predict(mod, s = s, ...)
+  predict(mod, s = s, newx = newx, ...)
 }
