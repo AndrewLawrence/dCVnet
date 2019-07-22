@@ -604,7 +604,8 @@ selected_hyperparameters <- function(object,
   A <- table(R$alpha)
   L <- summary(R$lambda)
   J <- lapply(alphas, function(a) {
-    data.frame(`n times selected` = sum(R$alpha == a),
+    data.frame(alpha = a,
+               `n times selected` = sum(R$alpha == a),
                `lambda mean` = mean(R$lambda[R$alpha == a]),
                `lambda sd` = sd(R$lambda[R$alpha == a]),
                `lambda min` = min(R$lambda[R$alpha == a]),
