@@ -651,8 +651,7 @@ coefficients_summary <- function(object, ...) {
   names(Range) <- names(Range.preds)
   Range <- as.data.frame(data.table::rbindlist(Range))
 
-  FinalModel <- coef(object$final$model,
-                     s = object$final$tuning$best$lambda)
+  FinalModel <- coef.multialpha.repeated.cv.glmnet(object$final$model)
   FinalModel <- setNames(as.data.frame(as.matrix(FinalModel)), "FinalModel")
 
   return(data.frame(FinalModel,

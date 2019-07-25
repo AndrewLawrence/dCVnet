@@ -399,7 +399,7 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
         if ( sum(sel) != 1 ) stop("ERROR: this should be unique.")
         s <- object$cvresults$results$lambda[sel]
       }
-      return(predict(mod, s = s, ...))
+      return(predict(mod, s = s, newx = newx, ...))
     } else {
       stop("Requested alpha not present")
     }
@@ -416,4 +416,33 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
 
   # run the prediction:
   predict(mod, s = s, newx = newx, ...)
+}
+
+
+
+#' coef.multialpha.repeated.cv.glmnet
+#'
+#' obtain coeffiicents from a
+#'     \code{\link{multialpha.repeated.cv.glmnet}} object.
+#'     This is a wrapper for \code{\link{predict.multialpha.repeated.cv.glmnet}}
+#'
+#' @inheritParams predict.multialpha.repeated.cv.glmnet
+#' @seealso \code{\link{predict.multialpha.repeated.cv.glmnet}}
+#'     \code{\link[glmnet]{predict.cv.glmnet}},
+#'     \code{\link[glmnet]{predict.glmnet}}
+#'
+#' @export
+coef.multialpha.repeated.cv.glmnet <- function(object,
+                                               newx = NULL,
+                                               alpha = NULL,
+                                               s = NULL,
+                                               ...) {
+  # function to return coefficients from a multi-alpha object
+  cl <- as.list(match.call())[-1]
+  cl$object <- object # pass object not name
+  cl$type <- "coefficients"
+  cl$newx <- NA # newx not required for type = coefficients.
+
+
+  do.call("predict.multialpha.repeated.cv.glmnet", args = cl)
 }
