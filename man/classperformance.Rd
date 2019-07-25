@@ -32,7 +32,7 @@ classperformance(x, ...)
 
 \item{label}{specify a label for the output}
 
-\item{threshold}{for logistic regression use a threshold other than 0.5.}
+\item{threshold}{logistic regression only - use a threshold other than 0.5.}
 }
 \value{
 a classperformance object, is a dataframe (or list of dataframes)

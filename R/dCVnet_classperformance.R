@@ -93,12 +93,13 @@ classperformance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
 #' @describeIn classperformance classperformance for \code{\link[stats]{glm}}
 #'     object
 #' @param label specify a label for the output
-#' @param threshold for logistic regression use a threshold other than 0.5.
+#' @param threshold logistic regression only - use a threshold other than 0.5.
 #' @export
 classperformance.glm <- function(x,
                                  as.data.frame = TRUE,
                                  label = deparse(substitute(x)),
-                                 threshold = 0.5, ...) {
+                                 threshold = 0.5,
+                                 ...) {
   # Return (labelled) prediction dataframe from a glm
   #     given a threshold (default = 0.5):
   outcome <- as.character(x$terms[[2]])
