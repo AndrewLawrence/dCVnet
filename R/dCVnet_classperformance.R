@@ -90,28 +90,41 @@ classperformance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
 }
 
 #' classperformance.glm
+#'
+#' For glm objects wraps \link{predict.glm} if newdata is specified.
+#'
 #' @describeIn classperformance classperformance for \code{\link[stats]{glm}}
 #'     object
 #' @param label specify a label for the output
+#' @param newdata evaluate performance in new data
 #' @param threshold logistic regression only - use a threshold other than 0.5.
 #' @export
 classperformance.glm <- function(x,
                                  as.data.frame = TRUE,
                                  label = deparse(substitute(x)),
                                  threshold = 0.5,
+                                 newdata = NULL,
                                  ...) {
   # Return (labelled) prediction dataframe from a glm
   #     given a threshold (default = 0.5):
   outcome <- as.character(x$terms[[2]])
 
-  rwid <- rownames(x$data)
 
   lvl <- levels(x$data[[outcome]])
-  classification <- as.numeric(stats::fitted(x) > threshold) + 1
-  classification <- factor(lvl[classification], levels = lvl)
 
-  reference <- x$data[[outcome]]
-  prediction <- fitted(x)
+  if ( is.null(newdata) ) {
+    rwid <- rownames(x$data)
+    prediction <- stats::fitted(x)
+    reference <- x$data[[outcome]]
+  } else {
+    rwid <- rownames(newdata)
+    prediction <- predict(x,
+                          newdata = newdata,
+                          type = "response", ...)
+    reference <- newdata[[outcome]]
+  }
+  classification <- as.numeric(prediction > threshold) + 1
+  classification <- factor(lvl[classification], levels = lvl)
 
   R <- data.frame(rowid = rwid,
                   reference = reference,

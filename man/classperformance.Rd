@@ -18,7 +18,8 @@ classperformance(x, ...)
 \method{classperformance}{dCVnet}(x, as.data.frame = TRUE, ...)
 
 \method{classperformance}{glm}(x, as.data.frame = TRUE,
-  label = deparse(substitute(x)), threshold = 0.5, ...)
+  label = deparse(substitute(x)), threshold = 0.5, newdata = NULL,
+  ...)
 
 \method{classperformance}{glmlist}(x, as.data.frame = TRUE, ...)
 }
@@ -33,6 +34,8 @@ classperformance(x, ...)
 \item{label}{specify a label for the output}
 
 \item{threshold}{logistic regression only - use a threshold other than 0.5.}
+
+\item{newdata}{evaluate performance in new data}
 }
 \value{
 a classperformance object, is a dataframe (or list of dataframes)
@@ -51,6 +54,8 @@ one source, e.g. multiple reps}
 }
 \description{
 extracts a standardised classification performance table for a model.
+
+For glm objects wraps \link{predict.glm} if newdata is specified.
 }
 \section{Methods (by class)}{
 \itemize{
