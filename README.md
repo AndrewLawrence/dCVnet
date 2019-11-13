@@ -192,8 +192,8 @@ This project is licensed under the
 ### Footnotes
 
 <a name="fn1">^1^</a> regularised-models/dCVnet can be useful for inference, 
-but this their main purpose, and the time-consuming double cross-validation 
-step is less important.
+but this is not really their main purpose, and the time-consuming outer 
+cross-validation loop is not very important for inference.
 
 <a name="fn2">^2^</a> Where *p*/*n* > 1, the standard least-squares regression 
 solutions are not defined and generalised models will have convergence problems.
