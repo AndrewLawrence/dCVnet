@@ -237,7 +237,7 @@ dCVnet <- function(
   cl.marcvglm$opt.keep_models <- TRUE
   # translate some dCVnet args to multialpha.repeated.cv.glmnet:
   cl.marcvglm$k <- k_inner
-  cl.marcvglm$nreps <- nrep_inner
+  cl.marcvglm$nrep <- nrep_inner
   # add non-commandline args (generated/modified within dCVnet):
   cl.marcvglm$lambdas <- lambdas
   cl.marcvglm$alphalist <- alphalist
