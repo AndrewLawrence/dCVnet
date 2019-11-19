@@ -106,25 +106,52 @@ classperformance.glm <- function(x,
                                  newdata = NULL,
                                  ...) {
   # Return (labelled) prediction dataframe from a glm
-  #     given a threshold (default = 0.5):
-  outcome <- as.character(x$terms[[2]])
+  #     given a threshold (default = 0.5).
 
+  # extract model.frame:
+  mf <- stats::model.frame(x)
+  mf.y <- stats::model.response(mf)
+  # name of outcome (always leftmost in model.frame):
+  outcome <- colnames(mf)[[1]]
 
-  lvl <- levels(x$data[[outcome]])
+  lvl <- NULL
+  if ( is.factor(mf.y) ) {
+    lvl <- levels(mf.y) # NULL if not factor
+  }
 
   if ( is.null(newdata) ) {
-    rwid <- rownames(x$data)
+    # extraction from model object:
+    rwid <- rownames(mf)
     prediction <- stats::fitted(x)
-    reference <- x$data[[outcome]]
+    reference <- mf.y
   } else {
+    ## There will be problems if y in the data doesn't have the same class
+    ##        and levels as y in the newdata:
+    stopifnot(identical(class(mf.y),
+                        class(newdata[[outcome]])))
+    if ( ! is.null(lvl) ) {
+      stopifnot(identical(levels(mf.y),
+                          levels(newdata[[outcome]])))
+    }
+
     rwid <- rownames(newdata)
+    if ( is.null(rwid) ) rwid <- 1:length(newdata)
     prediction <- predict(x,
                           newdata = newdata,
                           type = "response", ...)
     reference <- newdata[[outcome]]
   }
-  classification <- as.numeric(prediction > threshold) + 1
-  classification <- factor(lvl[classification], levels = lvl)
+  # convert probabilities to classifications:
+  classification <- as.integer(prediction > threshold)
+  if ( !is.null(lvl) ) {
+    # use factor levels if they exist:
+    classification <- factor(lvl[classification + 1L], levels = lvl)
+  } else {
+    # if we don't have levels we have glm data which *must* be 0 1:
+    classification <- factor(classification, levels = c(0,1))
+    # also cooerce the reference data:
+    reference <- factor(reference, levels = c(0,1))
+  }
 
   R <- data.frame(rowid = rwid,
                   reference = reference,
@@ -132,7 +159,6 @@ classperformance.glm <- function(x,
                   classification = classification,
                   label = label)
   # return merged df or list.
-  #   glms are always lists of length 1.
   if ( as.data.frame ) {
     return(structure(R, class = c("classperformance", "data.frame")))
   } else {
@@ -140,7 +166,7 @@ classperformance.glm <- function(x,
   }
 }
 
-#' classperformance.glm
+#' classperformance.glmlist
 #' @describeIn classperformance classperformance for glmlist from
 #'     \code{\link{reflogreg}} object
 #' @export
