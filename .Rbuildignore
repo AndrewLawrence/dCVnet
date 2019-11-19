@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 ^.development$
 ^.lintr$
+^data-raw$
