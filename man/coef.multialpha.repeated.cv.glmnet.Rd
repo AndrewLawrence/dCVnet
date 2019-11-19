@@ -22,7 +22,7 @@ Leave NULL to use the cv-optimised value.}
 \item{...}{passed to \code{\link[glmnet]{predict.glmnet}}}
 }
 \description{
-obtain coeffiicents from a
+obtain coefficients from a
 \code{\link{multialpha.repeated.cv.glmnet}} object.
 This is a wrapper for \code{\link{predict.multialpha.repeated.cv.glmnet}}
 }

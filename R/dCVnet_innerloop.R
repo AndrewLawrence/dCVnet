@@ -422,7 +422,7 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
 
 #' coef.multialpha.repeated.cv.glmnet
 #'
-#' obtain coeffiicents from a
+#' obtain coefficients from a
 #'     \code{\link{multialpha.repeated.cv.glmnet}} object.
 #'     This is a wrapper for \code{\link{predict.multialpha.repeated.cv.glmnet}}
 #'

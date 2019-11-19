@@ -148,9 +148,9 @@ classperformance.glm <- function(x,
     classification <- factor(lvl[classification + 1L], levels = lvl)
   } else {
     # if we don't have levels we have glm data which *must* be 0 1:
-    classification <- factor(classification, levels = c(0,1))
+    classification <- factor(classification, levels = c(0, 1))
     # also cooerce the reference data:
-    reference <- factor(reference, levels = c(0,1))
+    reference <- factor(reference, levels = c(0, 1))
   }
 
   R <- data.frame(rowid = rwid,
