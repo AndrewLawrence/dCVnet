@@ -8,7 +8,7 @@ parse_dCVnet_input(data, y, family, f = "~.", positive = 1,
   offset = NULL, yname = "y", passNA = FALSE)
 }
 \arguments{
-\item{data}{a data.frame containing all terms in f.}
+\item{data}{a data.frame containing variables needed for the formula (f).}
 
 \item{y}{the outcome (can be numeric vector,
 a factor (for binomial / multinomial) or a matrix for cox/mgaussian)}
@@ -43,8 +43,12 @@ including expansions, interaction terms specified in \code{f}}
 }
 \description{
 Collate a formula and dataset into a standardised object ready for dCVnet
+functions.
 }
 \details{
-The outcome is coerced to a binary factor which is releveled (if necessary)
-such that the test=positive level comes first.
+For binomial and multinomial families the outcome is coerced to a
+factor which is releveled (if necessary) so the test=positive level
+comes first.
+
+Sparse matrices are not supported.
 }

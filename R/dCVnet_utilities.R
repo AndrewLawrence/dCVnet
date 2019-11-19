@@ -4,12 +4,17 @@
 #' parse_dCVnet_input
 #'
 #' Collate a formula and dataset into a standardised object ready for dCVnet
+#' functions.
 #'
-#' The outcome is coerced to a binary factor which is releveled (if necessary)
-#' such that the test=positive level comes first.
+#' For binomial and multinomial families the outcome is coerced to a
+#'     factor which is releveled (if necessary) so the test=positive level
+#'     comes first.
+#'
+#' Sparse matrices are not supported.
+#'
 #' @name parse_dCVnet_input
 #'
-#' @param data a data.frame containing all terms in f.
+#' @param data a data.frame containing variables needed for the formula (f).
 #' @param y the outcome (can be numeric vector,
 #'      a factor (for binomial / multinomial) or a matrix for cox/mgaussian)
 #' @param f a one sided formula.
@@ -43,23 +48,25 @@ parse_dCVnet_input <- function(data,
                                offset = NULL,
                                yname = "y",
                                passNA = FALSE) {
-  # Check input:
   f <- as.formula(f)
   data <- as.data.frame(data)
   fterms <- stats::terms(f, data = data)
+  vars <- all.vars(fterms)
 
+  # check formula doesn't exclude the intercept:
   if ( !identical(attr(fterms, "intercept"), 1L) ) {
     stop("Error: formula must have an intercept. See stats::terms") # nolint
   }
+  # check formula is has no response variable:
   if ( !identical(attr(fterms, "response"), 0L) ) {
     stop("Error: use a RHS formula to specify in data")
   }
 
-  data <- as.data.frame(data)
-  vars <- attr(fterms, "term.labels")
   data <- data[, vars, drop = FALSE]
 
-  # remove missing based on data (unless imputing):
+  # Custom, paired x/y removal of incomplete data:
+
+  # remove missing in x/data (unless pass for imputing):
   if ( !passNA && any(!stats::complete.cases(data)) ) {
     cat(paste0("Removing ", sum(!stats::complete.cases(data)),
                " of ", NROW(data),
@@ -68,7 +75,7 @@ parse_dCVnet_input <- function(data,
     data <- subset(data, stats::complete.cases(data))
 
   }
-  # always remove missing based on y:
+  # always remove missing in y:
   if ( any(!stats::complete.cases(y)) ) {
     cat(paste0("Removing ", sum(!stats::complete.cases(y)),
                " of ", NROW(y),
@@ -77,7 +84,7 @@ parse_dCVnet_input <- function(data,
     y <- subset(y, stats::complete.cases(y))
   }
 
-  # special treatment if the outcome should be factor:
+  # special treatment to y if the outcome should be factor:
   if ( family %in% c("binomial", "multinomial")) {
     y <- as.factor(y) # extract y variable & coerce to factor.
 
@@ -93,8 +100,12 @@ parse_dCVnet_input <- function(data,
 
   # Make a model matrix of RHS variables
   #   i.e. parse dummy coding / interaction terms & drop intercept:
-  xf <- model.frame(formula = f, data = data, na.action = "na.pass")
-  x_mat <- model.matrix(f, data = xf)[, -1]
+  mf <- stats::model.frame(formula = f,
+                           data = data,
+                           na.action = ifelse(passNA,
+                                              yes = stats::na.pass,
+                                              no = stats::na.omit))
+  x_mat <- model.matrix(f, data = mf)[, -1]
 
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,

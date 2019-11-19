@@ -15,7 +15,7 @@ dCVnet(y, data, f = "~.", nrep_outer = 2, k_outer = 10,
 \item{y}{the outcome (can be numeric vector,
 a factor (for binomial / multinomial) or a matrix for cox/mgaussian)}
 
-\item{data}{a data.frame containing all terms in f.}
+\item{data}{a data.frame containing variables needed for the formula (f).}
 
 \item{f}{a one sided formula.
 The RHS must refer to columns in \code{data} and may include
