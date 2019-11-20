@@ -5,7 +5,12 @@
 
 # a dCVnet S3 generic: classperformance
 #   returns a merged dataframe or a list of data frames
-#   where the dataframe contains raw performance information.
+#   where the dataframe contains raw performance information:
+#     - reference       (actual classification)
+#     - prediction      (predicted probability)
+#     - classification  (predicted classification)
+#     - label           (a model label e.g. rep10fold3)
+#     - rowid           (an observation label)
 
 
 #  ~ making classperformance ----------------------------------------------
@@ -89,6 +94,7 @@ classperformance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
   }
 }
 
+
 #' classperformance.glm
 #'
 #' For glm objects wraps \link{predict.glm} if newdata is specified.
@@ -165,6 +171,7 @@ classperformance.glm <- function(x,
     return(structure(list(R), class = c("classperformance", "list")))
   }
 }
+
 
 #' classperformance.glmlist
 #' @describeIn classperformance classperformance for glmlist from
@@ -299,6 +306,7 @@ summary.classperformance <- function(object, label = NA, ...) {
   return(R)
 }
 
+
 #' report_classperformance_summary
 #'
 #' extracts classperformance from a dCVnet object
@@ -347,7 +355,6 @@ report_classperformance_summary <- function(dCVnet_object) {
 
   return(S)
 }
-
 
 
 #' casesummary.classperformance
