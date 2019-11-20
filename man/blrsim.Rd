@@ -11,7 +11,11 @@
 \item{x.test}{20 Gaussian predictors. Test data, 1000 observations}
 \item{y.test}{Class membership for x. Test data, 1000 observations}
 \item{bayes.rate}{Classification accuracy in the complete sample given the
-rule used to generate the data (see: raw-data/blrsim.R)}
+rule used to generate the data (see: raw-data/blrsim.R).
+
+Note, calling this the bayes rate is a bit of a terminological liberty
+as bayes rate refers to an error/loss while classification accuracy
+is the complement of such a error/loss.}
 }}
 \usage{
 blrsim
