@@ -183,13 +183,12 @@ parseddata_summary <- function(object) {
 #'     glmnet model.
 #'
 #' \itemize{
-#' \item{At last time of testing alpha=0 (i.e. a pure L2 / ridge penalty)
-#'     did not work for dCVnet due to a bug in glmnet.
-#'     As a quick 'fix' Zeros are replaced with a small non-zero value.
-#'     A solution outside of dCVnet is required to get results for a
+#' \item{Very small alphas are typically slow to fit.}
+#' \item{At last time of testing alpha=0.0 (i.e. a pure L2 / ridge penalty)
+#'     did not work due to a bug related to using fixed folds in glmnet.
+#'     As a workaround Zeros are replaced with a small non-zero value.
+#'     In effect different software is required to get results for a
 #'     'pure' L2/ridge regression model.}
-#' \item{It is often the case that smaller alphas are slow to fit.}
-#' \item{}
 #' }
 #'
 #' @name parse_alphalist
