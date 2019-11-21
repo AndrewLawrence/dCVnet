@@ -1,0 +1,354 @@
+---
+title: "Generalisation error in elastic-net-regularised and unregularised logistic regression"
+author: "Andrew Lawrence"
+date: "2019-11-20"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{dCVnet-vs-glm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+  
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+collapse = TRUE,
+comment = "#>"
+)
+```
+
+This document will will compare elastic-net regularised binary logistic 
+regression (as used by `dCVnet`) to an unregularised binary logistic 
+regression (fit with `glm`).
+
+#### Practical Notes / Disclaimers
+
+1. *For practical (time) reasons, this vignette uses a specially selected seed
+and a smaller number of CV repetitions than would typically be sensible.
+The seed was selected because it generated random CV folds that gave results representative of a much larger number of CV repetitions.*
+
+2. *This vignette is not a recipe for using the dCVnet package. The 
+complexities of data formatting / modelling, tuning elastic-net hyperparameters, deciding the nested repeated k-fold parameters and checking the
+variability cv results are all omitted, being beyond the scope of
+this vignette.*
+
+3. *For simplicity this vignette uses accuracy as a performance measure
+throughout. This is extracted from row 5 of a `summary(classperformance(x))` table.*
+
+## A Simulated Prediction Problem
+
+To illustrate the benefits of elastic-net regularisation
+for generalisation error we will
+use a simulated dataset for a binary classification problem in moderately high 
+dimension: 50 observations of 40 predictors for a binary outcome. This will be
+referred to as the training data set.
+
+Predictors are all normally distributed, but come in two types, predictors 1-10
+are used to construct the binary outcome (with added error) while predictors 
+11-40 are unrelated to the outcome labels.
+
+With a simulated dataset we know exactly how the data were
+generated and consequently what the ideal model should be. This gives us a 
+'bayes rate' - the performance of an ideal classifier.
+Further, we can generate unlimited data and use a large hold-out dataset
+(also termed test set) for comparison with cross-validated estimates derived
+within the training sample only.
+
+Unfortunately, real data doesn't come with a bayes rate and there is often 
+not enough data, so cross-validation is the best we can do.
+
+The simulated data is provided with the dCVnet package and can be loaded with `data("blrsim"):
+```{r data}
+require(dCVnet, quietly = TRUE)
+
+data("blrsim")
+
+# View the help file for more information:
+# ?blrsim
+
+sapply(blrsim, function(x) list(class = class(x),
+                                nvars = NCOL(x),
+                                nobs = NROW(x)))
+
+# we have training datasets: x and y, test datasets: x.test and y.test,
+#   and the recorded classification accuracy of an ideal classifier (bayes.rate)
+
+# what is the ideal classification accuracy?
+print(blrsim$bayes.rate)
+
+```
+
+
+## Unregularised Binary Logistic Regression
+
+Ignoring the inadequate sample size (40 predictors and 50 observations)
+a standard approach to produce a prediction model for data of this type would
+be binomial logistic regression.
+
+We can do this in R using the `glm` function:
+```{r glm}
+m1 <- glm(y ~ ., data = data.frame(y = blrsim$y, blrsim$x), family = "binomial")
+
+# first 5 model coefficients:
+head(coef(summary(m1)))
+
+# we are interested in classification accuracy, dCVnet has a function to
+#   extract these sorts of measures from a glmnet
+m1.train <- summary(dCVnet::classperformance(m1))
+
+#   the accuracy of this model in the data it was fit is:
+print(m1.train[5,2])
+
+```
+
+There are a few problems here! First we get a warning about model fit (because 
+the model perfectly separates the two classes), but a greater 
+concern is that the coefficients and their standard errors are inflated. In 
+short the glm is over-fit to the data.
+
+A model that is overfit will perform poorly in unseen data. Lets check how well the model fits the independent test dataset:
+```{r test.glm}
+m1.test <- summary(dCVnet::classperformance(m1,
+                                 newdata = data.frame(y = blrsim$y.test,
+                                                      blrsim$x.test)))
+# Accuracy:
+print(m1.test[5,2])
+
+```
+
+As expected, the accuracy in the unseen test data is pretty bad. It is better
+than chance accuracy (0.50), but `r round(m1.test[5,2],2)` is worse than
+the optimal accuracy of `r round(blrsim$bayes.rate, 2)`.
+
+In many circumstances we won't have extra data to act as a hold-out
+sample, so cross-validation is a good way to estimate how well a model
+will perform in new/unseen data.
+
+The dCVnet package uses repeated k-fold cross-validation, and there is a
+convenience function which applies the same scheme to an unregularised glm and
+extracts the performance measures.
+
+Because there are very few observations we will use 5-fold cross-validation
+rather than 10 or 20 fold. We will repeat this 10 times (although see note
+above)
+
+
+```{r cv.glm, warning=FALSE}
+set.seed(47)
+# Run a 10x-repeated 5-fold cross-validation:
+# (technically we are refitting m1 from scratch here)
+m1.cv <- dCVnet::cv_classperformance_glm(y = blrsim$y,
+                                         data = blrsim$x,
+                                         f = "~.",
+                                         k = 5,
+                                         nrep = 10)
+
+# print the mean accuracy over the 10 repetitions:
+round(m1.cv$cv.performance[5, 2, drop = F],3)
+
+```
+
+The cross-validated accuracy (`r round(m1.cv$cv.performance[5, 2], 2)`) is even
+worse than the results in the hold-out (`r round(m1.test[5, 2], 2)`).
+This is a known bias expected to occur (at least on average) because
+each model within the folds of the CV is fit with a smaller sample size than
+the full model. The extent of the effect then depends on the steepness of the
+learning curve for the problem, and the selected value of k in k-fold CV
+(see Chapter 7 of Elements of Statistical Learning).
+
+## Regularised Binary Logistic Regression
+
+So, the *standard* model described above overfits, what can be done?
+Previously, a researcher would simplify the model "by hand" considering which
+predictors to remove. Regularised models can do this variable selection 
+in a data-driven manner.
+
+In this example we will use elastic-net regularisation with a single, mostly
+ridge-like, alpha (0.1). In real data we might consider multiple alphas and 
+there would be a preliminary stage where we consider which ones to include. 
+As with the glm we will set k=5 for the k-fold cross-validation,
+(although to save time only 2 repetitions are used, see note above).
+
+```{r dCvnet}
+set.seed(47)
+# fit the model and run cross-validation in one step:
+m2 <- dCVnet::dCVnet(y = blrsim$y,
+                     data = blrsim$x,
+                     k_outer = 5,
+                     k_inner = 10,
+                     nrep_outer = 2,
+                     nrep_inner = 2,
+                     alphalist = 0.1,
+                     type.measure = "class")
+
+# What was the performance of this model in the data it was fit to?
+m2.train <- summary(classperformance(m2$final))
+
+# specifically the accuracy?:
+print(m2.train[5,2])
+
+```
+
+So a regularised model can still overfit the data (the accuracy in the training
+set is `r m2.train[5,2]` which is greater than the bayes rate of
+`r round(blrsim$bayes.rate, 2)`), however the key test is whether
+regularisation helps the model predict unseen data,
+either through cross-validation or in the test-set.
+
+
+```{r cv.dCVnet }
+# Test-set accuracy:
+m2.test <- summary(
+  structure(
+    data.frame(
+      prediction = predict(m2, newx = blrsim$x.test, type = "response")[,1],
+      classification = as.factor(predict(m2, newx = blrsim$x.test, type = "class")[,1]),
+      reference = as.factor(blrsim$y.test),
+      label = "m2.test",
+      stringsAsFactors = FALSE),
+    class = c("classperformance", "data.frame")
+  )
+)
+
+# print the test set accuracy:
+print(m2.test[5,2])
+
+# We cross-validated the results when we produced m2:
+m2.cv <- report_classperformance_summary(m2)
+
+# print the accuracy:
+print(m2.cv[5,2])
+
+```
+
+Finally put all the performance numbers together:
+
+```{r results}
+# merge together results:
+results <- c(
+  bayes.rate = blrsim$bayes.rate,
+  glm.train = m1.train[5,2],
+  glm.test = m1.test[5,2],
+  glm.cv = m1.cv$cv.performance[5,2],
+  
+  enet.train = m2.train[5,2],
+  enet.test = m2.test[5,2],
+  enet.cv = m2.cv[5,2]
+)
+
+# print accuracy:
+print(results, digits = 2)
+
+# subtract the bayes rate accuracy:
+print(results - results[1], digits = 2)
+
+```
+
+So, this vignette has shown:
+
+* The generalisation gap between model performance in training data and 
+model performance in test data is smaller for
+elastic-net (`r round(m2.train[5,2],2)` -> `r round(m2.test[5,2],2)`) than for
+glm (`r round(m1.train[5,2],2)` -> `r round(m1.test[5,2],2)`). This gap is 
+indicative of overfitting, by this measure there is less overfitting for 
+elastic-net than glm.
+
+* Although there is less overfitting, elastic-net performance in the training
+data can still be optimistic (i.e. greater than a perfect model: 
+enet.cv > bayes.rate,
+`r round(m2.train[5,2],2)` > `r round(blrsim$bayes.rate,2)`). So an 
+independent estimate of generalisation error is required.
+
+* Cross-validated estimates of generalisation error are pessimistically biased
+relative to the performance in a hold-out/test set (cv accuracy < test accuracy)
+so in general it would be better have enough data to keep a holdout,
+however repeated cross-validation will not be liberal when this is not possible.
+
+## Random Labels
+
+Above we have shown that regularisation with elastic net can recover
+some of the generality of model performance, but is it robust? What happens 
+when it is asked to predict noise?
+
+In the next section (note: output suppresed for brevity)
+a shuffled version of the training labels will be used to fit the same models 
+as above. The expected generalisation accuracy of a model fit to this data 
+becomes 0.5 - i.e. chance performance.
+
+
+```{r null model, echo=T, warning=FALSE, results="hide"}
+# shuffle group membership:
+set.seed(47)
+ry <- sample(blrsim$y)
+
+# glm with shuffled labels:
+rm1 <- glm(y ~ ., data = data.frame(y = ry, blrsim$x), family = "binomial")
+rm1.train <- summary(dCVnet::classperformance(rm1))
+
+rm1.cv <- dCVnet::cv_classperformance_glm(y = ry,
+                                          data = blrsim$x,
+                                          f = "~.",
+                                          k = 5,
+                                          nrep = 10)
+
+rm1.test <- summary(
+  dCVnet::classperformance(rm1,
+                           newdata = data.frame(y = blrsim$y.test,
+                                                blrsim$x.test)))
+# dCVnet with shuffled labels:
+rm2 <- dCVnet::dCVnet(y = ry,
+                     data = blrsim$x,
+                     k_outer = 5,
+                     k_inner = 10,
+                     nrep_outer = 2,
+                     nrep_inner = 2,
+                     alphalist = 0.1,
+                     type.measure = "class")
+
+rm2.train <- summary(classperformance(rm2$final))
+
+rm2.test <- summary(
+  structure(
+    data.frame(
+      prediction = predict(rm2, newx = blrsim$x.test, type = "response")[,1],
+      classification = as.factor(predict(rm2, newx = blrsim$x.test, type = "class")[,1]),
+      reference = as.factor(blrsim$y.test),
+      label = "m2.test",
+      stringsAsFactors = FALSE),
+    class = c("classperformance", "data.frame")
+  )
+)
+
+rm2.cv <- report_classperformance_summary(rm2)
+
+r_results <- c(
+  bayes.rate = 0.5,
+  
+  glm.train = rm1.train[5,2],
+  glm.test = rm1.test[5,2],
+  glm.cv = rm1.cv$cv.performance[5,2],
+  
+  enet.train = rm2.train[5,2],
+  enet.test = rm2.test[5,2],
+  enet.cv = rm2.cv[5,2]
+)
+
+```
+
+Now we will inspect the results:
+
+```{r inspect null model results} 
+# print accuracy:
+print(r_results, digits = 2)
+
+# subtract the bayes rate accuracy:
+print(r_results - 0.5, digits = 2)
+
+```
+
+A binary classification model trained on random labels should have a 
+chance level generalisation error/accuracy. Above we show that
+this is the case for glmnet (in this simulated data).
+
+This suggests that the nested model construction and cross-validation are 
+working as expected.

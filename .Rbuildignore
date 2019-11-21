@@ -3,3 +3,5 @@
 ^.development$
 ^.lintr$
 ^data-raw$
+^doc$
+^Meta$

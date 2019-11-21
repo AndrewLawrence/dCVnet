@@ -34,3 +34,4 @@ Suggests:
     car,
     psych,
     boot
+VignetteBuilder: knitr
