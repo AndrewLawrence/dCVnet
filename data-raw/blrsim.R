@@ -4,7 +4,7 @@
 set.seed(42)
 
 # simulation settings:
-nvar <- 20  # n predictors
+nvar <- 40  # n predictors
 ngood <- 10 # first ngood used for prediction
 nobs_train <- 50   # observations in training dataset
 nobs_test <- 1000  # observations in testing dataset
