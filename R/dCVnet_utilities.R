@@ -916,3 +916,113 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
   R <- lvl[R]
   return(factor(R, levels = lvl))
 }
+
+
+#' cv_classperformance_glm
+#'
+#' Cross-validated estimates of model performance by
+#' repeated k-fold cross-validation.
+#'
+#' This function is nothing revolutionary. The idea is to
+#' extend \code{\link{boot}{cv.glm}} with an interface that better matches
+#' the other functions in this package.
+#'
+#' The additions are:
+#' \itemize{
+#' \item{Repeated k-fold rather than single k-fold}
+#' \item{Option to provide the fold membership}
+#' \item{Default use of stratified sampling by outcome class}
+#' \item{Performance assessed with \code{\link{summary.classperformance}}}
+#' }
+#'
+#' @param y outcome vector (numeric or factor)
+#' @param data predictors in a data.frame
+#' @param f a formula to apply to x
+#' @param ... other arguments
+#' @inheritParams multialpha.repeated.cv.glmnet
+#' @inheritParams repeated.cv.glmnet
+#' @return A list containing the following:
+#'     \itemize{
+#'     \item{glm.performance - summary(classperformance(x))
+#'         for the uncrossvalidated model}
+#'     \item{cv.performance - report_classperformance_summary(cv.fits)
+#'         for the crossvalidated model}
+#'     \item{folds - the folds used in cross-validation}
+#'     }
+#' @seealso \code{\link[boot]{cv.glm}}, \code{\link{classperformance}}
+#' @export
+cv_classperformance_glm <- function(y,
+                                    data,
+                                    f = "~.",
+                                    folds = NULL,
+                                    k = 10,
+                                    nrep = 2,
+                                    family = "binomial",
+                                    opt.ystratify = TRUE,
+                                    opt.uniquefolds = FALSE,
+                                    ...) {
+  cl <- as.list(match.call())[-1]
+
+  parsed <- parse_dCVnet_input(data = data, y = y, f = f, family = family)
+
+  x <- data.frame(parsed$x)
+  y <- parsed$y
+
+  # observed model:
+  m0 <- glm(y ~ ., data = data.frame(y = y, x), family = family)
+
+  # prediction performance:
+  p0 <- summary(classperformance(m0), label = "observed")
+
+  # fold generation
+  if ( missing(folds) ) {
+    strat_y <- rep(".", times = NROW(x))
+    if ( opt.ystratify ) strat_y <- y
+
+    folds <- lapply(seq.int(nrep),
+                    function(i) {
+                      caret::createFolds(y = strat_y,
+                                         k = k,
+                                         list = FALSE)
+                    })
+  } else {
+    nrep <- length(folds)
+    k <- max(folds[[1]])
+  }
+
+  if ( identical(opt.uniquefolds, TRUE) ) checkForDuplicateCVFolds(folds)
+
+  # cross-validation loop:
+  pp <- lapply(1:length(folds), function(i) {
+    cat(paste0("rep ", i, " of ", nrep, "\n"))
+    rep <- folds[[i]]
+    ppp <- lapply(1:max(rep), function(j) {
+      xtrain <- x[rep != j,]
+      ytrain <- y[rep != j]
+      xtest <- x[rep == j,]
+      ytest <- y[rep == j]
+
+      m <- glm(y ~ ., data = data.frame(y = ytrain, xtrain), family = family)
+      p <- classperformance(m, newdata = data.frame(y = ytest, xtest))
+      return(p)
+    } )
+    # merge the folds:
+    ppp <- structure(as.data.frame(data.table::rbindlist(ppp)),
+                     class = c("classperformance", "data.frame"))
+    ppp$label <- paste("rep",as.character(i))
+    return(ppp)
+  } )
+
+  # merge the repetitions:
+
+  pp <- structure(as.data.frame(data.table::rbindlist(pp)),
+                  class = c("classperformance", "data.frame"))
+
+
+  pp <- report_classperformance_summary(pp)
+
+  return(list(
+    glm.performance = p0,
+    cv.performance = pp,
+    folds = folds))
+}
