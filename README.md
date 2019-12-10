@@ -10,7 +10,7 @@ urlcolor: blue
 **dCVnet** is an R package to estimate 
 **d**oubly **C**ross-**V**alidated Elastic-**net** 
 regularised generalised linear models (glm). dCVnet adds nested 
-cross-validation, and convenience functions, to regularised glm fit by the 
+cross-validation, and convenience functions, to the regularised glm fit by the 
 [glmnet package](https://cran.r-project.org/web/packages/glmnet/index.html).
 
 #### Overview & Rationale
@@ -46,9 +46,9 @@ reproducible relationships. As a result it will perform poorly in new (unseen)
 data. This failure to perform well in new data is termed 
 [generalisation (or out-of-sample) error](https://en.wikipedia.org/wiki/Generalization_error).
 
-Generalisation error can be assessed using properly conducted internal- or 
+Generalisation error can be assessed using properly conducted 
 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)). 
-In cross-validation the model is repeatedly refit in different subsets of the 
+Here the model is repeatedly refit in different subsets of the 
 data and performance evaluated in the cases which were not used for model 
 fitting. Cross-validated estimates of model performance are unaffected by the 
 optimism caused by overfitting and reflect the likely performance of the model 
