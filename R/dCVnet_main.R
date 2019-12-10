@@ -171,7 +171,7 @@ dCVnet <- function(
                   time.start = time_start)
 
   # Create outer folds ------------------------------------------------------
-  # Note: this is default stratified by y, we obtain unstratified sampling
+  # Note: this is by default stratified by y, we obtain unstratified sampling
   #         by giving caret::createMultiFolds a single-level factor/char.
   ystrat <- y
   if ( identical(opt.ystratify, FALSE) | family %in% c("cox", "mgaussian") ) {

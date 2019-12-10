@@ -30,8 +30,8 @@
 #'    \item{reference - the known 'true' class of the observation}
 #'    \item{prediction - the model prediction for a case.
 #'          for dCVnet this is the result of predict(model, type = "response")
-#'          for "binary" probability of the non-positive class assigned
-#'        by the model (used for AUROC)}
+#'          With "binary" response predictions are the predicted probability
+#'          of the non-reference class (used for AUROC)}
 #'    \item{classification - for binomial and multinomial models this is
 #'        the predicted class assigned by the model}
 #'    \item{label - a grouping variable when predictions come from more than
