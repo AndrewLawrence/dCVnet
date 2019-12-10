@@ -3,14 +3,30 @@
 
 #' parse_dCVnet_input
 #'
-#' Collate a formula and dataset into a standardised object ready for dCVnet
-#' functions.
+#' Collate an outcome (y) predictor matrix (x) into a standardised object ready
+#'    for dCVnet functions. Optionally x can be a dataframe and a
+#'    one-sided formula (f) can be provided to allow interactions,
+#'    transformations and expansions using R formula notation.
 #'
-#' For binomial and multinomial families the outcome is coerced to a
-#'     factor which is releveled (if necessary) so the test=positive level
-#'     comes first.
+#' @section Factor Outcomes:
+#'    For binomial and multinomial families \code{\link[glmnet]{glmnet}}
+#'    coerces non-numeric y data to a factor with labels sorted alphabetically.
+#'    Numeric y is left unchanged (behaviour verified in version 2.0.18).
+#'    This matters because most R functions (e.g. glm) honour the ordering
+#'    of the factor levels. A binomial glm fit to a factor with levels
+#'    \code{c("control", "case")}, will predict "case" and the model will return
+#'    predicted probabilities of being a "case". \code{\link[glmnet]{glmnet}}
+#'    will return the predicted probabilities of being "control" because it
+#'    follows "case" alphabetically. Currently cannot be avoided while using
+#'    glmnet.
+#'    To ensure dCVnet results are comparable between glmnet and glm / other
+#'    packages an error will be thrown if y is a factor and the levels are not
+#'    sorted alphabetically. Factor levels should be corrected such that
+#'    levels(y) and sort(levels(y)) agree.
+#'    e.g. \code{y <- forcats::fct_recode(y, case = "zcase")}
 #'
-#' Sparse matrices are not supported.
+#' @section Notes:
+#'    Sparse matrices are not supported by dCVnet.
 #'
 #' @name parse_dCVnet_input
 #'
@@ -24,19 +40,16 @@
 #'     The formula *must* include an intercept.
 #' @param family the model family (see \code{\link{glmnet}})
 #' @param offset optional model offset (see \code{\link{glmnet}})
-#' @param positive What level of the outcome is a 'positive' result
-#'     (in the sense of a diagnostic test).
-#'     Can be a numeric indicating which of \code{levels(y)} to use
-#'     (i.e. 1 | 2). Alternatively a character specifying the exact level
-#'     (e.g. \code{"patient"}).
 #' @param yname an optional label for the outcome / y variable.
 #' @param passNA should NA values be excluded (FALSE) or passed through (TRUE)?
 #'
-#' @return \itemize{
-#'     \item{ \code{y} - outcome factor
-#'         with level ordered according to \code{positive}}
+#' @return a list containing
+#'     \itemize{
+#'     \item{ \code{y} - outcome}
 #'     \item{ \code{x_mat} - predictor matrix
 #'         including expansions, interaction terms specified in \code{f}}
+#'     \item{ \code{yname} - a variable name for the y-variable }
+#'     \item{ \code{family} - the model family }
 #'     }
 #'
 #' @export
@@ -44,7 +57,6 @@ parse_dCVnet_input <- function(data,
                                y,
                                family,
                                f = "~.", # nolint
-                               positive = 1,
                                offset = NULL,
                                yname = "y",
                                passNA = FALSE) {
@@ -66,14 +78,13 @@ parse_dCVnet_input <- function(data,
 
   # Custom, paired x/y removal of incomplete data:
 
-  # remove missing in x/data (unless pass for imputing):
+  # remove missing in x/data (unless pass NAs for imputing):
   if ( !passNA && any(!stats::complete.cases(data)) ) {
     cat(paste0("Removing ", sum(!stats::complete.cases(data)),
                " of ", NROW(data),
                " subjects due to missing data.\n"))
     y <- subset(y, stats::complete.cases(data))
     data <- subset(data, stats::complete.cases(data))
-
   }
   # always remove missing in y:
   if ( any(!stats::complete.cases(y)) ) {
@@ -84,18 +95,25 @@ parse_dCVnet_input <- function(data,
     y <- subset(y, stats::complete.cases(y))
   }
 
-  # special treatment to y if the outcome should be factor:
-  if ( family %in% c("binomial", "multinomial")) {
-    y <- as.factor(y) # extract y variable & coerce to factor.
+  # coerce y into factor and check, because...
+  #   - glmnet (for its own infernal reasons) does not honour factor ordering,
+  #     the factor levels are converted to character and sorted alphabetically
+  #   - previously there was functionality to change factor ordering according
+  #     to a reference category, but this is inconsistent with glmnet.
+  #   - if y is numeric it is assumed the user knows what they are doing.
+  if ( family %in% c("binomial", "multinomial") && !is.numeric(y)) {
 
-    # relevel s.t. 'positive' is first:
+    y <- as.factor(y) # coerce y to factor
+
+    # check if
     lvl <- levels(y)
-    if ( is.numeric(positive) ) {
-      positive <- lvl[positive]
-    } else {
-      positive <- as.character(positive)
+    alvl <- sort(lvl)
+
+    if ( !identical(lvl, alvl) ) {
+      stop("The order of factor levels is not alphabetical.
+            glmnet ignores levels and treats factor levels in y
+            alphabetically.")
     }
-    if ( lvl[1] != positive ) y <- relevel(y, positive)
   }
 
   # Make a model matrix of RHS variables
@@ -140,8 +158,7 @@ parseddata_summary <- function(object) {
     object <- parse_dCVnet_input(f = object$input$callenv$f,
                                  y = object$input$callenv$y,
                                  data = object$input$callenv$data,
-                                 family = object$input$callenv$family,
-                                 positive = object$input$callenv$positive)
+                                 family = object$input$callenv$family)
   }
   # First describe the target:
   if ( object$family %in% c("binomial", "multinomial") ) {
@@ -948,12 +965,13 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #'     \item{cv.performance - report_classperformance_summary(cv.fits)
 #'         for the crossvalidated model}
 #'     \item{folds - the folds used in cross-validation}
+#'     \item{call - the function call}
 #'     }
 #' @seealso \code{\link[boot]{cv.glm}}, \code{\link{classperformance}}
 #' @export
 cv_classperformance_glm <- function(y,
                                     data,
-                                    f = "~.",
+                                    f = "~.", # nolint
                                     folds = NULL,
                                     k = 10,
                                     nrep = 2,
@@ -997,9 +1015,9 @@ cv_classperformance_glm <- function(y,
     cat(paste0("rep ", i, " of ", nrep, "\n"))
     rep <- folds[[i]]
     ppp <- lapply(1:max(rep), function(j) {
-      xtrain <- x[rep != j,]
+      xtrain <- x[rep != j, ]
       ytrain <- y[rep != j]
-      xtest <- x[rep == j,]
+      xtest <- x[rep == j, ]
       ytest <- y[rep == j]
 
       m <- glm(y ~ ., data = data.frame(y = ytrain, xtrain), family = family)
@@ -1009,7 +1027,7 @@ cv_classperformance_glm <- function(y,
     # merge the folds:
     ppp <- structure(as.data.frame(data.table::rbindlist(ppp)),
                      class = c("classperformance", "data.frame"))
-    ppp$label <- paste("rep",as.character(i))
+    ppp$label <- paste("rep", as.character(i))
     return(ppp)
   } )
 
@@ -1024,5 +1042,6 @@ cv_classperformance_glm <- function(y,
   return(list(
     glm.performance = p0,
     cv.performance = pp,
-    folds = folds))
+    folds = folds,
+    call = cl))
 }

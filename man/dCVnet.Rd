@@ -7,7 +7,7 @@
 dCVnet(y, data, f = "~.", nrep_outer = 2, k_outer = 10,
   nrep_inner = 5, k_inner = 10, alphalist = c(0.2, 0.5, 0.8),
   nlambda = 100, type.measure = "deviance", family = "binomial",
-  positive = 1, offset = NULL, opt.lambda.type = c("min", "1se"),
+  offset = NULL, opt.lambda.type = c("min", "1se"),
   opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
   opt.ystratify = TRUE, ...)
 }
@@ -44,12 +44,6 @@ inner cross-validation. Options: \code{"deviance"}, \code{"class"},
 \code{"mse"}, \code{"mae"}}
 
 \item{family}{the model family (see \code{\link{glmnet}})}
-
-\item{positive}{What level of the outcome is a 'positive' result
-(in the sense of a diagnostic test).
-Can be a numeric indicating which of \code{levels(y)} to use
-(i.e. 1 | 2). Alternatively a character specifying the exact level
-(e.g. \code{"patient"}).}
 
 \item{offset}{optional model offset (see \code{\link{glmnet}})}
 

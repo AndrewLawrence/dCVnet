@@ -4,8 +4,8 @@
 \alias{parse_dCVnet_input}
 \title{parse_dCVnet_input}
 \usage{
-parse_dCVnet_input(data, y, family, f = "~.", positive = 1,
-  offset = NULL, yname = "y", passNA = FALSE)
+parse_dCVnet_input(data, y, family, f = "~.", offset = NULL,
+  yname = "y", passNA = FALSE)
 }
 \arguments{
 \item{data}{a data.frame containing variables needed for the formula (f).}
@@ -21,12 +21,6 @@ interactions, transformations or expansions (like \code{\link{poly}}, or
 \code{\link{log}}).
 The formula \emph{must} include an intercept.}
 
-\item{positive}{What level of the outcome is a 'positive' result
-(in the sense of a diagnostic test).
-Can be a numeric indicating which of \code{levels(y)} to use
-(i.e. 1 | 2). Alternatively a character specifying the exact level
-(e.g. \code{"patient"}).}
-
 \item{offset}{optional model offset (see \code{\link{glmnet}})}
 
 \item{yname}{an optional label for the outcome / y variable.}
@@ -34,21 +28,42 @@ Can be a numeric indicating which of \code{levels(y)} to use
 \item{passNA}{should NA values be excluded (FALSE) or passed through (TRUE)?}
 }
 \value{
+a list containing
 \itemize{
-\item{ \code{y} - outcome factor
-with level ordered according to \code{positive}}
+\item{ \code{y} - outcome}
 \item{ \code{x_mat} - predictor matrix
 including expansions, interaction terms specified in \code{f}}
+\item{ \code{yname} - a variable name for the y-variable }
+\item{ \code{family} - the model family }
 }
 }
 \description{
-Collate a formula and dataset into a standardised object ready for dCVnet
-functions.
+Collate an outcome (y) predictor matrix (x) into a standardised object ready
+for dCVnet functions. Optionally x can be a dataframe and a
+one-sided formula (f) can be provided to allow interactions,
+transformations and expansions using R formula notation.
 }
-\details{
-For binomial and multinomial families the outcome is coerced to a
-factor which is releveled (if necessary) so the test=positive level
-comes first.
+\section{Factor Outcomes}{
 
-Sparse matrices are not supported.
+For binomial and multinomial families \code{\link[glmnet]{glmnet}}
+coerces non-numeric y data to a factor with labels sorted alphabetically.
+Numeric y is left unchanged (behaviour verified in version 2.0.18).
+This matters because most R functions (e.g. glm) honour the ordering
+of the factor levels. A binomial glm fit to a factor with levels
+\code{c("control", "case")}, will predict "case" and the model will return
+predicted probabilities of being a "case". \code{\link[glmnet]{glmnet}}
+will return the predicted probabilities of being "control" because it
+follows "case" alphabetically. Currently cannot be avoided while using
+glmnet.
+To ensure dCVnet results are comparable between glmnet and glm / other
+packages an error will be thrown if y is a factor and the levels are not
+sorted alphabetically. Factor levels should be corrected such that
+levels(y) and sort(levels(y)) agree.
+e.g. \code{y <- forcats::fct_recode(y, case = "zcase")}
 }
+
+\section{Notes}{
+
+Sparse matrices are not supported by dCVnet.
+}
+

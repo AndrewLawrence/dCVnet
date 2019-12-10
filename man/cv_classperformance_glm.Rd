@@ -45,6 +45,7 @@ for the uncrossvalidated model}
 \item{cv.performance - report_classperformance_summary(cv.fits)
 for the crossvalidated model}
 \item{folds - the folds used in cross-validation}
+\item{call - the function call}
 }
 }
 \description{
