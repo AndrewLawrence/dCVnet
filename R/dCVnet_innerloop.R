@@ -155,8 +155,8 @@ multialpha.repeated.cv.glmnet <- function(
   # check & name alphas:
   alphalist <- parse_alphalist(alphalist)
 
-  # We typically want to use a fixed lambda sequence over all folds of the
-  #   outer CV, but for convenience/generality include a fallback mode:
+  # We typically use a fixed lambda sequence over all folds of the
+  #   outer CV, but also include a fallback mode:
   if ( missing(lambdas) || is.null(lambdas) ) {
     warning("no lambdas provided: extracting glmnet default lambdas")
     # extract lambda lists
@@ -208,14 +208,21 @@ multialpha.repeated.cv.glmnet <- function(
   names(malist) <- base::prettyNum(alphalist)
 
   # assemble results:
+  # extract 1 model for each alpha:
+  #   (N.b. model is fit to all data passed to inner-loop,
+  #     not just the inner-loop training set)
   mods <- lapply(malist, "[[", "glmnet.fit")
+  # extract names:
   tmeas <- names(malist[[1]]$name)
-
+  # get the summary of glmnet::cv.glmnet performance and merge into data.frame:
   malist <- mapply(cv.glmnet.modelsummary,
                    mod = malist,
                    alpha = alphalist,
                    SIMPLIFY = FALSE)
   malist <- as.data.frame(data.table::rbindlist(malist))
+
+  # Note that mods contains models fit to the complete dataset received by
+  #   this function.
 
   # pick the optimal alpha:
   bestfun <- ifelse(tmeas == "auc", max, min)
