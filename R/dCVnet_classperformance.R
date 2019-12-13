@@ -141,7 +141,7 @@ classperformance.glm <- function(x,
     }
 
     rwid <- rownames(newdata)
-    if ( is.null(rwid) ) rwid <- 1:length(newdata)
+    if ( is.null(rwid) ) rwid <- seq_len(NROW(newdata))
     prediction <- predict(x,
                           newdata = newdata,
                           type = "response", ...)

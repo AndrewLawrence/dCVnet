@@ -1011,7 +1011,7 @@ cv_classperformance_glm <- function(y,
   if ( identical(opt.uniquefolds, TRUE) ) checkForDuplicateCVFolds(folds)
 
   # cross-validation loop:
-  pp <- lapply(1:length(folds), function(i) {
+  pp <- lapply(seq_along(folds), function(i) {
     cat(paste0("rep ", i, " of ", nrep, "\n"))
     rep <- folds[[i]]
     ppp <- lapply(1:max(rep), function(j) {
