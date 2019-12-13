@@ -270,7 +270,7 @@ Above we have shown that regularisation with elastic net can recover
 some of the generality of model performance, but is it robust? What happens 
 when it is asked to predict noise?
 
-In the next section (note: output suppresed for brevity)
+In the next section (note: output suppressed for brevity)
 a shuffled version of the training labels will be used to fit the same models 
 as above. The expected generalisation accuracy of a model fit to this data 
 becomes 0.5 - i.e. chance performance.
