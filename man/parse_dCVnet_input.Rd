@@ -4,8 +4,15 @@
 \alias{parse_dCVnet_input}
 \title{parse_dCVnet_input}
 \usage{
-parse_dCVnet_input(data, y, family, f = "~.", offset = NULL,
-  yname = "y", passNA = FALSE)
+parse_dCVnet_input(
+  data,
+  y,
+  family,
+  f = "~.",
+  offset = NULL,
+  yname = "y",
+  passNA = FALSE
+)
 }
 \arguments{
 \item{data}{a data.frame containing variables needed for the formula (f).}

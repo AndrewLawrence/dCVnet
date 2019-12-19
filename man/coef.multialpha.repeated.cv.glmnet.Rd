@@ -4,8 +4,7 @@
 \alias{coef.multialpha.repeated.cv.glmnet}
 \title{coef.multialpha.repeated.cv.glmnet}
 \usage{
-\method{coef}{multialpha.repeated.cv.glmnet}(object, newx = NULL,
-  alpha = NULL, s = NULL, ...)
+\method{coef}{multialpha.repeated.cv.glmnet}(object, newx = NULL, alpha = NULL, s = NULL, ...)
 }
 \arguments{
 \item{object}{a a \code{\link{multialpha.repeated.cv.glmnet}} object.}

@@ -277,7 +277,7 @@ summary.classperformance <- function(object, label = NA, ...) {
 
   .multi_cpsummary <- function(performance) {
     R <- lapply(seq_along(unique(performance$label)),
-                function(i){
+                function(i) {
                   rr <- as.character(unique(performance$label)[i])
                   dd <- performance[performance$label == rr, ]
                   R <- summary.classperformance(dd, rr)
@@ -390,7 +390,7 @@ casesummary.classperformance <- function(object,
   }
 
   # iterate over the labels (reps) to make a wide dataframe.
-  repdata <- lapply(labs, function(rep){
+  repdata <- lapply(labs, function(rep) {
     object[object$label == rep, ]
   })
   names(repdata) <- names(labs)

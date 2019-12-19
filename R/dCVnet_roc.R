@@ -22,7 +22,8 @@
 #' @param classperformance a \code{\link{classperformance}} object.
 #' @param invertprob boolean. Should class probabilities be inverted?
 #'     If the ROC curve appears under the diagonal then toggle this option.
-#' @return a data.frame object of class "rocdata" which can be plotted. Contents:
+#' @return a data.frame object of class "rocdata" which can be plotted.
+#'     Contents:
 #'     \itemize{
 #'     \item{\code{Sens} : Sensitivity}
 #'     \item{\code{InvSpec} : 1 - Specificity}
@@ -92,7 +93,8 @@ extract_rocdata <- function(classperformance,
 #'     This is intended to be used with k-fold cross-validation data.
 #'
 #'     Warning: The averaging of roc-curves is difficult
-#'         (e.g. \href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4112395/}{Chen & Samuelson Br J. Radiol Aug 2014})
+#'         (e.g. \href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4112395/}{
+#'         Chen & Samuelson Br J. Radiol Aug 2014})
 #'         , particularly while preserving the AUROC such that the AUROC
 #'         for the average ROC-curve is equal to the average AUROC of the
 #'         component ROC-curves.
@@ -107,7 +109,8 @@ extract_rocdata <- function(classperformance,
 #' @param rocdata a \code{\link{extract_rocdata}} object.
 #' @param n the number of thresholds in \\[0,1\\] to evaluate.
 #'
-#' @return a data.frame object of class "rocdata" which can be plotted. Contents:
+#' @return a data.frame object of class "rocdata" which can be plotted.
+#'     Contents:
 #'     \itemize{
 #'     \item{\code{Sens} : Sensitivity}
 #'     \item{\code{InvSpec} : 1 - Specificity}

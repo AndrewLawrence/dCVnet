@@ -4,8 +4,7 @@
 \alias{predict.multialpha.repeated.cv.glmnet}
 \title{predict.multialpha.repeated.cv.glmnet}
 \usage{
-\method{predict}{multialpha.repeated.cv.glmnet}(object, newx,
-  alpha = NULL, s = NULL, ...)
+\method{predict}{multialpha.repeated.cv.glmnet}(object, newx, alpha = NULL, s = NULL, ...)
 }
 \arguments{
 \item{object}{a a \code{\link{multialpha.repeated.cv.glmnet}} object.}
@@ -24,7 +23,7 @@ Leave NULL to use the cv-optimised value.}
 \description{
 obtain predictions from a
 \code{\link{multialpha.repeated.cv.glmnet}} object.
-Uses the 'best' alpha & lambda hyperparameters determined by the
+Uses the 'best' alpha \& lambda hyperparameters determined by the
 internal cross-validation results. For lambda this will be lambda.min
 or lambda.1se (determined at model runtime) unless requested otherwise.
 }

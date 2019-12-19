@@ -19,7 +19,7 @@ mixture of two types of regularisation: L2 (ridge) and L1 (LASSO) are
 possible. This regularisation produces dimensionality reduction and
 variable selection in the predictors.
 
-The values of the hyperparameters (and thereby the amount and type of
+The values of the hyperparameters (and so the amount and type of
 regularisation) are selected on the basis of cross-validated model
 performance - i.e. data-driven.
 

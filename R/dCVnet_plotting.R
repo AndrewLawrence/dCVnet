@@ -32,7 +32,7 @@ plot.multialpha.repeated.cv.glmnet <- function(x,
   }
   # proc data:
   x$alpha <- as.factor(x$alpha)
-  if ( identical(xvar, "s") ) { #nolint
+  if ( identical(xvar, "s") ) { # nolint
     x$s <- as.numeric(gsub("s", "", x$s))
 
     smax <- aggregate(x$s, by = list(alpha = x$alpha), FUN = max)
@@ -84,8 +84,8 @@ plot.multialpha.repeated.cv.glmnet <- function(x,
 #' Produces either a plot of the tuning parameters and inner loop performance
 #'     per fold of the outer loop, or the final roc plots of the outer loop.
 #'     \itemize{
-#'     \item{\code{tuning} - selected tuning parameters over repeated folds of the
-#'           outerloop}
+#'     \item{\code{tuning} - selected tuning parameters over repeated folds
+#'         of the outerloop}
 #'     \item{\code{roc} - Sensitivity vs. (1 - Specificity) plot.}
 #'     }
 #'
@@ -203,6 +203,8 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
   plotReps <- unique(df$Rep)
   if ( n.random > 0 ) plotReps <- sample(plotReps, size = n.random)
   pdf <- df[df$Rep %in% plotReps, ]
+  # should we treat alpha as continuous or discrete?
+  if ( length(unique(pdf$alpha)) < 7 ) pdf$alpha <- as.factor(pdf$alpha)
 
   p <- ggplot2::ggplot(pdf,
                        ggplot2::aes_string(

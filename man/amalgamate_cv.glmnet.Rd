@@ -4,8 +4,10 @@
 \alias{amalgamate_cv.glmnet}
 \title{amalgamate_cv.glmnet}
 \usage{
-amalgamate_cv.glmnet(cvglmlist, checks = list(alpha = TRUE, lambda =
-  FALSE, type.measure = TRUE))
+amalgamate_cv.glmnet(
+  cvglmlist,
+  checks = list(alpha = TRUE, lambda = FALSE, type.measure = TRUE)
+)
 }
 \arguments{
 \item{cvglmlist}{a list of cv.glmnet models}
@@ -13,26 +15,25 @@ amalgamate_cv.glmnet(cvglmlist, checks = list(alpha = TRUE, lambda =
 \item{checks}{which input checks to run}
 }
 \value{
-an object of class \code{"cv.glmnet"} is returned, which is a
-  list with the ingredients of the cross-validation fit.
-  \item{lambda}{the values of \code{lambda} used in the fits.}
-  \item{cvm}{The mean cross-validated error - a vector of length
-    \code{length(lambda)}.}
-  \item{cvsd}{estimate of standard error of \code{cvm}.}
-  \item{cvup}{upper curve = \code{cvm+cvsd}.}
-  \item{cvlo}{lower curve = \code{cvm-cvsd}.}
-  \item{nzero}{number of non-zero coefficients at each \code{lambda}.}
-  \item{name}{a text string indicating type of measure (for plotting
-    purposes).}
- \item{glmnet.fit}{a fitted glmnet object for the full data.}
-  \item{lambda.min}{value of \code{lambda} that gives minimum
-    \code{cvm}.}
-  \item{lambda.1se}{largest value of \code{lambda} such that error is
-    within 1 standard error of the minimum.}
-  \item{fit.preval}{if \code{keep=TRUE}, this is the array of
-    prevalidated fits. Some entries can be \code{NA}, if that and
-    subsequent values of \code{lambda} are not reached for that fold}
-  \item{foldid}{if \code{keep=TRUE}, the fold assignments used}
+an object of class \code{"cv.glmnet"} is returned, which is a list
+with the ingredients of the cross-validation fit.  If the object was created
+with \code{relax=TRUE} then this class has a prefix class of
+\code{"cv.relaxed"}.  \item{lambda}{the values of \code{lambda} used in the
+fits.} \item{cvm}{The mean cross-validated error - a vector of length
+\code{length(lambda)}.} \item{cvsd}{estimate of standard error of
+\code{cvm}.} \item{cvup}{upper curve = \code{cvm+cvsd}.} \item{cvlo}{lower
+curve = \code{cvm-cvsd}.} \item{nzero}{number of non-zero coefficients at
+each \code{lambda}.} \item{name}{a text string indicating type of measure
+(for plotting purposes).} \item{glmnet.fit}{a fitted glmnet object for the
+full data.} \item{lambda.min}{value of \code{lambda} that gives minimum
+\code{cvm}.} \item{lambda.1se}{largest value of \code{lambda} such that
+error is within 1 standard error of the minimum.} \item{fit.preval}{if
+\code{keep=TRUE}, this is the array of prevalidated fits. Some entries can
+be \code{NA}, if that and subsequent values of \code{lambda} are not reached
+for that fold} \item{foldid}{if \code{keep=TRUE}, the fold assignments used}
+\item{relaxed}{if \code{relax=TRUE}, this additional item has the CV info
+for each of the mixed fits. In particular it also selects \code{lambda,
+gamma} pairs corresponding to the 1SE rule, as well as the minimum error.}
 }
 \description{
 Gathers results from a list of \code{\link[glmnet]{cv.glmnet}} objects
@@ -82,7 +83,8 @@ names(foldlist) <- paste0("Rep", 1:10) # label the replications.
 lambdaseq <- glmnet::cv.glmnet(x=x, y=y, family = "cox")$lambda
 # create a list of models:
 modellist <- lapply(foldlist, function(ff) {
-glmnet::cv.glmnet(x = x, y = y, family = "cox", foldid = ff, lambda = lambdaseq) } )
+glmnet::cv.glmnet(x = x, y = y, family = "cox", foldid = ff,
+    lambda = lambdaseq) } )
 
 # use amalgamate to average results:
 mod <- amalgamate_cv.glmnet(modellist)

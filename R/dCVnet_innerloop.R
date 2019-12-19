@@ -19,7 +19,7 @@
 #'     see \code{\link[glmnet]{glmnet}}
 #' @param folds This is a list where each element is an integer vector
 #'     of length *n_cases*. The integer for each case labels it as belonging
-#'     to a fold *1:n_folds*. This argument implicitly sets the number of repeats
+#'     to a fold *1:n_folds*. This argument overrides the number of repeats
 #'     and the k in repeated k-fold cv.
 #' @param nreps if folds are not specified, how many times to repeat k-fold
 #'     cross-validation? The default (nreps=NULL) uses 5 repeats.
@@ -48,8 +48,13 @@ repeated.cv.glmnet <- function(x, y,
                                           "cox", "mgaussian"),
                                ...,
                                debug = FALSE) {
-  cl <- as.list(match.call())[-1]
+  cl <- as.list(match.call(expand.dots = TRUE))[-1]
 
+  if ( "relax" %in% names(cl) ) {
+    if ( identical(cl$relax, TRUE) ) {
+      stop("The dCVnet package does not support relaxed fit models.")
+    }
+  }
   # We typically want to use fixed folds and fixed lambda sequence, but for
   #   convenience/generality include fallback modes (with warnings):
   if ( is.null(lambda) || missing(lambda) ) {
@@ -57,7 +62,7 @@ repeated.cv.glmnet <- function(x, y,
     # get elements of call suitable for glmnet:
     cl.gnet <- cl[names(cl) %in% methods::formalArgs(glmnet::glmnet)]
     # extract lambda list
-    lambdaseq <- do.call(glmnet::glmnet, cl.gnet)$lambda #nolint
+    lambdaseq <- do.call(glmnet::glmnet, cl.gnet)$lambda # nolint
   } else {
     lambdaseq <- lambda
   }
@@ -83,13 +88,14 @@ repeated.cv.glmnet <- function(x, y,
   cvgnet_args <- unique(c(methods::formalArgs(glmnet::cv.glmnet),
                           methods::formalArgs(glmnet::glmnet)))
   cvgnet_args <- cvgnet_args[!(cvgnet_args %in% "...")]
-  cl.cvgnet <- cl[names(cl) %in% cvgnet_args] #nolint
+  cl.cvgnet <- cl[names(cl) %in% cvgnet_args] # nolint
 
   # estimate models over folds:
   models <- lapply(seq_along(folds), function(i) {
     cl.cvgnet$foldid <- quote(folds[[i]])
-    return(set_glmnet_alpha(do.call(glmnet::cv.glmnet, cl.cvgnet),
-                            setalpha = alpha))
+    return(set_glmnet_alpha(
+      do.call("cv.glmnet", cl.cvgnet),
+      setalpha = alpha))
   } )
   # merge and return:
   if (debug) return(models)
@@ -367,7 +373,6 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
 #'     internal cross-validation results. For lambda this will be lambda.min
 #'     or lambda.1se (determined at model runtime) unless requested otherwise.
 #'
-#' @inheritParams glmnet::predict.glmnet
 #' @param object a a \code{\link{multialpha.repeated.cv.glmnet}} object.
 #' @param newx matrix of new values for x at which predictions are required.
 #'     Note: no impact when type is "coefficients", "class" or "nonzero".

@@ -12,7 +12,8 @@ average_rocdata(rocdata, n = 1000)
 \item{n}{the number of thresholds in \[0,1\] to evaluate.}
 }
 \value{
-a data.frame object of class "rocdata" which can be plotted. Contents:
+a data.frame object of class "rocdata" which can be plotted.
+Contents:
 \itemize{
 \item{\code{Sens} : Sensitivity}
 \item{\code{InvSpec} : 1 - Specificity}
@@ -27,17 +28,19 @@ specificity are extracted and mean averaged over the set of curves.
 This is intended to be used with k-fold cross-validation data.
 }
 \details{
-Warning: The averaging of roc-curves is difficult
-(e.g. \href{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4112395/}{Chen & Samuelson Br J. Radiol Aug 2014})
-, particularly while preserving the AUROC such that the AUROC
-for the average ROC-curve is equal to the average AUROC of the
-component ROC-curves.
+\preformatted{Warning: The averaging of roc-curves is difficult
+    (e.g. \\href\{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4112395/\}\{
+    Chen & Samuelson Br J. Radiol Aug 2014\})
+    , particularly while preserving the AUROC such that the AUROC
+    for the average ROC-curve is equal to the average AUROC of the
+    component ROC-curves.
 
-This function is for a rough display of average performance
-over bootstraps or repeats of k-fold cross-validation.
+    This function is for a rough display of average performance
+    over bootstraps or repeats of k-fold cross-validation.
 
-Minimal testing suggests that there should be agreement in the
-AUROCs to the third decimal place.
+    Minimal testing suggests that there should be agreement in the
+    AUROCs to the third decimal place.
+}
 }
 \seealso{
 \code{\link{plot.rocdata}}, \code{\link{extract_rocdata}}

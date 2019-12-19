@@ -22,8 +22,8 @@
 Produces either a plot of the tuning parameters and inner loop performance
 per fold of the outer loop, or the final roc plots of the outer loop.
 \itemize{
-\item{\code{tuning} - selected tuning parameters over repeated folds of the
-outerloop}
+\item{\code{tuning} - selected tuning parameters over repeated folds
+of the outerloop}
 \item{\code{roc} - Sensitivity vs. (1 - Specificity) plot.}
 }
 }

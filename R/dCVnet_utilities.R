@@ -591,7 +591,6 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #' @param cvglmlist a list of cv.glmnet models
 #' @param checks which input checks to run
 #' @inherit glmnet::cv.glmnet return
-#' @importFrom glmnet getmin
 #' @examples
 #' \dontrun{
 #' data("CoxExample", package = "glmnet") # x and y
@@ -603,7 +602,8 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #' lambdaseq <- glmnet::cv.glmnet(x=x, y=y, family = "cox")$lambda
 #' # create a list of models:
 #' modellist <- lapply(foldlist, function(ff) {
-#' glmnet::cv.glmnet(x = x, y = y, family = "cox", foldid = ff, lambda = lambdaseq) } )
+#' glmnet::cv.glmnet(x = x, y = y, family = "cox", foldid = ff,
+#'     lambda = lambdaseq) } )
 #'
 #' # use amalgamate to average results:
 #' mod <- amalgamate_cv.glmnet(modellist)
@@ -625,10 +625,10 @@ amalgamate_cv.glmnet <- function(cvglmlist,
                                                type.measure = TRUE)) {
   # apply with base::Reduce to check all element of a list are identical:
   .reducing_identical <- function(x, y) if (identical(x, y)) x else FALSE
-
   # Sometimes the glmnet path fit stops before all lambdas are tested.
   #  we will filter down to lambdas found in every repetition.
   lambda <- base::Reduce(.reducing_identical, lapply(cvglmlist, "[[", "lambda"))
+  # we have common lambdas unless lambda == FALSE, handle the non-common case:
   if ( identical(lambda, FALSE) ) {
     # get commmon lambdas:
     lambda <- base::Reduce(base::intersect, lapply(cvglmlist, "[[", "lambda"))
@@ -646,11 +646,10 @@ amalgamate_cv.glmnet <- function(cvglmlist,
       mod$cvup <- mod$cvup[sel]
       mod$cvlo <- mod$cvlo[sel]
       mod$nzero <- mod$nzero[sel]
-      return(mod)
-    },
-    mod = cvglmlist,
-    sel = common,
-    SIMPLIFY = FALSE)
+      return(mod) },
+      mod = cvglmlist,
+      sel = common,
+      SIMPLIFY = FALSE)
   }
 
   # check alphas
@@ -669,8 +668,8 @@ amalgamate_cv.glmnet <- function(cvglmlist,
   # merge the list of results:
   cvm <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "cvm")))
   cvsd <- as.data.frame(base::Map("[[", cvglmlist, "cvsd"))
-  cvsd <- cvsd ^ 2  # for sd take variance, average and return to sd.
-  cvsd <- sqrt(rowMeans(cvsd))
+  # for sd take variance, average and return to sd.
+  cvsd <- sqrt(rowMeans(cvsd ^ 2))
   # Note: cv.glmnet (2.0.16) gets nzero from the reference glmnet (prior to
   #       cross-validation), it doesn't measure nzero independently for each
   #       fold.
@@ -682,9 +681,9 @@ amalgamate_cv.glmnet <- function(cvglmlist,
   names(nz) <- nm
   # lookup lambda.min/lambda.1se
   lamin <- if (cvname == "AUC") {
-    glmnet::getmin(lambda, -cvm, cvsd)
+    glmnet_getmin(lambda, -cvm, cvsd)
   } else {
-    glmnet::getmin(lambda, cvm, cvsd)
+    glmnet_getmin(lambda, cvm, cvsd)
   }
   return(structure(c(list(lambda = lambda,
                           cvm = cvm,
@@ -693,7 +692,8 @@ amalgamate_cv.glmnet <- function(cvglmlist,
                           cvlo = cvm - cvsd,
                           nzero = nz,
                           name = cvname,
-                          glmnet.fit = cvglmlist[[1]]$glmnet.fit),
+                          glmnet.fit = cvglmlist[[1]]$glmnet.fit,
+                          call = cvglmlist[[1]]$call),
                      as.list(lamin)),
                    nrep = length(cvglmlist),
                    class = "cv.glmnet"))
@@ -1044,4 +1044,16 @@ cv_classperformance_glm <- function(y,
     cv.performance = pp,
     folds = folds,
     call = cl))
+}
+
+# function was removed from glmnet in 3.0 update.
+glmnet_getmin <- function(lambda, cvm, cvsd) {
+  cvmin <- min(cvm, na.rm = TRUE)
+  idmin <- cvm <= cvmin
+  lambda.min <- max(lambda[idmin], na.rm = TRUE)
+  idmin <- match(lambda.min, lambda)
+  semin <- (cvm + cvsd)[idmin]
+  idmin <- cvm <= semin
+  lambda.1se <- max(lambda[idmin], na.rm = TRUE)
+  list(lambda.min = lambda.min, lambda.1se = lambda.1se)
 }

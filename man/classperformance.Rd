@@ -17,9 +17,14 @@ classperformance(x, ...)
 
 \method{classperformance}{dCVnet}(x, as.data.frame = TRUE, ...)
 
-\method{classperformance}{glm}(x, as.data.frame = TRUE,
-  label = deparse(substitute(x)), threshold = 0.5, newdata = NULL,
-  ...)
+\method{classperformance}{glm}(
+  x,
+  as.data.frame = TRUE,
+  label = deparse(substitute(x)),
+  threshold = 0.5,
+  newdata = NULL,
+  ...
+)
 
 \method{classperformance}{glmlist}(x, as.data.frame = TRUE, ...)
 }

@@ -4,9 +4,18 @@
 \alias{cv_classperformance_glm}
 \title{cv_classperformance_glm}
 \usage{
-cv_classperformance_glm(y, data, f = "~.", folds = NULL, k = 10,
-  nrep = 2, family = "binomial", opt.ystratify = TRUE,
-  opt.uniquefolds = FALSE, ...)
+cv_classperformance_glm(
+  y,
+  data,
+  f = "~.",
+  folds = NULL,
+  k = 10,
+  nrep = 2,
+  family = "binomial",
+  opt.ystratify = TRUE,
+  opt.uniquefolds = FALSE,
+  ...
+)
 }
 \arguments{
 \item{y}{outcome vector (numeric or factor)}
@@ -17,7 +26,7 @@ cv_classperformance_glm(y, data, f = "~.", folds = NULL, k = 10,
 
 \item{folds}{This is a list where each element is an integer vector
 of length \emph{n_cases}. The integer for each case labels it as belonging
-to a fold \emph{1:n_folds}. This argument implicitly sets the number of repeats
+to a fold \emph{1:n_folds}. This argument overrides the number of repeats
 and the k in repeated k-fold cv.}
 
 \item{k}{the number of folds for k-fold cross-validation.}

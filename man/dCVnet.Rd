@@ -4,12 +4,25 @@
 \alias{dCVnet}
 \title{Fit a doubly cross-validated elastic-net regularised logistic regression}
 \usage{
-dCVnet(y, data, f = "~.", nrep_outer = 2, k_outer = 10,
-  nrep_inner = 5, k_inner = 10, alphalist = c(0.2, 0.5, 0.8),
-  nlambda = 100, type.measure = "deviance", family = "binomial",
-  offset = NULL, opt.lambda.type = c("min", "1se"),
-  opt.empirical_cutoff = FALSE, opt.uniquefolds = FALSE,
-  opt.ystratify = TRUE, ...)
+dCVnet(
+  y,
+  data,
+  f = "~.",
+  nrep_outer = 2,
+  k_outer = 10,
+  nrep_inner = 5,
+  k_inner = 10,
+  alphalist = c(0.2, 0.5, 0.8),
+  nlambda = 100,
+  type.measure = "deviance",
+  family = "binomial",
+  offset = NULL,
+  opt.lambda.type = c("min", "1se"),
+  opt.empirical_cutoff = FALSE,
+  opt.uniquefolds = FALSE,
+  opt.ystratify = TRUE,
+  ...
+)
 }
 \arguments{
 \item{y}{the outcome (can be numeric vector,
@@ -31,8 +44,8 @@ The formula \emph{must} include an intercept.}
 
 \item{k_inner}{an integer, the k in the inner k-fold CV.}
 
-\item{alphalist}{a numeric vector of values in (0,1].
-This sets the search space for optimising hyperparameter alpha.}
+\item{alphalist}{a numeric vector of values in (0,1]. This sets the search space for
+optimising hyperparameter alpha.}
 
 \item{nlambda}{an integer, number of gradations between
 lambda.min and lambda.max to search.
@@ -79,7 +92,8 @@ Double (nested) repeated k-fold cross-validation used to:
 \itemize{
 \item{Produce unbiased estimates of out-of-sample
 classification performance (outer CV).}
-\item{Select optimal hyperparameters for the elasticnet (inner CV).}}
+\item{Select optimal hyperparameters for the elasticnet (inner CV).}
+}
 Elasticnet hyperparameters are
 \bold{lambda} (the total regularisation penalty)
 and \bold{alpha} (the balance of L1 and L2 regularisation types).

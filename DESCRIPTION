@@ -1,7 +1,7 @@
 Package: dCVnet
 Type: Package
 Title: doubly cross-validated elastic-net regularised generalised linear models
-Version: 1.0.4
+Version: 1.0.5
 Authors@R: c(person("Andrew J.", "Lawrence", 
                     email = "lawrenceajl@gmail.com",
                     role = c("aut", "cre")))
@@ -26,7 +26,7 @@ Imports:
     methods,
     stats
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Suggests:
     knitr,
     rmarkdown,

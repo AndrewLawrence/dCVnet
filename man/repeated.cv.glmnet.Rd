@@ -4,42 +4,52 @@
 \alias{repeated.cv.glmnet}
 \title{repeated.cv.glmnet}
 \usage{
-repeated.cv.glmnet(x, y, folds = NULL, lambda = NULL, alpha = 1,
-  nfolds = NULL, nreps = NULL, family = c("gaussian", "binomial",
-  "poisson", "multinomial", "cox", "mgaussian"), ..., debug = FALSE)
+repeated.cv.glmnet(
+  x,
+  y,
+  folds = NULL,
+  lambda = NULL,
+  alpha = 1,
+  nfolds = NULL,
+  nreps = NULL,
+  family = c("gaussian", "binomial", "poisson", "multinomial", "cox", "mgaussian"),
+  ...,
+  debug = FALSE
+)
 }
 \arguments{
-\item{x}{input matrix, of dimension nobs x nvars; each row is an
-  observation vector. Can be in sparse matrix format (inherit from class \code{"sparseMatrix"} as in package \code{Matrix}; not yet available for \code{family="cox"})}
+\item{x}{input matrix, of dimension nobs x nvars; each row is an observation
+vector. Can be in sparse matrix format (inherit from class
+\code{"sparseMatrix"} as in package \code{Matrix}; not yet available for
+\code{family="cox"})}
 
-\item{y}{response variable. Quantitative for \code{family="gaussian"},
-  or \code{family="poisson"} (non-negative counts). For
-  \code{family="binomial"} should be either a factor with two levels, or
-  a two-column matrix of counts or proportions (the second column is
-  treated as the target class; for a factor, the last level in
-  alphabetical order is the target class). For
-  \code{family="multinomial"}, can be a \code{nc>=2} level factor, or a
-  matrix with \code{nc} columns of counts or proportions.
-  For either \code{"binomial"} or \code{"multinomial"}, if \code{y} is
-  presented as a vector, it will be coerced into a factor. For
-  \code{family="cox"}, \code{y} should be a two-column matrix with
-  columns named 'time' and 'status'. The latter is a binary variable,
-  with '1' indicating death, and '0' indicating right censored. The
-  function \code{Surv()} in package \pkg{survival} produces such a
-  matrix. For  \code{family="mgaussian"}, \code{y} is a matrix of quantitative responses.}
+\item{y}{response variable. Quantitative for \code{family="gaussian"}, or
+\code{family="poisson"} (non-negative counts). For \code{family="binomial"}
+should be either a factor with two levels, or a two-column matrix of counts
+or proportions (the second column is treated as the target class; for a
+factor, the last level in alphabetical order is the target class). For
+\code{family="multinomial"}, can be a \code{nc>=2} level factor, or a matrix
+with \code{nc} columns of counts or proportions.  For either
+\code{"binomial"} or \code{"multinomial"}, if \code{y} is presented as a
+vector, it will be coerced into a factor. For \code{family="cox"}, \code{y}
+should be a two-column matrix with columns named 'time' and 'status'. The
+latter is a binary variable, with '1' indicating death, and '0' indicating
+right censored. The function \code{Surv()} in package \pkg{survival}
+produces such a matrix. For \code{family="mgaussian"}, \code{y} is a matrix
+of quantitative responses.}
 
 \item{folds}{This is a list where each element is an integer vector
 of length \emph{n_cases}. The integer for each case labels it as belonging
-to a fold \emph{1:n_folds}. This argument implicitly sets the number of repeats
+to a fold \emph{1:n_folds}. This argument overrides the number of repeats
 and the k in repeated k-fold cv.}
 
 \item{lambda}{use a fixed, user supplied lambda sequence (descending)
 see \code{\link[glmnet]{glmnet}}}
 
-\item{alpha}{The elasticnet mixing parameter, with
-    \eqn{0\le\alpha\le 1}. The penalty is defined
-    as \deqn{(1-\alpha)/2||\beta||_2^2+\alpha||\beta||_1.} \code{alpha=1}
-    is the lasso penalty, and \code{alpha=0} the ridge penalty.}
+\item{alpha}{The elasticnet mixing parameter, with \eqn{0\le\alpha\le 1}.
+The penalty is defined as
+\deqn{(1-\alpha)/2||\beta||_2^2+\alpha||\beta||_1.} \code{alpha=1} is the
+lasso penalty, and \code{alpha=0} the ridge penalty.}
 
 \item{nfolds}{if folds are not specified, how many folds should be used in
 cross-validation? The default (nfolds=NULL) uses 10-fold.}

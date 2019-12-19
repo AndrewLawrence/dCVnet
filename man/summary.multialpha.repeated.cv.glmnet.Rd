@@ -4,8 +4,7 @@
 \alias{summary.multialpha.repeated.cv.glmnet}
 \title{summary.multialpha.repeated.cv.glmnet}
 \usage{
-\method{summary}{multialpha.repeated.cv.glmnet}(object, print = TRUE,
-  ...)
+\method{summary}{multialpha.repeated.cv.glmnet}(object, print = TRUE, ...)
 }
 \arguments{
 \item{object}{a a \code{\link{multialpha.repeated.cv.glmnet}} object.}

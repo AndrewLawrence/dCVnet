@@ -16,14 +16,14 @@
 #' possible. This regularisation produces dimensionality reduction and
 #' variable selection in the predictors.
 #'
-#' The values of the hyperparameters (and thereby the amount and type of
+#' The values of the hyperparameters (and so the amount and type of
 #' regularisation) are selected on the basis of cross-validated model
 #' performance - i.e. data-driven.
 #'
 #' The fully nested cross-validation keeps the final performance estimates
 #' 'honest' by reducing optimism bias.
 #'
-#' @importFrom glmnet glmnet cv.glmnet predict.lognet
+#' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
 #' @importFrom stats predict fitted predict.glm
 #' @importFrom caret confusionMatrix

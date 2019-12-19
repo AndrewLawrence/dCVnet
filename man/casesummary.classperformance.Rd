@@ -4,8 +4,7 @@
 \alias{casesummary.classperformance}
 \title{casesummary.classperformance}
 \usage{
-casesummary.classperformance(object, type = c("both", "data", "summary"),
-  ...)
+casesummary.classperformance(object, type = c("both", "data", "summary"), ...)
 }
 \arguments{
 \item{object}{a \code{\link{classperformance}} object?}

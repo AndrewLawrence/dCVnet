@@ -4,8 +4,7 @@
 \alias{plot.multialpha.repeated.cv.glmnet}
 \title{plot.multialpha.repeated.cv.glmnet}
 \usage{
-\method{plot}{multialpha.repeated.cv.glmnet}(x, xvar = c("lambda", "s"),
-  errorbars = FALSE, ...)
+\method{plot}{multialpha.repeated.cv.glmnet}(x, xvar = c("lambda", "s"), errorbars = FALSE, ...)
 }
 \arguments{
 \item{x}{a \code{\link{multialpha.repeated.cv.glmnet}} object.}

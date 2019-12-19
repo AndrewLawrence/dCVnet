@@ -13,7 +13,8 @@ extract_rocdata(classperformance, invertprob = FALSE)
 If the ROC curve appears under the diagonal then toggle this option.}
 }
 \value{
-a data.frame object of class "rocdata" which can be plotted. Contents:
+a data.frame object of class "rocdata" which can be plotted.
+Contents:
 \itemize{
 \item{\code{Sens} : Sensitivity}
 \item{\code{InvSpec} : 1 - Specificity}

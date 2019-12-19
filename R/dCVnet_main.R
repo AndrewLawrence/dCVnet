@@ -7,7 +7,8 @@
 #'     \itemize{
 #'     \item{Produce unbiased estimates of out-of-sample
 #'         classification performance (outer CV).}
-#'     \item{Select optimal hyperparameters for the elasticnet (inner CV).}}
+#'     \item{Select optimal hyperparameters for the elasticnet (inner CV).}
+#'     }
 #'     Elasticnet hyperparameters are
 #'     \bold{lambda} (the total regularisation penalty)
 #'     and \bold{alpha} (the balance of L1 and L2 regularisation types).
@@ -19,8 +20,9 @@
 #' @param k_outer an integer, the k in the outer k-fold CV.
 #' @param nrep_inner an integer, the number of repetitions (k-fold inner CV)
 #' @param nrep_outer an integer, the number of repetitions (k-fold outer CV)
-#' @param alphalist a numeric vector of values in \(0,1\].
-#'     This sets the search space for optimising hyperparameter alpha.
+#' @param alphalist
+#'     a numeric vector of values in (0,1]. This sets the search space for
+#'     optimising hyperparameter alpha.
 #' @param nlambda an integer, number of gradations between
 #'     lambda.min and lambda.max to search.
 #'     See \code{glmnet} argument \code{nlambda}.
@@ -31,7 +33,7 @@
 #' @param opt.empirical_cutoff Boolean.
 #'     Use the empirical proportion of cases as the cutoff for outer CV
 #'     classification (affects outer CV performance only).
-#'     Otherwise classify at 50\% probability.
+#'     Otherwise classify at 50% probability.
 #' @param ... Arguments to pass through to cv.glmnet
 #'     (may break things).
 #' @return a dCVnet object.

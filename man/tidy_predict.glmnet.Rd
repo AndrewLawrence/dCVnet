@@ -4,8 +4,17 @@
 \alias{tidy_predict.glmnet}
 \title{tidy_predict.glmnet}
 \usage{
-tidy_predict.glmnet(mod, newx, s, family, newy = NULL,
-  newoffset = NULL, label = "", binomial_thresh = 0.5, ...)
+tidy_predict.glmnet(
+  mod,
+  newx,
+  s,
+  family,
+  newy = NULL,
+  newoffset = NULL,
+  label = "",
+  binomial_thresh = 0.5,
+  ...
+)
 }
 \arguments{
 \item{mod}{a fitted glmnet object (alpha is determined by the object)}

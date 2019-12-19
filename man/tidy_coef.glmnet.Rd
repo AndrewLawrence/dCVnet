@@ -4,8 +4,16 @@
 \alias{tidy_coef.glmnet}
 \title{tidy_coef.glmnet}
 \usage{
-tidy_coef.glmnet(mod, newx, newy, s, family, label = "",
-  newoffset = NULL, binomial_thresh = 0.5)
+tidy_coef.glmnet(
+  mod,
+  newx,
+  newy,
+  s,
+  family,
+  label = "",
+  newoffset = NULL,
+  binomial_thresh = 0.5
+)
 }
 \arguments{
 \item{mod}{a fitted glmnet object (alpha is determined by the object)}

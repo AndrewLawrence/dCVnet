@@ -10,8 +10,7 @@ reflogreg(object, ...)
 
 \method{reflogreg}{default}(object, ...)
 
-\method{reflogreg}{dCVnet}(object, univariate = TRUE, doPCA = "auto",
-  ncomp = "auto", ...)
+\method{reflogreg}{dCVnet}(object, univariate = TRUE, doPCA = "auto", ncomp = "auto", ...)
 }
 \arguments{
 \item{object}{an object to calculate reference logistic regressions for}

@@ -8,8 +8,8 @@
 #' to the outcome.
 #'
 #' The data is split into train and test sets.
-#' For reference, the classification accuracy of a model using the generative rule
-#' in the complete data is provided.
+#' For reference, the classification accuracy of a model
+#' (using the generative rule) in the complete data is provided.
 #'
 #' @format list
 #' \describe{
