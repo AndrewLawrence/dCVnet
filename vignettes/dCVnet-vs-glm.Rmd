@@ -23,17 +23,17 @@ regression (fit with `glm`).
 
 #### Practical Notes / Disclaimers
 
-1. *For practical (time) reasons, this vignette uses a specially selected seed
+1. *For practical reasons (computation time), this vignette uses a specially selected seed
 and a smaller number of CV repetitions than would typically be sensible.
 The seed was selected because it generated random CV folds that gave results representative of a much larger number of CV repetitions.*
 
 2. *This vignette is not a recipe for using the dCVnet package. The 
-complexities of data formatting / modelling, tuning elastic-net hyperparameters, deciding the nested repeated k-fold parameters and checking the
-variability cv results are all omitted, being beyond the scope of
+complexities of data formatting, modelling decisions, picking the elastic-net hyperparameters to tune over, deciding the nested repeated k-fold parameters and checking the variability cv results are all omitted, being beyond the scope of
 this vignette.*
 
-3. *For simplicity this vignette uses accuracy as a performance measure
-throughout. This is extracted from row 5 of a `summary(classperformance(x))` table.*
+3. *For simplicity this vignette uses classification accuracy as a performance
+measure throughout. This is extracted from row 5 of a 
+`summary(classperformance(x))` table.*
 
 ## A Simulated Prediction Problem
 
@@ -49,10 +49,9 @@ are used to construct the binary outcome (with added error) while predictors
 
 With a simulated dataset we know exactly how the data were
 generated and consequently what the ideal model should be. This gives us a 
-'bayes rate' - the performance of an ideal classifier.
-Further, we can generate unlimited data and use a large hold-out dataset
-(also termed test set) for comparison with cross-validated estimates derived
-within the training sample only.
+'bayes rate' - the performance of an ideal / true classifier.
+Further, with simulation we can generate unlimited data and use a
+large hold-out dataset (also termed test set) for comparison with cross-validated estimates derived within the training sample only.
 
 Unfortunately, real data doesn't come with a bayes rate and there is often 
 not enough data, so cross-validation is the best we can do.
@@ -101,8 +100,7 @@ print(m1.train[5,2])
 
 ```
 
-There are a few problems here! First we get a warning about model fit (because 
-the model perfectly separates the two classes), but a greater 
+There are a few problems here! First we get a warning from glm about the model fit (because the model perfectly separates the two classes), but a greater 
 concern is that the coefficients and their standard errors are inflated. In 
 short the glm is over-fit to the data.
 
@@ -129,8 +127,7 @@ convenience function which applies the same scheme to an unregularised glm and
 extracts the performance measures.
 
 Because there are very few observations we will use 5-fold cross-validation
-rather than 10 or 20 fold. We will repeat this 10 times (although see note
-above)
+rather than 10 or 20 fold. We will repeat this 10 times (although see Note 3)
 
 
 ```{r cv.glm, warning=FALSE}
@@ -151,23 +148,20 @@ round(m1.cv$cv.performance[5, 2, drop = F],3)
 The cross-validated accuracy (`r round(m1.cv$cv.performance[5, 2], 2)`) is even
 worse than the results in the hold-out (`r round(m1.test[5, 2], 2)`).
 This is a known bias expected to occur (at least on average) because
-each model within the folds of the CV is fit with a smaller sample size than
-the full model. The extent of the effect then depends on the steepness of the
-learning curve for the problem, and the selected value of k in k-fold CV
-(see Chapter 7 of Elements of Statistical Learning).
+each model is fit to a fold of the CV which has 1/kth less data to work with than the full model. The extent of the downward bias depends on the steepness of the learning curve for the problem at that sample size, and the selected value of k in k-fold CV (see Chapter 7 of Elements of Statistical Learning).
 
 ## Regularised Binary Logistic Regression
 
 So, the *standard* model described above overfits, what can be done?
-Previously, a researcher would simplify the model "by hand" considering which
-predictors to remove. Regularised models can do this variable selection 
-in a data-driven manner.
+Previously, a researcher might either apply for more funding to collect more data, or more commonly try to simplify the model "by hand" considering which
+predictors to remove. Regularised models can do variable selection 
+in a continuous and data-driven manner (removing a variable from a model is equivalent to infinite regularisation of that term).
 
 In this example we will use elastic-net regularisation with a single, mostly
 ridge-like, alpha (0.1). In real data we might consider multiple alphas and 
 there would be a preliminary stage where we consider which ones to include. 
 As with the glm we will set k=5 for the k-fold cross-validation,
-(although to save time only 2 repetitions are used, see note above).
+(although to save time only 2 repetitions are used, see Note 3 above).
 
 ```{r dCvnet}
 set.seed(47)
@@ -189,11 +183,11 @@ print(m2.train[5,2])
 
 ```
 
-So a regularised model can still overfit the data (the accuracy in the training
+So a regularised model will still overfit the data (the accuracy in the training
 set is `r m2.train[5,2]` which is greater than the bayes rate of
 `r round(blrsim$bayes.rate, 2)`), however the key test is whether
 regularisation helps the model predict unseen data,
-either through cross-validation or in the test-set.
+either in the test-set or through cross-validation.
 
 
 ```{r cv.dCVnet }
@@ -221,7 +215,7 @@ print(m2.cv[5,2])
 
 ```
 
-Finally put all the performance numbers together:
+To get an overview, we can bring all the performance numbers together:
 
 ```{r results}
 # merge together results:
@@ -250,14 +244,13 @@ So, this vignette has shown:
 model performance in test data is smaller for
 elastic-net (`r round(m2.train[5,2],2)` -> `r round(m2.test[5,2],2)`) than for
 glm (`r round(m1.train[5,2],2)` -> `r round(m1.test[5,2],2)`). This gap is 
-indicative of overfitting, by this measure there is less overfitting for 
+indicative of overfitting, so by this measure there is less overfitting for 
 elastic-net than glm.
 
 * Although there is less overfitting, elastic-net performance in the training
 data can still be optimistic (i.e. greater than a perfect model: 
 enet.cv > bayes.rate,
-`r round(m2.train[5,2],2)` > `r round(blrsim$bayes.rate,2)`). So an 
-independent estimate of generalisation error is required.
+`r round(m2.train[5,2],2)` > `r round(blrsim$bayes.rate,2)`). So an estimate of generalisation error in data not used for training is still required.
 
 * Cross-validated estimates of generalisation error are pessimistically biased
 relative to the performance in a hold-out/test set (cv accuracy < test accuracy)
@@ -266,19 +259,19 @@ however repeated cross-validation will not be liberal when this is not possible.
 
 ## Random Labels
 
-Above we have shown that regularisation with elastic net can recover
-some of the generality of model performance, but is it robust? What happens 
-when it is asked to predict noise?
+We have shown that regularisation with elastic net can produce models which
+generalise better, but is the proceedure robust? What happens 
+when it is asked to predict noise/nonsense?
 
-In the next section (note: output suppressed for brevity)
-a shuffled version of the training labels will be used to fit the same models 
-as above. The expected generalisation accuracy of a model fit to this data 
-becomes 0.5 - i.e. chance performance.
-
+In the next section (note: output suppressed for brevity) the class labels of 
+the training data will be shuffled to break the relationship with the 
+predictors. It should not longer be possible to learn to predict the outcome,
+the bayes rate of this shuffled problem is that of a trivial majority class 
+classifier (i.e. 0.5 in this balanced prediction problem).
 
 ```{r null model, echo=T, warning=FALSE, results="hide"}
 # shuffle group membership:
-set.seed(47)
+set.seed(48)
 ry <- sample(blrsim$y)
 
 # glm with shuffled labels:
@@ -346,9 +339,8 @@ print(r_results - 0.5, digits = 2)
 
 ```
 
-A binary classification model trained on random labels should have a 
-chance level generalisation error/accuracy. Above we show that
-this is the case for glmnet (in this simulated data).
+A binary classification model trained on random labels should have (on average) a chance level (majority class frequency) accuracy in test data. 
+Above we show that this is the case for glmnet (in this simulated data).
 
 This suggests that the nested model construction and cross-validation are 
 working as expected.
