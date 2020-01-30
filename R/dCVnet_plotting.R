@@ -133,12 +133,45 @@ plot.dCVnet <- function(x, type = "tuning", ...) {
 #'
 #' @name plot.rocdata
 #' @param x \code{\link[=extract_rocdata]{rocdata}} object
-#' @param legend logical. Display legend?
-#' @param ... additional arguments
+#' @param legend logical. Display a legend?
+#' @param alphalabel should certain alpha values (probability thresholds)
+#'     on the curve be highlighted with symbols indicating threshold?
+#' @param ... additional arguments (unused)
 #' @return a ROC plot, as above.
 #'
 #' @export
-plot.rocdata <- function(x, legend = FALSE, ...) {
+plot.rocdata <- function(x,
+                         legend = TRUE,
+                         alphalabel = c(0.25, 0.5, 0.75),
+                         ...) {
+  hasalphas <- any(!is.na(alphalabel))
+  .closest <- function(vals, x) {
+    locs <- vapply(vals, function(v) which.min(abs(x - v)), FUN.VALUE = 1L)
+    r <- rep(NA_character_, NROW(x))
+    r[locs] <- names(locs)
+    return(r)
+  }
+
+  if ( hasalphas ) {
+    alphalabel <- as.numeric(alphalabel)
+    stopifnot(min(alphalabel) >= 0.0,
+              max(alphalabel) <= 1.0)
+
+    if ( is.null(names(alphalabel)) ) {
+      alphalabel <- setNames(alphalabel, prettyNum(alphalabel))
+    }
+    # initialise in x:
+    x$PThreshold <- NA_character_
+    # get closest for each group (called run):
+    # note: lappy used for side effect.
+    lapply(
+      setNames(unique(x$run),
+               unique(x$run)),
+      function(g) {
+        x$PThreshold[x$run == g] <<- .closest(alphalabel, x$alpha[x$run == g])
+      })
+    x$PThreshold <- factor(x$PThreshold, levels = names(alphalabel))
+  }
 
   p <- ggplot2::ggplot(x, ggplot2::aes_string(y = "Sens",
                                               x = "InvSpec",
@@ -154,7 +187,15 @@ plot.rocdata <- function(x, legend = FALSE, ...) {
     ggplot2::coord_equal() +
     ggplot2::theme_light()
 
-  return(p)
+  if ( hasalphas  ) {
+    p <- p +
+      ggplot2::geom_point(data = x[!is.na(x$PThreshold), ],
+                          mapping = ggplot2::aes_string(shape = "PThreshold"),
+                          show.legend = legend)
+  }
+  print(p)
+  return(invisible(list(plot = p,
+                        data = x)))
 }
 
 

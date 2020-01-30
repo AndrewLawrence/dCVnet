@@ -4,12 +4,15 @@
 \alias{plot.rocdata}
 \title{plot.rocdata}
 \usage{
-\method{plot}{rocdata}(x, legend = FALSE, ...)
+\method{plot}{rocdata}(x, legend = TRUE, alphalabel = c(0.25, 0.5, 0.75), ...)
 }
 \arguments{
 \item{x}{\code{\link[=extract_rocdata]{rocdata}} object}
 
-\item{legend}{logical. Display legend?}
+\item{legend}{logical. Display a legend?}
+
+\item{alphalabel}{should certain alpha values (probability thresholds)
+on the curve be highlighted with symbols indicating threshold?}
 
 \item{...}{additional arguments}
 }
