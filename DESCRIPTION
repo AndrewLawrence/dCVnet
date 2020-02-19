@@ -18,6 +18,7 @@ Imports:
     e1071,
     caret,
     ggplot2,
+    forcats,
     ModelMetrics,
     parallel,
     data.table,

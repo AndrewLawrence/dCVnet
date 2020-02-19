@@ -4,7 +4,15 @@
 \alias{plot_outerloop_coefs}
 \title{plot_outerloop_coefs}
 \usage{
-plot_outerloop_coefs(object, type = "rep", abs = FALSE)
+plot_outerloop_coefs(
+  object,
+  type = "rep",
+  ordered = FALSE,
+  abs = FALSE,
+  final = TRUE,
+  final_col = "red",
+  final_shape = 24
+)
 }
 \arguments{
 \item{object}{a \code{\link{dCVnet}} object}
@@ -19,7 +27,17 @@ passed to \code{\link{coef.dCVnet}} .
 \item{\code{"median"} - dotplot of the median of \code{"rep"}.}
 }}
 
+\item{ordered}{sort predictors by size?}
+
 \item{abs}{plot absolute values?}
+
+\item{final}{add the final model coefficients as an overlay?
+(note: this is not in the return data, but can be accessed with
+coef(object$final$model))}
+
+\item{final_col}{colour for final model coefficients}
+
+\item{final_shape}{shape for final model coefficients}
 }
 \description{
 Plot showing standardised betas for outer-loop model coefficients.

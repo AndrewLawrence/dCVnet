@@ -289,10 +289,22 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
 #'     \item{\code{"mean"} - dotplot of the mean of \code{"rep"}.}
 #'     \item{\code{"median"} - dotplot of the median of \code{"rep"}.}
 #'     }
+#' @param ordered sort predictors by size?
 #' @param abs plot absolute values?
+#' @param final add the final model coefficients as an overlay?
+#'     (note: this is not in the return data, but can be accessed with
+#'      coef(object$final$model))
+#' @param final_col colour for final model coefficients
+#' @param final_shape shape for final model coefficients
 #' @importFrom scales muted
 #' @export
-plot_outerloop_coefs <- function(object, type = "rep", abs = FALSE) {
+plot_outerloop_coefs <- function(object,
+                                 type = "rep",
+                                 ordered = FALSE,
+                                 abs = FALSE,
+                                 final = TRUE,
+                                 final_col = "red",
+                                 final_shape = 24) {
   df <- coef.dCVnet(object, type = type)
 
   if ( abs ) {
@@ -301,6 +313,10 @@ plot_outerloop_coefs <- function(object, type = "rep", abs = FALSE) {
   } else {
     df$stdbeta <- df$Coef
     ylabel <- "Standardised Beta"
+  }
+
+  if ( ordered ) {
+    df$Predictor <- forcats::fct_reorder(df$Predictor, df$stdbeta)
   }
 
   p <-  ggplot2::ggplot(df,
@@ -322,6 +338,21 @@ plot_outerloop_coefs <- function(object, type = "rep", abs = FALSE) {
     p <- p + ggplot2::geom_boxplot()
   } else {
     p <- p + ggplot2::geom_point()
+  }
+
+  if ( final ) {
+    fcoef <- coef(object$final$model)
+    if ( abs ) {
+      fcoef <- abs(fcoef)
+    }
+    fcoef.df <- data.frame(Predictor = factor(rownames(fcoef),
+                                              levels = levels(df$Predictor)),
+                           stdbeta = as.vector(fcoef),
+                           fold = "Final",
+                           rep = "Final")
+    p <- p + ggplot2::geom_point(data = fcoef.df,
+                                 colour = final_col,
+                                 shape = final_shape)
   }
 
   print(p)
