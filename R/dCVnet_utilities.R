@@ -753,6 +753,8 @@ tidy_predict.glmnet <- function(mod,
                                 ...) {
   # always specify a value for lambda (s)
   # if rownames were used in fitting the model they will be carried through
+
+  # see formals(glmnet::predict.glmnet)
   p <- predict(object = mod,
                newx = newx,
                type = "response",

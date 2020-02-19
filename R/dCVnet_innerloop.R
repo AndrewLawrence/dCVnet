@@ -397,7 +397,6 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
                 " does not include the fitted models required for predict.\n",
                 "Rerun multialpha.repeated.cv.glmnet with ",
                 "opt.keep_models = TRUE"))
-
   }
 
   # if an alpha value was specified:

@@ -2,16 +2,46 @@
 
 # classperformance S3 generic ---------------------------------------------
 
-
 # a dCVnet S3 generic: classperformance
 #   returns a merged dataframe or a list of data frames
 #   where the dataframe contains raw performance information:
-#     - reference       (actual classification)
-#     - prediction      (predicted probability)
-#     - classification  (predicted classification)
-#     - label           (a model label e.g. rep10fold3)
-#     - rowid           (an observation label)
-
+#     - reference       (actual 'true' outcome)
+#     - prediction      (predicted outcome, will be probability for classifications)
+#     - classification  (the classification derived from prediction, if applicable)
+#     - label           (a grouping label e.g. rep10fold3, model1)
+#     - rowid           (observation labels from the rowids of the data)
+#
+# Conceptually a classperformance object contains all the data required to evaluate
+#   the performance of a model, or models.
+#
+#   The actual performance measures are then calculated by generic print / summary methods.
+#
+#   Thus, to construct a classperformance object you need all the input to the predict
+#   function appropriate for that model plus the actual outcome being predicted.
+#
+#   Further (optional) extensions are:
+#     labels  - allowing performance from different models to be held
+#               in a single object.
+#     rowid   - allowing performance to be broken down by subject, and
+#               simplifying the process of merging / augmentation of raw data.
+#
+# Practically the main difference between a class performance object and a
+#   predict object is the class performance object is tidy, and must also encode
+#   the observed outcomes associated with newx - predict methods only require
+#   newx. We also add rownames / caselabels when these are present.
+#
+# important notes:
+#   y formats vary substantially between the model families
+#   notably:
+#     cox has both outcome (status) and censoring time in y, but
+#       results of predict are a vector of relative risks
+#     multinomial can take either a k>2 factor or a matrix with k columns
+#       and returns a matrix with k-columns
+#     mgaussian takes a k-column matrix and returns a k-column matrix.
+#
+# tidy_predict.glmnet does most of the heavy lifting here for
+#   multialpha.repeated.glmnet objects
+#   classperformance should be recoded to make more use of this.
 
 #  ~ making classperformance ----------------------------------------------
 
