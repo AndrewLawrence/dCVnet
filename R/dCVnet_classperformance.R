@@ -6,18 +6,22 @@
 #   returns a merged dataframe or a list of data frames
 #   where the dataframe contains raw performance information:
 #     - reference       (actual 'true' outcome)
-#     - prediction      (predicted outcome, will be probability for classifications)
-#     - classification  (the classification derived from prediction, if applicable)
+#     - prediction      (predicted outcome,
+#                         will be probability for classifications)
+#     - classification  (the classification derived from prediction,
+#                         if applicable)
 #     - label           (a grouping label e.g. rep10fold3, model1)
 #     - rowid           (observation labels from the rowids of the data)
 #
-# Conceptually a classperformance object contains all the data required to evaluate
-#   the performance of a model, or models.
+# Conceptually a classperformance object contains all the data required to
+#   evaluate the performance of a model, or models.
 #
-#   The actual performance measures are then calculated by generic print / summary methods.
+#   The actual performance measures are then calculated by generic
+#       print / summary methods.
 #
-#   Thus, to construct a classperformance object you need all the input to the predict
-#   function appropriate for that model plus the actual outcome being predicted.
+#   Thus, to construct a classperformance object you need all the input to the
+#     predict function appropriate for that model plus the actual outcome
+#     being predicted.
 #
 #   Further (optional) extensions are:
 #     labels  - allowing performance from different models to be held

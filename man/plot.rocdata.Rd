@@ -14,7 +14,7 @@
 \item{alphalabel}{should certain alpha values (probability thresholds)
 on the curve be highlighted with symbols indicating threshold?}
 
-\item{...}{additional arguments}
+\item{...}{additional arguments (unused)}
 }
 \value{
 a ROC plot, as above.
