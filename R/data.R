@@ -25,3 +25,43 @@
 #' is the complement of such a error/loss.}
 #' }
 "blrsim"
+
+#' Prostate cancer data from Stamey et al. (1989)
+#'
+#' This dataset is used as an example in Hastie, Tibshirani & Freedman's
+#' Elements of Statistical Learning. It was included in the ElemStatLearn
+#' package which (at time of writing) is orphaned and no-longer available on
+#' CRAN.
+#'
+#' There are 8 predictors (columns 1:8), one outcome (column 9) and a
+#' marker for test/train data used in the textbook examples (column 10).
+#'
+#' Observations are from 97 men who underwent prostatectomy. The original
+#' paper investigates the post-surgical characteristics that predict
+#' pre-surgical prostate-specific antigen (PSA) score (variable: lpsa).
+#'
+#' Variables prefixed with 'l' have been log transformed.
+#'
+#' The following descriptions have been adapted from Ryan Tibshirani's
+#' \href{https://www.stat.cmu.edu/~ryantibs/statcomp-F16/lectures/exploratory_data_slides.html#(3)}{lecture notes on EDA}
+#'
+#' \describe{
+#' \item{lpsa:}{log PSA score}
+#' \item{lcavol:}{log cancer volume}
+#' \item{lweight:}{log prostate weight}
+#' \item{age:}{age of patient}
+#' \item{lbph:}{log of the amount of benign prostatic hyperplasia}
+#' \item{svi:}{seminal vesicle invasion}
+#' \item{lcp:}{log of capsular penetration}
+#' \item{gleason:}{Gleason score}
+#' \item{pgg45:}{percent of Gleason scores 4 or 5}
+#' }
+#'
+#' The dataset is provided in the original units, a scaled version can be
+#' obtained with
+#' \code{sprostate <- data.frame(scale(prostate[,-10]), train = prostate[,10])}.
+#'
+#' Observations are ordered by outcome.
+"prostate"
+# This is a link for the paper:
+# \href{https://www.ncbi.nlm.nih.gov/pubmed/2468795}{Stamey et al (1989)}
