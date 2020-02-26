@@ -291,6 +291,7 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
 #'     }
 #' @param ordered sort predictors by size?
 #' @param abs plot absolute values?
+#' @param intercept include the value of the intercept coefficient in the plot?
 #' @param final add the final model coefficients as an overlay?
 #'     (note: this is not in the return data, but can be accessed with
 #'      coef(object$final$model))
@@ -302,10 +303,15 @@ plot_outerloop_coefs <- function(object,
                                  type = "rep",
                                  ordered = FALSE,
                                  abs = FALSE,
+                                 intercept = FALSE,
                                  final = TRUE,
                                  final_col = "red",
                                  final_shape = 24) {
   df <- coef.dCVnet(object, type = type)
+
+  if ( ! intercept ) {
+    df <- df[df$Predictor != "(Intercept)",]
+  }
 
   if ( abs ) {
     df$stdbeta <- abs(df$Coef)
@@ -350,6 +356,10 @@ plot_outerloop_coefs <- function(object,
                            stdbeta = as.vector(fcoef),
                            fold = "Final",
                            rep = "Final")
+    if ( ! intercept ) {
+      fcoef.df <- fcoef.df[fcoef.df$Predictor != "(Intercept)",]
+    }
+
     p <- p + ggplot2::geom_point(data = fcoef.df,
                                  colour = final_col,
                                  shape = final_shape)

@@ -9,6 +9,7 @@ plot_outerloop_coefs(
   type = "rep",
   ordered = FALSE,
   abs = FALSE,
+  intercept = FALSE,
   final = TRUE,
   final_col = "red",
   final_shape = 24
@@ -30,6 +31,8 @@ passed to \code{\link{coef.dCVnet}} .
 \item{ordered}{sort predictors by size?}
 
 \item{abs}{plot absolute values?}
+
+\item{intercept}{include the value of the intercept coefficient in the plot?}
 
 \item{final}{add the final model coefficients as an overlay?
 (note: this is not in the return data, but can be accessed with
