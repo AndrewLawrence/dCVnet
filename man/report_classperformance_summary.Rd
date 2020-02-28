@@ -4,10 +4,14 @@
 \alias{report_classperformance_summary}
 \title{report_classperformance_summary}
 \usage{
-report_classperformance_summary(dCVnet_object)
+report_classperformance_summary(dCVnet_object, pvprevalence = "observed")
 }
 \arguments{
 \item{dCVnet_object}{result from a call to \code{\link{dCVnet}}}
+
+\item{pvprevalence}{allows calculation of PPV/NPV at different prevalences.
+set to "observed" to use the prevalence of the data.
+Note: does not affect the presented prevalence value in the table.}
 }
 \value{
 a data.frame of summarised and raw performance statistics.

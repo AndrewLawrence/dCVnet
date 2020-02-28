@@ -267,9 +267,15 @@ print.classperformance <- function(x, ...) {
 #' @param object a \code{\link{classperformance}} object.
 #' @param label a label can be assigned here.
 #'      (Warning - setting a length 1 vector will concatenate multiple reps.)
-#' @param ... additional arguments (not currently used)
+#' @param pvprevalence argument for adjustment of PPV/NPV calculation.
+#'     either "observed", or number \code{[0,1]}.
+#' @param ... additional arguments (ignored)
+#'
 #' @export
-summary.classperformance <- function(object, label = NA, ...) {
+summary.classperformance <- function(object,
+                                     label = NA,
+                                     pvprevalence = "observed",
+                                     ...) {
   # Function assigns a label if asked to (for multi performance mode.)
   #   In multiperformance mode it uses label to produce columns of data.
   # If label is 'None' then this column is removed.
@@ -292,29 +298,52 @@ summary.classperformance <- function(object, label = NA, ...) {
   if ( !is.na(label) ) object$label <- label
 
   # Two methods:
-  .single_cpsummary <- function(performance) {
+  .single_cpsummary <- function(performance, pvprevalence = "observed") {
+    if ( identical(pvprevalence, "observed") ) {
+      pvprevalence <- NULL
+    }
     # First categorical classification:
     A <- tidy_confusionmatrix(
       caret::confusionMatrix(
         data = performance$classification,
-        reference = performance$reference))
+        reference = performance$reference,
+        # ~~~~~~~~~~~~~
+        # Factor levels
+        # ~~~~~~~~~~~~~
+        # The ordering of factor levels is important for calculating
+        #   sensitivity, specificity, PPV, NPV etc.
+        # caret by default (and confusion matrices in general) follows the
+        #   convention that the class being predicted (e.g. diseased subjects)
+        #   is stored in the first level of the factor.
+        #   However glm / model.matrix uses treatment-coding: instead the
+        #   first level of y is the reference class (e.g. control subjects).
+        #   This behaviour is helpful when interpreting model coefficients
+        #   as they represent the deviation from the reference.
+        # dCVnet coerces input data into an alphabetical factor with the
+        #   reference class as the first level, so when calculating
+        #   classification perforamnce we must force level 2 as the
+        #   'positive' class (where positive is taken in the sense of
+        #   'positive predictive value'). This is done here:
+        positive = levels(performance$reference)[[2]],
+        prevalence = pvprevalence))
 
     # Next add the AUC:
     B <- ModelMetrics::auc(actual = performance$reference,
                            predicted = performance$prediction)
-    B <- pmax(B, 1 - B)
+    # following hack removed:
+    #B <- pmax(B, 1 - B)
     B <- data.frame(Measure = "AUROC", Value = B)
 
     B$label <- A$label <- unique(performance$label)
     return(rbind(A, B))
   }
 
-  .multi_cpsummary <- function(performance) {
+  .multi_cpsummary <- function(performance, pvprevalence) {
     R <- lapply(seq_along(unique(performance$label)),
                 function(i) {
                   rr <- as.character(unique(performance$label)[i])
                   dd <- performance[performance$label == rr, ]
-                  R <- summary.classperformance(dd, rr)
+                  R <- summary.classperformance(dd, rr, pvprevalence)
                   # Parse back to long.
                   R$label <- NULL # rr
                   names(R)[2] <- rr #"Value"
@@ -327,12 +356,12 @@ summary.classperformance <- function(object, label = NA, ...) {
   #   (for multiclassperf functionality)
   # If there is a single label return single, otherwise return mulit.
   if ( is.null(object$label) ) {
-    R <- .single_cpsummary(object)
+    R <- .single_cpsummary(object, pvprevalence = pvprevalence)
   } else {
     if ( length(unique(object$label)) == 1 ) {
-      R <- .single_cpsummary(object)
+      R <- .single_cpsummary(object, pvprevalence = pvprevalence)
     } else {
-      R <- .multi_cpsummary(object)
+      R <- .multi_cpsummary(object, pvprevalence = pvprevalence)
     }
   }
   # Option : remove label if it is there.
@@ -353,22 +382,28 @@ summary.classperformance <- function(object, label = NA, ...) {
 #' @name report_classperformance_summary
 #'
 #' @param dCVnet_object result from a call to \code{\link{dCVnet}}
+#' @param pvprevalence allows calculation of PPV/NPV at different prevalences.
+#'      set to "observed" to use the prevalence of the data.
+#'      Note: does not affect the presented prevalence value in the table.
 #'
 #' @return a data.frame of summarised and raw performance statistics.
 #'
 #' @export
-report_classperformance_summary <- function(dCVnet_object) {
+report_classperformance_summary <- function(dCVnet_object,
+                                            pvprevalence = "observed") {
 
   outernreps <- length(unique(dCVnet_object$performance$label))
 
   if ( outernreps == 1 ) {
     # Simpler frame can be returned if only one outer loop:
-    ols <- summary(classperformance(dCVnet_object), label = "None")
+    ols <- summary(classperformance(dCVnet_object),
+                   label = "None",
+                   pvprevalence = pvprevalence)
     names(ols)[2] <- "Rep1"
     return(ols)
   }
 
-  ols <- summary(classperformance(dCVnet_object))
+  ols <- summary(classperformance(dCVnet_object), pvprevalence = pvprevalence)
 
   summary_measures <- c("mean", "sd", "min", "max")
   names(summary_measures) <- summary_measures

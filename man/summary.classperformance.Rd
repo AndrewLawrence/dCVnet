@@ -4,7 +4,7 @@
 \alias{summary.classperformance}
 \title{summary.classperformance}
 \usage{
-\method{summary}{classperformance}(object, label = NA, ...)
+\method{summary}{classperformance}(object, label = NA, pvprevalence = "observed", ...)
 }
 \arguments{
 \item{object}{a \code{\link{classperformance}} object.}
@@ -12,7 +12,10 @@
 \item{label}{a label can be assigned here.
 (Warning - setting a length 1 vector will concatenate multiple reps.)}
 
-\item{...}{additional arguments (not currently used)}
+\item{pvprevalence}{argument for adjustment of PPV/NPV calculation.
+either "observed", or number \code{[0,1]}.}
+
+\item{...}{additional arguments (ignored)}
 }
 \description{
 Calculates classification performance table and
