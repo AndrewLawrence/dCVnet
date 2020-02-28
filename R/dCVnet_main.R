@@ -146,7 +146,7 @@ dCVnet <- function(
       stop(
         paste("AUC is not possible due to small sample size!\n
               Estimated inner foldsize =", auc_magic,
-              "\nuse 'class' (or 'mse') instead."))
+              "\nuse different type.measure (e.g. 'class')."))
     }
   }
 

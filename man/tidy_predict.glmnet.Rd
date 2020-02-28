@@ -24,8 +24,7 @@ tidy_predict.glmnet(
 \item{s}{the value of penalty parameter lambda at which predictions are
 required.}
 
-\item{family}{the glmnet model family
-(this determines the format of the return)}
+\item{family}{the glmnet model family}
 
 \item{newy}{outcome associated with newx. If provided these will be included
 in the output (useful for subsequent performance assessment).}
@@ -62,5 +61,5 @@ Optionally the data.frame will contain:
 }
 \description{
 return a dataframe of glmnet predictions associated with outcomes (when these
-are provided.)
+are provided). Standardises return over different model families.
 }

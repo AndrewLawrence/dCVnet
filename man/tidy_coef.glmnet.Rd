@@ -26,8 +26,7 @@ in the output (useful for subsequent performance assessment).}
 \item{s}{the value of penalty parameter lambda at which predictions are
 required.}
 
-\item{family}{the glmnet model family
-(this determines the format of the return)}
+\item{family}{the glmnet model family}
 
 \item{label}{an optional label (value is added in column "label")}
 

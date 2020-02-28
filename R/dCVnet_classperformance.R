@@ -44,7 +44,7 @@
 #     mgaussian takes a k-column matrix and returns a k-column matrix.
 #
 # tidy_predict.glmnet does most of the heavy lifting here for
-#   multialpha.repeated.glmnet objects
+#   a glmnet objects
 #   classperformance should be recoded to make more use of this.
 
 #  ~ making classperformance ----------------------------------------------
@@ -207,6 +207,8 @@ classperformance.glm <- function(x,
 }
 
 
+
+
 #' classperformance.glmlist
 #' @describeIn classperformance classperformance for glmlist from
 #'     \code{\link{reflogreg}} object
@@ -230,6 +232,10 @@ classperformance.glmlist <- function(x, as.data.frame = TRUE, ...) {
   return(structure(R, class = class_df))
 }
 
+
+# WIP: write a classperformance.glm_net_ that calls to tidy_predict.glmnet.
+#
+#
 
 #  ~ utilising class performance ----------------------------------------------
 

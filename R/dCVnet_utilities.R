@@ -703,14 +703,13 @@ amalgamate_cv.glmnet <- function(cvglmlist,
 #' tidy_predict.glmnet
 #'
 #' return a dataframe of glmnet predictions associated with outcomes (when these
-#'     are provided.)
+#'     are provided). Standardises return over different model families.
 #'
 #' @param mod a fitted glmnet object (alpha is determined by the object)
 #' @param newx new values of x for which predictions are desired.
 #' @param s the value of penalty parameter lambda at which predictions are
 #'     required.
 #' @param family the glmnet model family
-#'     (this determines the format of the return)
 #' @param label an optional label (value is added in column "label")
 #' @param newy outcome associated with newx. If provided these will be included
 #'     in the output (useful for subsequent performance assessment).
@@ -751,9 +750,18 @@ tidy_predict.glmnet <- function(mod,
                                 label = "",
                                 binomial_thresh = 0.5,
                                 ...) {
+  # Check mod's class is glmnet:
+  if ( !("glmnet" %in% class(mod)) ) {
+    msg <- paste0(
+      "Input must be a glmnet model! ",
+      "(i.e. not cv.glmnet, multialpha.repeated.cv.glmnet)",
+      collapse = " "
+    )
+    stop(msg)
+  }
+
   # always specify a value for lambda (s)
   # if rownames were used in fitting the model they will be carried through
-
   # see formals(glmnet::predict.glmnet)
   p <- predict(object = mod,
                newx = newx,
@@ -767,9 +775,6 @@ tidy_predict.glmnet <- function(mod,
   }
 
   p <- as.data.frame(p)
-
-  class(p) <- c("dcvntidyperf", "data.frame")
-  attr(p, "family") <- family
 
   if ( !is.null(newy)) {
     a <- as.data.frame(newy)
@@ -787,14 +792,12 @@ tidy_predict.glmnet <- function(mod,
   if ( family %in% c("gaussian", "poisson") ) {
     if ( !is.null(newy) ) p$reference <- a[[1]]
     p$label <- label
-    return(p)
   }
 
   if ( family == "cox" ) {
     if ( !is.null(newy) ) p$reference.Time <- a[, 1]
     if ( !is.null(newy) ) p$reference.Status <- a[, 2]
     p$label <- label
-    return(p)
   }
 
   if ( family == "binomial" ) {
@@ -809,7 +812,6 @@ tidy_predict.glmnet <- function(mod,
     }
 
     p$label <- label
-    return(p)
   }
 
   if ( family == "mgaussian" ) {
@@ -818,7 +820,6 @@ tidy_predict.glmnet <- function(mod,
       p <- data.frame(p, a)
     }
     p$label <- label
-    return(p)
   }
 
   if ( family == "multinomial" ) {
@@ -830,9 +831,11 @@ tidy_predict.glmnet <- function(mod,
                                   newoffset = newoffset))
     if ( !is.null(newy) ) p$reference <- a[[1]]
     p$label <- label
-    return(p)
   }
-  stop(paste0("family error: ", family))
+
+  class(p) <- c("dcvntidyperf", "data.frame")
+  attr(p, "family") <- family
+  return(p)
 }
 
 
@@ -1058,4 +1061,87 @@ glmnet_getmin <- function(lambda, cvm, cvsd) {
   idmin <- cvm <= semin
   lambda.1se <- max(lambda[idmin], na.rm = TRUE)
   list(lambda.min = lambda.min, lambda.1se = lambda.1se)
+}
+
+# 2020-04-27
+# Hmmm. Not sure what this function does...
+#   ostensibily it might be an idea to cross-validate lm instead of glm
+#   but the code hasn't changed from the *_glm version.
+#   also, glm can be run with gaussian family, so the only problem is
+#   getting the classperformance summary to work with a continuous
+#   classperformance object which needs fixing another way.
+cv_classperformance_lm <- function(y,
+                                   data,
+                                   f = "~.", # nolint
+                                   folds = NULL,
+                                   k = 10,
+                                   nrep = 2,
+                                   opt.ystratify = TRUE,
+                                   opt.uniquefolds = FALSE,
+                                   ...) {
+  cl <- as.list(match.call())[-1]
+
+  parsed <- parse_dCVnet_input(data = data, y = y, f = f, family = family)
+
+  x <- data.frame(parsed$x)
+  y <- parsed$y
+
+  # observed model:
+  m0 <- lm(y ~ ., data = data.frame(y = y, x))
+
+  # prediction performance:
+  p0 <- summary(classperformance(m0), label = "observed")
+
+  # fold generation
+  if ( missing(folds) ) {
+    strat_y <- rep(".", times = NROW(x))
+    if ( opt.ystratify ) strat_y <- y
+
+    folds <- lapply(seq.int(nrep),
+                    function(i) {
+                      caret::createFolds(y = strat_y,
+                                         k = k,
+                                         list = FALSE)
+                    })
+  } else {
+    nrep <- length(folds)
+    k <- max(folds[[1]])
+  }
+
+  if ( identical(opt.uniquefolds, TRUE) ) checkForDuplicateCVFolds(folds)
+
+  # cross-validation loop:
+  pp <- lapply(seq_along(folds), function(i) {
+    cat(paste0("rep ", i, " of ", nrep, "\n"))
+    rep <- folds[[i]]
+    ppp <- lapply(1:max(rep), function(j) {
+      xtrain <- x[rep != j, ]
+      ytrain <- y[rep != j]
+      xtest <- x[rep == j, ]
+      ytest <- y[rep == j]
+
+      m <- glm(y ~ ., data = data.frame(y = ytrain, xtrain), family = family)
+      p <- classperformance(m, newdata = data.frame(y = ytest, xtest))
+      return(p)
+    } )
+    # merge the folds:
+    ppp <- structure(as.data.frame(data.table::rbindlist(ppp)),
+                     class = c("classperformance", "data.frame"))
+    ppp$label <- paste("rep", as.character(i))
+    return(ppp)
+  } )
+
+  # merge the repetitions:
+
+  pp <- structure(as.data.frame(data.table::rbindlist(pp)),
+                  class = c("classperformance", "data.frame"))
+
+
+  pp <- report_classperformance_summary(pp)
+
+  return(list(
+    lm.performance = p0,
+    cv.performance = pp,
+    folds = folds,
+    call = cl))
 }

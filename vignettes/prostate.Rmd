@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ***THIS VIGNETTE IS CURRENTLY WORK IN PROGRESS***
 
 In this example we will explore an application of dCVnet in a tutorial dataset
-provided with the Elements of Statistical Learning textbook (henceforth ESL).
+provided with the Elements of Statistical Learning (ESL) textbook.
 
 First, get required libraries, load the data and take a look:
 
@@ -112,17 +112,23 @@ if ( require(lmvar) ) {
         repeat2 = data.frame(unclass(m1.cv.repeat))) %>% 
       select(-contains(".sd")) %>% 
       knitr::kable(digits = 3)
+  
+  perf.train <- mean(abs(m1$fitted.values - m1$y)) %>% round(3)
+  perf.test <- m1.cv$MAE$mean %>% round(3)
+  
 } else {
   print("install.packages('lmvar') to run this chunk.")
+  perf.train <- mean(abs(m1$fitted.values - m1$y)) %>% round(3)
+  perf.test <- "LMVAR missing"
 }
 
 ```
 
 So there is a performance gap for the simple linear model (e.g. MAE) such
 that the complete data performance
-(`r mean(abs(m1$fitted.values - m1$y)) %>% round(3)`)
+(`r perf.train`)
 is better than the cross-validated performance
- (`r m1.cv$MAE$mean %>% round(3)`).
+ (`r perf.test`).
 
 
 
