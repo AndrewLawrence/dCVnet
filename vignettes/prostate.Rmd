@@ -1,0 +1,130 @@
+---
+title: "A dCVnet example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{A dCVnet example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+***THIS VIGNETTE IS CURRENTLY WORK IN PROGRESS***
+
+In this example we will explore an application of dCVnet in a tutorial dataset
+provided with the Elements of Statistical Learning textbook (henceforth ESL).
+
+First, get required libraries, load the data and take a look:
+
+```{r setup}
+library(tidyverse)
+ggplot2::theme_set(theme_minimal())
+library(dCVnet)
+data(prostate)
+psych::describe(prostate[,-10], fast = TRUE) %>% 
+  knitr::kable(digits = 2)
+```
+
+For consistency with examples in ESL we wish to standardise the data:
+
+```{r standardise}
+# see ?prostate for more details:
+sprostate <- data.frame(scale(prostate[,-10]), train = prostate[,10])
+```
+
+Before cross-validating our estimates of prediction models, first lets build 
+some prediction models
+
+```{r predict_lm, echo=TRUE}
+m1 <- lm(lpsa ~ ., data = sprostate[,-10], y = TRUE, x = TRUE)
+```
+
+```{r predict_cv.glmnet}
+m2 <- glmnet::cv.glmnet(y = sprostate$lpsa, x = as.matrix(sprostate[,-9:-10]))
+```
+
+
+The resulting coefficients look like this:
+
+```{r coefficients, echo=FALSE}
+data.frame(broom::tidy(m1)[,1:2] %>% setNames(c("Term", "lm")),
+           `glmnet\nlambda.min` = c(tidy_coef.glmnet(m2, s = "lambda.min")),
+           `glmnet\nlambda.1se` = c(tidy_coef.glmnet(m2, s = "lambda.1se"))) %>% 
+  knitr::kable(digits = 3)
+```
+
+
+The MSE (in the test data) is:
+
+```{r accuracy}
+
+predictdf <- data.frame(observed = sprostate$lpsa,
+                        lm = predict(m1),
+                        glmnet.lambda.min = c(predict(m2,
+                                                      s = "lambda.min",
+                                                      newx = as.matrix(sprostate[,-9:-10]))),
+                        glmnet.lambda.1se = c(predict(m2,
+                                                      s = "lambda.1se",
+                                                      newx = as.matrix(sprostate[,-9:-10])))
+)
+
+sapply(predictdf[,-1], caret::postResample, predictdf[,1]) %>% 
+  knitr::kable(digits = 3)
+
+```
+
+Plotting out the predictions against the true values gives:
+
+```{r plot_perf, echo=FALSE, fig.height=7, fig.width=7, message=FALSE, warning=FALSE}
+
+predictdf %>% 
+  pivot_longer(cols = c("lm", "glmnet.lambda.min", "glmnet.lambda.1se"),
+               values_to = "Prediction",
+               names_to = "Model") %>% 
+  #mutate(Model = forcats::fct_rev(Model)) %>% 
+  ggplot(aes(y = observed, x = Prediction)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0) +
+  facet_grid(rows = vars(Model), as.table = FALSE)
+
+```
+
+
+However, these performance results are not cross-validated, we can use dCVnet to produce
+cross-validated performance results and improve the tuning of the glmnet models by 
+
+  1) repeating the k-fold CV to stabilise tuning parameter selection
+  1) tuning over alpha (elastic-net hyperparameter for the balance between L1 and L2 penalties)
+ 
+First though, we shall produce cross-validated estimates of the lm performance:
+```{r cv_lm}
+if ( require(lmvar) ) {
+  set.seed(42)
+  m1.cv <- lmvar::cv.lm(m1, k = 10, max_cores = 1)
+  m1.cv.repeat <- lmvar::cv.lm(m1, k = 10, max_cores = 1)
+  
+  rbind(repeat1 = data.frame(unclass(m1.cv)),
+        repeat2 = data.frame(unclass(m1.cv.repeat))) %>% 
+      select(-contains(".sd")) %>% 
+      knitr::kable(digits = 3)
+} else {
+  print("install.packages('lmvar') to run this chunk.")
+}
+
+```
+
+So there is a performance gap for the simple linear model (e.g. MAE) such
+that the complete data performance
+(`r mean(abs(m1$fitted.values - m1$y)) %>% round(3)`)
+is better than the cross-validated performance
+ (`r m1.cv$MAE$mean %>% round(3)`).
+
+
+
+
+
