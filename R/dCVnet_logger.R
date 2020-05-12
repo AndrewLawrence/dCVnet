@@ -60,9 +60,9 @@ log_results_to_excel <- function(object,
                                       "alpha"),
                           Value = NA,
                           stringsAsFactors = FALSE)
-  final.hps[3, 2] <- object$final$tuning$inner_best$lambda
-  final.hps[4, 2] <- as.numeric(object$final$tuning$inner_best$alpha)
-  final <- as.data.frame(data.table::rbindlist(final.hps))
+  final.hps[3, 2] <- object$final$tuning$best$lambda
+  final.hps[4, 2] <- as.numeric(object$final$tuning$best$alpha)
+  final <- as.data.frame(data.table::rbindlist(list(final, final.hps)))
 
   # do we need to calculate the reference models?:
   if ( identical(referencemodel, TRUE) ) {
