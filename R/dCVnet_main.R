@@ -69,7 +69,7 @@
 #' summary(model)
 #'
 #' # Detailed cross-validated model performance summary:
-#' summary(classperformance(model))
+#' summary(performance(model))
 #'
 #' # hyperparameter tuning plot:
 #' plot(model)
@@ -90,7 +90,7 @@
 #' # Reference logistic regressions (unregularised & univariate):
 #' ref_model <- dCVnet::reflogreg(model)
 #'
-#' dCVnet::report_reference_classperformance_summary(ref_model)
+#' dCVnet::report_reference_performance_summary(ref_model)
 #'
 #'
 #' }
@@ -328,7 +328,7 @@ dCVnet <- function(
       return(list(tuning = inners$cvresults,
                   model = inners$models[[match(fit_alpha, alphalist)]],
                   performance = structure(newx_performance,
-                                          class = c("classperformance",
+                                          class = c("performance",
                                                     "data.frame"))))
     }
   )
@@ -346,7 +346,7 @@ dCVnet <- function(
   )
   rownames(performance) <- NULL
   performance <- structure(performance,
-                           class = c("classperformance",
+                           class = c("performance",
                                      "data.frame"))
   # and remove it in the source:
   for (ii in seq_along(outers)) {
@@ -377,7 +377,7 @@ dCVnet <- function(
     s = final_tuning$cvresults$best$lambda)
 
   final_performance <- structure(final_performance,
-                                 class = c("classperformance",
+                                 class = c("performance",
                                            "data.frame"))
 
   final <- list(
@@ -711,7 +711,7 @@ summary.dCVnet <- function(object, ...) {
   print(object)
 
   # Outerloop CV results:
-  outcv <- report_classperformance_summary(object)
+  outcv <- report_performance_summary(object)
 
   min_vars <- c("Accuracy", "Sensitivity",
                 "Specificity", "Balanced Accuracy",

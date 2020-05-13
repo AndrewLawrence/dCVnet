@@ -32,7 +32,7 @@
 #'
 #' @export
 reflogreg <- function(object, ...) {
-  UseMethod("reflogreg", object)
+  UseMethod("reflogreg")
 }
 
 #' reflogreg.default
@@ -129,26 +129,26 @@ print.reflogreg <- function(x, ...) {
 }
 
 
-#' report_reference_classperformance_summary
+#' report_reference_performance_summary
 #'
-#' Returns a report of classperformance summary information for a set of dCVnet
+#' Returns a report of performance summary information for a set of dCVnet
 #'     reference models.
 #'
 #' @param refobj a set of reference models provided by
 #'     \code{\link{reflogreg.dCVnet}}
 #'
-#' @name report_reference_classperformance_summary
-#' @inherit report_classperformance_summary return
+#' @name report_reference_performance_summary
+#' @inherit report_performance_summary return
 #' @export
-report_reference_classperformance_summary <- function(refobj) {
+report_reference_performance_summary <- function(refobj) {
 
-  glm <- summary(classperformance(refobj$glm), "GLM")
+  glm <- summary(performance(refobj$glm), "GLM")
 
   glm <- glm[, -3]
   names(glm)[2] <- "Reference GLM"
 
   if ( refobj$options$univariate ) {
-    univ <- report_classperformance_summary(refobj$univariate)
+    univ <- report_performance_summary(refobj$univariate)
 
     names(univ)[2:5] <- paste("UnivPred", names(univ)[2:5])
 

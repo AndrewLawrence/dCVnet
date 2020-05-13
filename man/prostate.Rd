@@ -4,7 +4,9 @@
 \name{prostate}
 \alias{prostate}
 \title{Prostate cancer data from Stamey et al. (1989)}
-\format{An object of class \code{data.frame} with 97 rows and 10 columns.}
+\format{
+An object of class \code{data.frame} with 97 rows and 10 columns.
+}
 \usage{
 prostate
 }

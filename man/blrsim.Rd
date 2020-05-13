@@ -4,7 +4,8 @@
 \name{blrsim}
 \alias{blrsim}
 \title{Simulated binary logistic regression data}
-\format{list
+\format{
+list
 \describe{
 \item{x}{40 Gaussian predictors. Training data, 50 observations}
 \item{y}{Class membership for x. Training data, 50 observations}
@@ -16,7 +17,8 @@ rule used to generate the data (see: raw-data/blrsim.R).
 Note: calling this the bayes rate is a bit of a liberty
 as bayes rate is an error/loss while classification accuracy
 is the complement of such a error/loss.}
-}}
+}
+}
 \usage{
 blrsim
 }

@@ -130,7 +130,7 @@ dCVnet::parseddata_summary(model)
 summary(model)
 
 # Detailed cross-validated model performance summary:
-summary(classperformance(model))
+summary(performance(model))
 
 # hyperparameter tuning plot:
 plot(model)
@@ -151,7 +151,7 @@ dCVnet::selected_hyperparameters(model, what = "data")
 # Reference logistic regressions (unregularised & univariate):
 ref_model <- dCVnet::reflogreg(model)
 
-dCVnet::report_reference_classperformance_summary(ref_model)
+dCVnet::report_reference_performance_summary(ref_model)
 
 
 }

@@ -1,8 +1,8 @@
 
 
-# classperformance S3 generic ---------------------------------------------
+# performance S3 generic ---------------------------------------------
 
-# a dCVnet S3 generic: classperformance
+# a dCVnet S3 generic: performance
 #   returns a merged dataframe or a list of data frames
 #   where the dataframe contains raw performance information:
 #     - reference       (actual 'true' outcome)
@@ -13,13 +13,13 @@
 #     - label           (a grouping label e.g. rep10fold3, model1)
 #     - rowid           (observation labels from the rowids of the data)
 #
-# Conceptually a classperformance object contains all the data required to
+# Conceptually a performance object contains all the data required to
 #   evaluate the performance of a model, or models.
 #
 #   The actual performance measures are then calculated by generic
 #       print / summary methods.
 #
-#   Thus, to construct a classperformance object you need all the input to the
+#   Thus, to construct a performance object you need all the input to the
 #     predict function appropriate for that model plus the actual outcome
 #     being predicted.
 #
@@ -45,20 +45,21 @@
 #
 # tidy_predict.glmnet does most of the heavy lifting here for
 #   a glmnet objects
-#   classperformance should be recoded to make more use of this.
+#   performance should be recoded to make more use of this.
 
-#  ~ making classperformance ----------------------------------------------
+#  ~ making performance ----------------------------------------------
 
-#' classperformance
+#' performance
 #'
-#' extracts a standardised classification performance table for a model.
+#' extracts a standardised classification performance table for a model
+#'     or list of models.
 #'
-#' @name classperformance
+#' @name performance
 #'
-#' @param x an object from which binary class performance can be extracted.
+#' @param x an object from which prediction performance can be extracted.
 #' @param ... arguments to pass on
 #'
-#' @return a classperformance object, is a dataframe (or list of dataframes)
+#' @return a performance object, is a dataframe (or list of dataframes)
 #'     with the following columns:
 #'    \itemize{
 #'    \item{reference - the known 'true' class of the observation}
@@ -73,79 +74,87 @@
 #'    }
 #'
 #' @export
-classperformance <- function(x, ...) {
-  UseMethod("classperformance", x)
+performance <- function(x, ...) {
+  UseMethod("performance")
 }
 
 
-#' classperformance.list
-#' @describeIn classperformance classperformance for \code{\link{list}} object
-#'     (treats it as a \code{\link{dCVnet}} object)
+#' performance.default
+#'
+#' @rdname performance
+#' @description Default function behaviour assumes input is a
+#'     \code{\link{dCVnet}} object (and fails if this is not reasonable).
 #' @export
-classperformance.list <- function(x, ...) {
+performance.default <- function(x, ...) {
   # if we are given a list, lets assume it is a dCVnet style object
   #   such as dCVnet$final
   if (!"performance" %in% names(x)) {
-    stop("not a suitable list for classperformance")
+    stop("not a suitable list for performance")
   }
   expected <- c("label", "reference", "prediction")
   if ( any(!expected %in% names(x$performance)) ) {
-    stop("required columns for classperformance missing.")
+    stop("required columns for performance missing.")
   }
-  classperformance.dCVnet(x, ...)
+  performance.dCVnet(x, ...)
 }
 
 
-#' classperformance.classperformance
-#' @describeIn classperformance returns self (allows list/dataframe conversion)
-#' @export
-classperformance.classperformance <- function(x, as.data.frame = TRUE, ...) {
-  if ( as.data.frame && ! "data.frame" %in% class(x) ) {
 
-    xfac <- as.factor(unlist(lapply(x, "[[", "label"), use.names = FALSE))
-    return(structure(unsplit(x, xfac),
-                     class = c("classperformance", "data.frame")))
-  }
-  if ( ! as.data.frame && "data.frame" %in% class(x) ) {
-    x <- split(x, x$label)
-    return(structure(x, class = c("classperformance", "list")))
-  }
-  return(x)
-}
-
-
-#' classperformance.dCVnet
-#' @describeIn classperformance classperformance for \code{\link{dCVnet}} object
+#' performance.dCVnet
+#'
+#' @rdname performance
 #' @param as.data.frame return a data.frame instead of a list of
-#'     \code{\link{classperformance}} objects.
+#'     \code{\link{performance}} objects.
 #' @export
-classperformance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
+performance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
   if ( identical(as.data.frame, TRUE) ) {
     return(x$performance)
   } else {
     R <- split(x$performance, x$performance$label)
-    return(structure(R, class = c("classperformance", "list")))
+    return(structure(R, class = c("performance", "list")))
   }
 }
 
 
-#' classperformance.glm
+#' performance.performance
+#'
+#' @rdname performance
+#' @description Applying performance to a performance object
+#'     allows conversion between list/dataframe format.
+#' @export
+performance.performance <- function(x, as.data.frame = TRUE, ...) {
+  if ( as.data.frame && ! "data.frame" %in% class(x) ) {
+
+    xfac <- as.factor(unlist(lapply(x, "[[", "label"), use.names = FALSE))
+    return(structure(unsplit(x, xfac),
+                     class = c("performance", "data.frame")))
+  }
+  if ( ! as.data.frame && "data.frame" %in% class(x) ) {
+    x <- split(x, x$label)
+    return(structure(x, class = c("performance", "list")))
+  }
+  return(x)
+}
+
+#' performance.glm
 #'
 #' For glm objects wraps \link{predict.glm} if newdata is specified.
 #'
-#' @describeIn classperformance classperformance for \code{\link[stats]{glm}}
-#'     object
+#' @rdname performance
 #' @param label specify a label for the output
 #' @param newdata evaluate performance in new data
-#' @param threshold logistic regression only - use a threshold other than 0.5.
+#' @param threshold for binomial family glm - use specified threshold
+#'     for predicting class from probability.
 #' @export
-classperformance.glm <- function(x,
+performance.glm <- function(x,
                                  as.data.frame = TRUE,
                                  label = deparse(substitute(x)),
                                  threshold = 0.5,
                                  newdata = NULL,
                                  ...) {
-  # Return (labelled) prediction dataframe from a glm
+  family <- check_model_family(x$family$family)
+
+  # dataframe of prediction results from a glm
   #     given a threshold (default = 0.5).
 
   # extract model.frame:
@@ -200,28 +209,26 @@ classperformance.glm <- function(x,
                   label = label)
   # return merged df or list.
   if ( as.data.frame ) {
-    return(structure(R, class = c("classperformance", "data.frame")))
+    return(structure(R, class = c("performance", "data.frame")))
   } else {
-    return(structure(list(R), class = c("classperformance", "list")))
+    return(structure(list(R), class = c("performance", "list")))
   }
 }
 
 
-
-
-#' classperformance.glmlist
-#' @describeIn classperformance classperformance for glmlist from
-#'     \code{\link{reflogreg}} object
+#' performance.glmlist
+#'
+#' @rdname performance
 #' @export
-classperformance.glmlist <- function(x, as.data.frame = TRUE, ...) {
+performance.glmlist <- function(x, as.data.frame = TRUE, ...) {
   # applies pobj.glm to a list of glms.
 
-  class_list <- c("classperformance", "list")
-  class_df <- c("classperformance", "data.frame")
+  class_list <- c("performance", "list")
+  class_df <- c("performance", "data.frame")
 
   R <- lapply(seq_along(x), function(i) {
     # for a list we force return of a dataframe as we wrap in a list anyway.
-    classperformance.glm(x[[i]],
+    performance.glm(x[[i]],
                          as.data.frame = TRUE,
                          label = names(x)[i], ...)
   })
@@ -233,7 +240,7 @@ classperformance.glmlist <- function(x, as.data.frame = TRUE, ...) {
 }
 
 
-# WIP: write a classperformance.glm_net_ that calls to tidy_predict.glmnet.
+# WIP: write a performance.glm_net_ that calls to tidy_predict.glmnet.
 #
 #
 
@@ -241,7 +248,7 @@ classperformance.glmlist <- function(x, as.data.frame = TRUE, ...) {
 
 # Simple print function for class performance objects.
 #' @export
-print.classperformance <- function(x, ...) {
+print.performance <- function(x, ...) {
   if ( "list" %in% class(x) ) {
     type <- "list"
     n_models <- length(x)
@@ -255,7 +262,7 @@ print.classperformance <- function(x, ...) {
     sel <- (sel == sel[1])
     px <- subset(x, sel)
   }
-  cat(paste("\nClassperformance object of type: ", type, "\n"))
+  cat(paste("\nperformance object of type: ", type, "\n"))
   cat(paste("\tcontains results of", n_models, "model(s)\n"))
   cat(paste("\nOutcomes:"))
   print(table(px$reference))
@@ -265,12 +272,12 @@ print.classperformance <- function(x, ...) {
 }
 
 
-#' summary.classperformance
+#' summary.performance
 #'
 #' Calculates classification performance table and
 #'     two-class classification metrics for a
-#'     \code{\link{classperformance}} object.
-#' @param object a \code{\link{classperformance}} object.
+#'     \code{\link{performance}} object.
+#' @param object a \code{\link{performance}} object.
 #' @param label a label can be assigned here.
 #'      (Warning - setting a length 1 vector will concatenate multiple reps.)
 #' @param pvprevalence argument for adjustment of PPV/NPV calculation.
@@ -278,7 +285,7 @@ print.classperformance <- function(x, ...) {
 #' @param ... additional arguments (ignored)
 #'
 #' @export
-summary.classperformance <- function(object,
+summary.performance <- function(object,
                                      label = NA,
                                      pvprevalence = "observed",
                                      ...) {
@@ -289,7 +296,7 @@ summary.classperformance <- function(object,
   if ( "list" %in% class(object) ) {
     # convert lists to data.frames.
     object <- structure(data.frame(do.call(rbind, object)),
-                        class = c("classperformance", "data.frame"))
+                        class = c("performance", "data.frame"))
   }
 
   # Check structure:
@@ -349,7 +356,7 @@ summary.classperformance <- function(object,
                 function(i) {
                   rr <- as.character(unique(performance$label)[i])
                   dd <- performance[performance$label == rr, ]
-                  R <- summary.classperformance(dd, rr, pvprevalence)
+                  R <- summary.performance(dd, rr, pvprevalence)
                   # Parse back to long.
                   R$label <- NULL # rr
                   names(R)[2] <- rr #"Value"
@@ -376,16 +383,16 @@ summary.classperformance <- function(object,
 }
 
 
-#' report_classperformance_summary
+#' report_performance_summary
 #'
-#' extracts classperformance from a dCVnet object
+#' extracts performance from a dCVnet object
 #'     calculates classification statistics and
 #'     provides a summary of
 #'     \code{\link[base]{mean}},
 #'     \code{\link[stats]{sd}},
 #'     \code{\link[base:Extremes]{min}}, and \code{\link[base:Extremes]{max}}
 #'
-#' @name report_classperformance_summary
+#' @name report_performance_summary
 #'
 #' @param dCVnet_object result from a call to \code{\link{dCVnet}}
 #' @param pvprevalence allows calculation of PPV/NPV at different prevalences.
@@ -395,21 +402,21 @@ summary.classperformance <- function(object,
 #' @return a data.frame of summarised and raw performance statistics.
 #'
 #' @export
-report_classperformance_summary <- function(dCVnet_object,
+report_performance_summary <- function(dCVnet_object,
                                             pvprevalence = "observed") {
 
   outernreps <- length(unique(dCVnet_object$performance$label))
 
   if ( outernreps == 1 ) {
     # Simpler frame can be returned if only one outer loop:
-    ols <- summary(classperformance(dCVnet_object),
+    ols <- summary(performance(dCVnet_object),
                    label = "None",
                    pvprevalence = pvprevalence)
     names(ols)[2] <- "Rep1"
     return(ols)
   }
 
-  ols <- summary(classperformance(dCVnet_object), pvprevalence = pvprevalence)
+  ols <- summary(performance(dCVnet_object), pvprevalence = pvprevalence)
 
   summary_measures <- c("mean", "sd", "min", "max")
   names(summary_measures) <- summary_measures
@@ -432,11 +439,11 @@ report_classperformance_summary <- function(dCVnet_object,
 }
 
 
-#' casesummary.classperformance
+#' casesummary.performance
 #'
 #' What proportion of the time were subjects correctly classified in a
-#'     \code{\link{classperformance}} object.
-#' @param object a \code{\link{classperformance}} object?
+#'     \code{\link{performance}} object.
+#' @param object a \code{\link{performance}} object?
 #' @param type What should be returned?
 #'                 \itemize{
 #'                 \item{\code{data} - The true and estimated classifications.}
@@ -444,7 +451,7 @@ report_classperformance_summary <- function(dCVnet_object,
 #'                 }
 #' @param ... additional arguments (not currently used)
 #' @export
-casesummary.classperformance <- function(object,
+casesummary.performance <- function(object,
                                          type = c("both",
                                                   "data",
                                                   "summary"),

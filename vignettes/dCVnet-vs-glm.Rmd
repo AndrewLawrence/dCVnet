@@ -33,7 +33,7 @@ this vignette.*
 
 3. *For simplicity this vignette uses classification accuracy as a performance
 measure throughout. This is extracted from row 5 of a 
-`summary(classperformance(x))` table.*
+`summary(performance(x))` table.*
 
 ## A Simulated Prediction Problem
 
@@ -93,7 +93,7 @@ head(coef(summary(m1)))
 
 # we are interested in classification accuracy, dCVnet has a function to
 #   extract these sorts of measures from a glmnet
-m1.train <- summary(dCVnet::classperformance(m1))
+m1.train <- summary(dCVnet::performance(m1))
 
 #   the accuracy of this model in the data it was fit is:
 print(m1.train[5,2])
@@ -106,7 +106,7 @@ short the glm is over-fit to the data.
 
 A model that is overfit will perform poorly in unseen data. Lets check how well the model fits the independent test dataset:
 ```{r test.glm}
-m1.test <- summary(dCVnet::classperformance(m1,
+m1.test <- summary(dCVnet::performance(m1,
                                  newdata = data.frame(y = blrsim$y.test,
                                                       blrsim$x.test)))
 # Accuracy:
@@ -134,7 +134,7 @@ rather than 10 or 20 fold. We will repeat this 10 times (although see Note 3)
 set.seed(47)
 # Run a 10x-repeated 5-fold cross-validation:
 # (technically we are refitting m1 from scratch here)
-m1.cv <- dCVnet::cv_classperformance_glm(y = blrsim$y,
+m1.cv <- dCVnet::cv_performance_glm(y = blrsim$y,
                                          data = blrsim$x,
                                          f = "~.",
                                          k = 5,
@@ -176,7 +176,7 @@ m2 <- dCVnet::dCVnet(y = blrsim$y,
                      type.measure = "class")
 
 # What was the performance of this model in the data it was fit to?
-m2.train <- summary(classperformance(m2$final))
+m2.train <- summary(performance(m2$final))
 
 # specifically the accuracy?:
 print(m2.train[5,2])
@@ -200,7 +200,7 @@ m2.test <- summary(
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
       stringsAsFactors = FALSE),
-    class = c("classperformance", "data.frame")
+    class = c("performance", "data.frame")
   )
 )
 
@@ -208,7 +208,7 @@ m2.test <- summary(
 print(m2.test[5,2])
 
 # We cross-validated the results when we produced m2:
-m2.cv <- report_classperformance_summary(m2)
+m2.cv <- report_performance_summary(m2)
 
 # print the accuracy:
 print(m2.cv[5,2])
@@ -276,16 +276,16 @@ ry <- sample(blrsim$y)
 
 # glm with shuffled labels:
 rm1 <- glm(y ~ ., data = data.frame(y = ry, blrsim$x), family = "binomial")
-rm1.train <- summary(dCVnet::classperformance(rm1))
+rm1.train <- summary(dCVnet::performance(rm1))
 
-rm1.cv <- dCVnet::cv_classperformance_glm(y = ry,
+rm1.cv <- dCVnet::cv_performance_glm(y = ry,
                                           data = blrsim$x,
                                           f = "~.",
                                           k = 5,
                                           nrep = 10)
 
 rm1.test <- summary(
-  dCVnet::classperformance(rm1,
+  dCVnet::performance(rm1,
                            newdata = data.frame(y = blrsim$y.test,
                                                 blrsim$x.test)))
 # dCVnet with shuffled labels:
@@ -298,7 +298,7 @@ rm2 <- dCVnet::dCVnet(y = ry,
                      alphalist = 0.1,
                      type.measure = "class")
 
-rm2.train <- summary(classperformance(rm2$final))
+rm2.train <- summary(performance(rm2$final))
 
 rm2.test <- summary(
   structure(
@@ -308,11 +308,11 @@ rm2.test <- summary(
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
       stringsAsFactors = FALSE),
-    class = c("classperformance", "data.frame")
+    class = c("performance", "data.frame")
   )
 )
 
-rm2.cv <- report_classperformance_summary(rm2)
+rm2.cv <- report_performance_summary(rm2)
 
 r_results <- c(
   bayes.rate = 0.5,

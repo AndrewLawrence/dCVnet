@@ -1,7 +1,7 @@
 
 
 # S3 class: rocdata --------
-#   data for a ROC analysis, acts on classperformance to produce a table of:
+#   data for a ROC analysis, acts on performance to produce a table of:
 #     Sens : Sensitivity (tpr),
 #     InvSpec : one-minus Specificity (fpr)
 #   for assorted thresholds of the model class thresholds.
@@ -11,7 +11,7 @@
 
 #' extract_rocdata
 #'
-#' Function reads ROC data from a \code{\link{classperformance}} object.
+#' Function reads ROC data from a \code{\link{performance}} object.
 #'     Sensitivity and specificity are calculated
 #'     at incrementing class probability thresholds.
 #'
@@ -19,7 +19,7 @@
 #'     \code{\link[ROCR]{performance}}
 #'
 #' @name extract_rocdata
-#' @param classperformance a \code{\link{classperformance}} object.
+#' @param performance a \code{\link{performance}} object.
 #' @param invertprob boolean. Should class probabilities be inverted?
 #'     If the ROC curve appears under the diagonal then toggle this option.
 #' @return a data.frame object of class "rocdata" which can be plotted.
@@ -28,27 +28,27 @@
 #'     \item{\code{Sens} : Sensitivity}
 #'     \item{\code{InvSpec} : 1 - Specificity}
 #'     \item{\code{alpha} : threshold}
-#'     \item{\code{run} : label from \code{\link{classperformance}}}
+#'     \item{\code{run} : label from \code{\link{performance}}}
 #'     }
 #'
 #' @seealso \code{\link{plot.rocdata}}
 #'
 #' @export
-extract_rocdata <- function(classperformance,
+extract_rocdata <- function(performance,
                             invertprob = FALSE) {
   # First ensure it is in list format, not dataframe:
-  if ( "data.frame" %in% class(classperformance) ) {
-    lvls <- as.character(unique(classperformance$label))
+  if ( "data.frame" %in% class(performance) ) {
+    lvls <- as.character(unique(performance$label))
 
-    classperformance <- lapply(
+    performance <- lapply(
       lvls,
       function(lab) {
-        classperformance[classperformance$label == lab, ]
+        performance[performance$label == lab, ]
       })
-    names(classperformance) <- lvls
+    names(performance) <- lvls
 
-    classperformance <- structure(classperformance,
-                                  class = c("classperformance", "list"))
+    performance <- structure(performance,
+                                  class = c("performance", "list"))
   }
 
   # Utility subfunction convert a ROC performance object to a dataframe.
@@ -73,14 +73,14 @@ extract_rocdata <- function(classperformance,
 
   outer.pred <- ROCR::prediction(
     # Invert class probabilities if needed:
-    predictions = lapply(classperformance,
+    predictions = lapply(performance,
                          .extract_pred,
                          invert = invertprob),
-    labels = lapply(classperformance, "[[", "reference"),
-    label.ordering = levels(classperformance[[1]]$reference))
+    labels = lapply(performance, "[[", "reference"),
+    label.ordering = levels(performance[[1]]$reference))
   outer.perf <- ROCR::performance(outer.pred, "tpr", "fpr")
 
-  R <- .performance_to_data_frame(outer.perf, names(classperformance))
+  R <- .performance_to_data_frame(outer.perf, names(performance))
   return(structure(R, class = c("rocdata", "data.frame")))
 }
 

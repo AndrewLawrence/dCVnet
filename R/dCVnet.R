@@ -1,4 +1,4 @@
-# documented NULL function for ROxygen.
+# documented NULL function for ROxygen and meta-info.
 
 
 #' dCVnet: Doubly Cross-Validated Elastic-Net Regularised (Generalised)
@@ -34,3 +34,17 @@
 #' @docType package
 #' @name dCVnet-package
 NULL
+
+
+# model families are being added gradually to this package.
+#   supported model families and methods for checking are set here
+supported_model_families <- function() c("binomial", "gaussian")
+
+check_model_family <- function(family) {
+  if ( ! family %in% supported_model_families() ) {
+    cat(paste("Supported families are",
+              paste0(supported_model_families(), collapse = " "),
+              "\n"))
+    stop(paste("family not supported by dCVnet:", family))
+  }
+}

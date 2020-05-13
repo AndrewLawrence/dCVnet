@@ -4,10 +4,10 @@
 \alias{extract_rocdata}
 \title{extract_rocdata}
 \usage{
-extract_rocdata(classperformance, invertprob = FALSE)
+extract_rocdata(performance, invertprob = FALSE)
 }
 \arguments{
-\item{classperformance}{a \code{\link{classperformance}} object.}
+\item{performance}{a \code{\link{performance}} object.}
 
 \item{invertprob}{boolean. Should class probabilities be inverted?
 If the ROC curve appears under the diagonal then toggle this option.}
@@ -19,11 +19,11 @@ Contents:
 \item{\code{Sens} : Sensitivity}
 \item{\code{InvSpec} : 1 - Specificity}
 \item{\code{alpha} : threshold}
-\item{\code{run} : label from \code{\link{classperformance}}}
+\item{\code{run} : label from \code{\link{performance}}}
 }
 }
 \description{
-Function reads ROC data from a \code{\link{classperformance}} object.
+Function reads ROC data from a \code{\link{performance}} object.
 Sensitivity and specificity are calculated
 at incrementing class probability thresholds.
 }

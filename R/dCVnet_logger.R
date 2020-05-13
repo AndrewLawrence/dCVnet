@@ -53,7 +53,7 @@ log_results_to_excel <- function(object,
   ces <- coefficients_summary(object)
 
   # final classification + hyperparameters:
-  final <- summary(classperformance(object$final))[, -3]
+  final <- summary(performance(object$final))[, -3]
   final.hps <- data.frame(Measure = c("...",
                                       "Final Model Hyperparameters",
                                       "lambda",
@@ -80,8 +80,8 @@ log_results_to_excel <- function(object,
     ), ""),
     dqs.1 = setNames(as.data.frame(pds[[1]]), ""),
     dqs.2 = as.data.frame(pds[[2]]),
-    classif = report_classperformance_summary(object),
-    subclass = casesummary.classperformance(object$performance),
+    classif = report_performance_summary(object),
+    subclass = casesummary.performance(object$performance),
     hyperparameters = hps$joint,
     coefficients = ces,
     final = final

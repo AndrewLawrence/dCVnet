@@ -115,7 +115,7 @@ plot.dCVnet <- function(x, type = "tuning", ...) {
   type <- type_opts[type]
   switch(type,
          tuning = return(tuning_plot_dCVnet(x, ...)),
-         roc = return(plot(extract_rocdata(classperformance(x)), ...))
+         roc = return(plot(extract_rocdata(performance(x)), ...))
   )
 }
 
