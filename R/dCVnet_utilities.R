@@ -154,7 +154,7 @@ parse_dCVnet_input <- function(data,
 parseddata_summary <- function(object) {
   # we want to operate either directly on a 'parsed' input,
   #   or extract one from a dCVnet object.
-  if ( "dCVnet" %in% class(object) ) {
+  if ( inherits(object, "dCVnet") ) {
     object <- parse_dCVnet_input(f = object$input$callenv$f,
                                  y = object$input$callenv$y,
                                  data = object$input$callenv$data,
@@ -923,7 +923,7 @@ tidy_confusionmatrix <- function(mat) {
 #' @param threshold the prediction threshold
 #' @export
 predict_cat.glm <- function(glm, threshold = 0.5) {
-  if ( !("glm" %in% class(glm)) ) stop("input must be of class 'glm'")
+  if ( !inherits(glm, "glm") ) stop("input must be of class 'glm'")
   if ( !("binomial" %in% glm$family$family) ) stop("input glm must be binomial")
 
   # extract the outcome variable.

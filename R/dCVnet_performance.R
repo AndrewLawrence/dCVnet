@@ -123,13 +123,13 @@ performance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
 #'     allows conversion between list/dataframe format.
 #' @export
 performance.performance <- function(x, as.data.frame = TRUE, ...) {
-  if ( as.data.frame && ! "data.frame" %in% class(x) ) {
+  if ( as.data.frame && !inherits(x, "data.frame") ) {
 
     xfac <- as.factor(unlist(lapply(x, "[[", "label"), use.names = FALSE))
     return(structure(unsplit(x, xfac),
                      class = c("performance", "data.frame")))
   }
-  if ( ! as.data.frame && "data.frame" %in% class(x) ) {
+  if ( ! as.data.frame && inherits(x, "data.frame") ) {
     x <- split(x, x$label)
     return(structure(x, class = c("performance", "list")))
   }
@@ -249,18 +249,20 @@ performance.glmlist <- function(x, as.data.frame = TRUE, ...) {
 # Simple print function for class performance objects.
 #' @export
 print.performance <- function(x, ...) {
-  if ( "list" %in% class(x) ) {
+  if ( inherits(x, "list") ) {
     type <- "list"
     n_models <- length(x)
     mod_labs <- names(x)
     px <- x[[1]]
-  } else {
+  } else if (inherits(x, "data.frame")) {
     type <- "data.frame"
     mod_labs <- unique(as.character(x$label))
     n_models <- length(mod_labs)
     sel <- as.character(x$label)
     sel <- (sel == sel[1])
     px <- subset(x, sel)
+  } else {
+    stop("object must inherit list or data.frame")
   }
   cat(paste("\nperformance object of type: ", type, "\n"))
   cat(paste("\tcontains results of", n_models, "model(s)\n"))
