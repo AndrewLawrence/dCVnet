@@ -201,7 +201,7 @@ dCVnet <- function(
   # force no standardisation:
   cl.marcvglm$standardize <- FALSE
   # force keep multialpha models:
-  cl.marcvglm$opt.keep_models <- TRUE
+  cl.marcvglm$opt.keep_models <- "best"
   # translate some dCVnet args to multialpha.repeated.cv.glmnet:
   cl.marcvglm$k <- k_inner
   cl.marcvglm$nrep <- nrep_inner
@@ -304,8 +304,8 @@ dCVnet <- function(
 
       # hyperparameter selection --------------------------------------------
       #   - based on best CV/out-of-sample performance in inner loop
-      fit_alpha <- inners$cvresults$best$alpha
-      fit_lambda <- inners$cvresults$best$lambda
+      fit_alpha <- inners$best$alpha
+      fit_lambda <- inners$best$lambda
 
 
       # tuned outer-train model ---------------------------------------------
@@ -315,7 +315,7 @@ dCVnet <- function(
       #       "[single lambda fit] is not recommended and is not the spirit
       #        of the package."
       newx_performance <- tidy_predict.glmnet(
-        mod = inners$models[[match(fit_alpha, alphalist)]],
+        mod = inners$models[[inners$bestmodel]],
         newx = testx,
         family = family,
         newy = testy,
@@ -325,8 +325,8 @@ dCVnet <- function(
                          split = ".", fixed = TRUE)[[1]][2],
         s = fit_lambda)
 
-      return(list(tuning = inners$cvresults,
-                  model = inners$models[[match(fit_alpha, alphalist)]],
+      return(list(tuning = drop_models.multialpha.repeated.cv.glmnet(inners),
+                  model = inners$models[[inners$bestmodel]],
                   performance = structure(newx_performance,
                                           class = c("performance",
                                                     "data.frame"))))
@@ -366,29 +366,27 @@ dCVnet <- function(
   final_tuning <- do.call("multialpha.repeated.cv.glmnet", cl.marcvglm)
 
   final_performance <- tidy_predict.glmnet(
-    mod = final_tuning$models[[match(final_tuning$cvresults$best$alpha,
-                                     final_tuning$cvresults$alphas)]],
+    mod = final_tuning$models[[final_tuning$bestmodel]],
     newx = xs,
     family = family,
     newy = y,
     binomial_thresh = cutoff,
     offset = offset,
     label = "Final",
-    s = final_tuning$cvresults$best$lambda)
+    s = final_tuning$best$lambda)
 
   final_performance <- structure(final_performance,
                                  class = c("performance",
                                            "data.frame"))
 
   final <- list(
-    tuning = final_tuning$cvresults,
+    tuning = drop_models.multialpha.repeated.cv.glmnet(final_tuning),
     performance = final_performance,
     model = final_tuning,
     preprocess = final_PPx) # include the preprocessing for predict method.
 
   time_stop <- Sys.time()
   run_time <- difftime(time_stop, time_start, units = "hours")
-
 
   # Return object -----------------------------------------------------------
   obj <- structure(list(tuning = outers,

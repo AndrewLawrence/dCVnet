@@ -35,6 +35,7 @@
 #   newx. We also add rownames / caselabels when these are present.
 #
 # important notes:
+#   these functions are in development for model families other than binomial
 #   y formats vary substantially between the model families
 #   notably:
 #     cox has both outcome (status) and censoring time in y, but
@@ -330,10 +331,12 @@ summary.performance <- function(object,
         # caret by default (and confusion matrices in general) follows the
         #   convention that the class being predicted (e.g. diseased subjects)
         #   is stored in the first level of the factor.
-        #   However glm / model.matrix uses treatment-coding: instead the
+        #   However glm / model.matrix uses treatment-coding: the
         #   first level of y is the reference class (e.g. control subjects).
         #   This behaviour is helpful when interpreting model coefficients
         #   as they represent the deviation from the reference.
+        # glmnet: to add to the confusion glmnet will reorder binary factors such that
+        #   levels are alphabetical.
         # dCVnet coerces input data into an alphabetical factor with the
         #   reference class as the first level, so when calculating
         #   classification perforamnce we must force level 2 as the

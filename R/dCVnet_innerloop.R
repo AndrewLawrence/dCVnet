@@ -69,6 +69,7 @@ repeated.cv.glmnet <- function(x, y,
   cl$lambda <- quote(lambdaseq)
   cl$x <- quote(x)
   cl$y <- quote(y)
+  cl$family <- quote(family)
 
   if ( missing(folds) ) {  # nolint
     if ( missing(nfolds) ) nfolds <- 10
@@ -107,8 +108,11 @@ repeated.cv.glmnet <- function(x, y,
 
 #' multialpha.repeated.cv.glmnet
 #'
-#' Runs a \code{\link{repeated.cv.glmnet}} for a list of alpha values and
+#' Runs \code{\link{repeated.cv.glmnet}} for a list of alpha values and
 #'     returns averaged results, selects the 'best' alpha.
+#'     One key difference between (repeated.)cv.glmnet and this function is
+#'     that a single 'best' lambda/alpha combination is identified
+#'     based on opt.lambda.type.
 #'     *This is intended to be a dCVnet internal function*
 #' @inheritParams repeated.cv.glmnet
 #' @param lambdas a list of lambda sequence lists
@@ -130,15 +134,22 @@ repeated.cv.glmnet <- function(x, y,
 #'     In most circumstances folds will be unique. This requests
 #'     that random folds are checked for uniqueness in inner and outer loops.
 #'     Currently it warns if non-unique values are found.
-#' @param opt.keep_models Boolean.
-#'     Should models be returned, or just cross-validated results (default)?
+#' @param opt.keep_models The models take up memory. What should we return?
+#'     \itemize{
+#'       \item{ best - model with the alpha value selected as optimal. }
+#'       \item{ none - no models, just cv results. }
+#'       \item{ all - list of models at all alphas. }
+#'     }
 #'
 #' @return an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
-#'     This is a 3 item list: \itemize{
+#'     Containing: \itemize{
 #'     \item{results - merged \code{\link{repeated.cv.glmnet}} with
 #'         additional columns indicating *alpha* and logical for *best* overall}
 #'     \item{best - best selected row from results}
 #'     \item{folds - record of folds used}
+#'     \item{models - models requested by opt.keep_models.}
+#'     \item{bestmodel - index of the best model such that
+#'         \code{models[[bestmodel]]} returns the model selected as optimal.}
 #'     }
 #' @seealso \code{\link{repeated.cv.glmnet}}
 #' @export
@@ -152,11 +163,12 @@ multialpha.repeated.cv.glmnet <- function(
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
   family,
-  opt.keep_models = FALSE,
+  opt.keep_models = c("best", "none", "all"),
   ...) {
 
   cl <- as.list(match.call())[-1]
   opt.lambda.type <- match.arg(opt.lambda.type)
+  opt.keep_models <- match.arg(opt.keep_models)
 
   # check & name alphas:
   alphalist <- parse_alphalist(alphalist)
@@ -233,10 +245,12 @@ multialpha.repeated.cv.glmnet <- function(
   # pick the optimal alpha:
   bestfun <- ifelse(tmeas == "auc", max, min)
   lselector <- ifelse(opt.lambda.type == "min", "lambda.min", "lambda.1se")
+  # lselector is the name of a column containing logical values in malist:
   bestcandidates <- malist[malist[[lselector]], ]
   best <- bestcandidates[bestcandidates$cvm == bestfun(bestcandidates$cvm), ]
 
-  # ties are broken by smaller cvsd followed by sparser solutions (unlikely)
+  # ties in the objective function are broken by smaller cvsd
+  #     followed by sparser solutions (unlikely)
   if ( nrow(best) > 1 ) {
     best <- best[order(best$cvsd, best$nzero), ]
     best <- best[1, ]
@@ -245,40 +259,47 @@ multialpha.repeated.cv.glmnet <- function(
   # add column to the multialpha list.
   malist$best <- (malist$alpha == best$alpha) & (malist$lambda == best$lambda)
 
-  R <- structure(list(results = malist,
-                      best = best,
-                      alphas = alphalist,
-                      folds = folds),
+  # initialise the return:
+  R <- list(results = malist,
+            best = best,
+            alphas = alphalist,
+            folds = folds)
+
+  if ( opt.keep_models == "all" ) {
+    R <- append(R,
+                values = list(models = mods,
+                              bestmodel = which(alphalist == best$alpha)))
+  } else {
+    R <- append(R,
+                values = list(models = mods[which(alphalist == best$alpha)],
+                              bestmodel = 1))
+  }
+
+  R <- structure(R,
                  class = "multialpha.repeated.cv.glmnet",
                  type.measure = tmeas,
                  family = family,
-                 type.lambda = lselector)
-  if ( opt.keep_models ) {
-    return(structure(list(models = mods,
-                          cvresults = R),
-                     class = "multialpha.repeated.cv.glmnet",
-                     type.measure = tmeas,
-                     family = family,
-                     type.lambda = lselector
-                     ))
-  } else {
-    return(R)
-  }
+                 type.lambda = lselector,
+                 opt.keep_models = opt.keep_models)
+  return(R)
 }
 
 #' @export
 print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 
-  has_models <- FALSE
-  if ( !is.null(x[["models"]]) ) {
-    has_models <- TRUE
-    x <- x$cvresults
-  }
-
   type.lambda <- attr(x, "type.lambda")
+  opt.keep_models <- attr(x, "opt.keep_models")
 
   cat("A dCVnet::multialpha.repeated.cv.glmnet object\n\n")
-  if ( has_models ) cat("(includes fitted models for each alpha.)\n\n")
+  if ( opt.keep_models == "all" ) {
+    cat("(includes fitted models for each alpha)\n\n")
+  }
+  if ( opt.keep_models == "none" ) {
+    cat("(includes no fitted models, only cv results)\n\n")
+  }
+  if ( opt.keep_models == "best" ) {
+    cat("(includes fitted models at optimum lambda/alpha)\n\n")
+  }
   cat(paste0("Model family:\t\t", attr(x, "family"), "\n"))
   cat(paste0("Tuning metric (cvm):\t", attr(x, "type.measure"), "\n"))
   cat(paste0("Lambda Selection:\t", type.lambda, "\n"))
@@ -332,10 +353,6 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
   }
 
   type.lambda <- attr(object, "type.lambda")
-
-  if ( !is.null(object[["models"]]) ) {
-    object <- object$cvresults
-  }
 
   best <- object$best
   object <- object$results
@@ -392,23 +409,32 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
                                                   s = NULL,
                                                   ...) {
   # function to return "best" predictions from a multi-alpha object
-  if ( is.null(object[["models"]]) ) {
+  if ( attr(object, "opt.keep_models") == "none" ) {
     stop(paste0("The object ", deparse(substitute(object)),
                 " does not include the fitted models required for predict.\n",
                 "Rerun multialpha.repeated.cv.glmnet with ",
-                "opt.keep_models = TRUE"))
+                "opt.keep_models = best",
+                "or opt.keep_models = all",
+                "to make predictions"))
+  }
+  if ( !missing(alpha) && attr(object, "opt.keep_models") == "best" ) {
+    stop(paste0("The object ", deparse(substitute(object)),
+                " does not include all fitted models required for predict.\n",
+                "Rerun multialpha.repeated.cv.glmnet with ",
+                "opt.keep_models = all",
+                "in order to predict at the non-best alpha."))
   }
 
   # if an alpha value was specified:
   if ( !missing(alpha) ) {
-    if ( alpha %in% object$cvresults$alphas ) {
-      mod <- object$models[[match(alpha, object$cvresults$alphas)]]
+    if ( alpha %in% object$alphas ) {
+      mod <- object$models[[ which(alpha %in% object$alphas) ]]
       if ( missing(s) ) {
         type.lambda <- attr(object, "type.lambda")
-        sel <- (object$cvresults$results$alpha == alpha) &
-          (object$cvresults$results[[type.lambda]])
+        sel <- (object$results$alpha == alpha) &
+          (object$results[[type.lambda]])
         if ( sum(sel) != 1 ) stop("ERROR: this should be unique.")
-        s <- object$cvresults$results$lambda[sel]
+        s <- object$results$lambda[sel]
       }
       return(predict(mod, s = s, newx = newx, ...))
     } else {
@@ -416,14 +442,19 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
     }
   }
 
-  # index of best alpha:
-  bestalpha <- match(object$cvresults$best$alpha,
-                     object$cvresults$alphas)
-  # use model with best alpha:
-  mod <- object$models[[bestalpha]]
+  # otherwise we will use best alpha:
+  mod <- object$models[[object$bestmodel]]
 
   # if s missing use best s:
-  if ( missing(s) ) s <- object$cvresults$best$lambda
+  if ( missing(s) ) {
+    s <- object$best$lambda
+  } else {#
+    warning(paste("alpha is selected optimally,",
+                  "but lambda is manually specified.",
+                  "manual alpha: ", s,
+                  "best alpha:", object$best$lambda
+                  ))
+  }
 
   # run the prediction:
   predict(mod, s = s, newx = newx, ...)
@@ -456,4 +487,19 @@ coef.multialpha.repeated.cv.glmnet <- function(object,
 
 
   do.call("predict.multialpha.repeated.cv.glmnet", args = cl)
+}
+
+# Remove models from a multialpha.repeated.cv.glmnet object, but retain the
+#   attributes.
+#   This is a workaround of an R quirk: `[` drops most attributes (see ?Extract)
+#   Packages like vctrs/sticky attempt to address this more formally.
+drop_models.multialpha.repeated.cv.glmnet <- function(object) {
+  attr <- attributes(object)
+  R <- structure(object[!names(object) %in% c("models", "bestmodel")],
+                 class = attr$class,
+                 type.measure = attr$type.measure,
+                 family = attr$family,
+                 type.lambda = attr$type.lambda,
+                 opt.keep_models = "none")
+  return(R)
 }

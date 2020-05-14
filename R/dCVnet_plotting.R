@@ -25,11 +25,7 @@ plot.multialpha.repeated.cv.glmnet <- function(x,
   type.lambda <- attr(x, "type.lambda")
   type.measure <- attr(x, "type.measure")
 
-  if ( !is.null(x[["models"]]) ) {
-    x <- x$cvresults$results
-  } else {
-    x <- x$results # only need the results dataframe.
-  }
+  x <- x$results
   # proc data:
   x$alpha <- as.factor(x$alpha)
   if ( identical(xvar, "s") ) { # nolint

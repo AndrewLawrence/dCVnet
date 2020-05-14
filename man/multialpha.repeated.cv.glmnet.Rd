@@ -15,7 +15,7 @@ multialpha.repeated.cv.glmnet(
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
   family,
-  opt.keep_models = FALSE,
+  opt.keep_models = c("best", "none", "all"),
   ...
 )
 }
@@ -67,23 +67,33 @@ Currently it warns if non-unique values are found.}
 
 \item{family}{Response type (see above)}
 
-\item{opt.keep_models}{Boolean.
-Should models be returned, or just cross-validated results (default)?}
+\item{opt.keep_models}{The models take up memory. What should we return?
+\itemize{
+\item{ best - model with the alpha value selected as optimal. }
+\item{ none - no models, just cv results. }
+\item{ all - list of models at all alphas. }
+}}
 
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
 }
 \value{
 an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
-This is a 3 item list: \itemize{
+Containing: \itemize{
 \item{results - merged \code{\link{repeated.cv.glmnet}} with
 additional columns indicating \emph{alpha} and logical for \emph{best} overall}
 \item{best - best selected row from results}
 \item{folds - record of folds used}
+\item{models - models requested by opt.keep_models.}
+\item{bestmodel - index of the best model such that
+\code{models[[bestmodel]]} returns the model selected as optimal.}
 }
 }
 \description{
-Runs a \code{\link{repeated.cv.glmnet}} for a list of alpha values and
+Runs \code{\link{repeated.cv.glmnet}} for a list of alpha values and
 returns averaged results, selects the 'best' alpha.
+One key difference between (repeated.)cv.glmnet and this function is
+that a single 'best' lambda/alpha combination is identified
+based on opt.lambda.type.
 \emph{This is intended to be a dCVnet internal function}
 }
 \seealso{
