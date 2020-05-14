@@ -125,6 +125,14 @@ parse_dCVnet_input <- function(data,
                                               no = stats::na.omit))
   x_mat <- model.matrix(f, data = mf)[, -1]
 
+  # force matrices to vectors:
+  if ( family %in% c("gaussian", "poisson") && inherits(y, "matrix") ) {
+    y <- as.vector(y)
+  }
+
+  # check nothing was mangled:
+  if ( NROW(y) != NROW(x_mat) ) stop("Error x & y lengths do not match.")
+
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,
               x_mat = x_mat,
@@ -168,14 +176,15 @@ parseddata_summary <- function(object) {
                    ": ",
                    sprintf(ytab, fmt = "%i"),
                    " (", yptab, "%)")
-  } else {
-    if ( object$family == "cox") {
+  } else if ( object$family == "cox") {
       stry <- aggregate(list(Time = object$y[, 1]),
                         by = list(Outcome = object$y[, 2]),
                         summary)
-    } else {
+  } else {
+      # should be gaussian (1d mat / vector),
+      #           poisson (1d mat / vector) or
+      #           mgaussian (data.frame)
       stry <- summary(object$y)
-    }
   }
 
   # Next the predictor matrix:
@@ -190,6 +199,7 @@ parseddata_summary <- function(object) {
                               nnz = sum(x != 0))
                  })
   xdes <- as.data.frame(data.table::rbindlist(xdes))
+  rownames(xdes) <- colnames(object$x_mat)
   return(list(OutcomeData = stry,
               PredictorData = xdes))
 }
