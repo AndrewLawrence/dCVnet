@@ -306,7 +306,7 @@ plot_outerloop_coefs <- function(object,
   df <- coef.dCVnet(object, type = type)
 
   if ( ! intercept ) {
-    df <- df[df$Predictor != "(Intercept)",]
+    df <- df[df$Predictor != "(Intercept)", ]
   }
 
   if ( abs ) {
@@ -354,7 +354,7 @@ plot_outerloop_coefs <- function(object,
                            rep = "Final",
                            stringsAsFactors = FALSE)
     if ( ! intercept ) {
-      fcoef.df <- fcoef.df[fcoef.df$Predictor != "(Intercept)",]
+      fcoef.df <- fcoef.df[fcoef.df$Predictor != "(Intercept)", ]
     }
 
     p <- p + ggplot2::geom_point(data = fcoef.df,

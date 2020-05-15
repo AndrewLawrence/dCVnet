@@ -379,7 +379,8 @@ lambda_rangefinder <- function(y, x,
                                                 y = y[subsamp],
                                                 alphalist = alphalist)
                                })
-  result <- as.data.frame(data.table::rbindlist(result), stringsAsFactors = FALSE)
+  result <- as.data.frame(data.table::rbindlist(result),
+                          stringsAsFactors = FALSE)
 
   if ( length(alphalist) == 1 ) {
     return(max(result))

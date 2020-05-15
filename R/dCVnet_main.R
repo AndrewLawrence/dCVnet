@@ -304,7 +304,6 @@ dCVnet <- function(
 
       # hyperparameter selection --------------------------------------------
       #   - based on best CV/out-of-sample performance in inner loop
-      fit_alpha <- inners$best$alpha
       fit_lambda <- inners$best$lambda
 
 

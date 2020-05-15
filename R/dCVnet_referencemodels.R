@@ -193,7 +193,9 @@ coef_reflogreg <- function(refobj) {
     names(U) <- c("(Intercept)", names(refobj$univariate))
   }
 
-  if ( a & b ) return(data.frame(glm = G, univariate = U, stringsAsFactors = FALSE))
+  if ( a & b ) return(data.frame(glm = G,
+                                 univariate = U,
+                                 stringsAsFactors = FALSE))
   if ( a ) return(data.frame(glm = G, stringsAsFactors = FALSE))
   if ( b ) return(data.frame(univariate = U, stringsAsFactors = FALSE))
   return(NA)

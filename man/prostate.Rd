@@ -27,7 +27,7 @@ pre-surgical prostate-specific antigen (PSA) score (variable: lpsa).
 Variables prefixed with 'l' have been log transformed.
 
 The following descriptions have been adapted from Ryan Tibshirani's
-\href{https://www.stat.cmu.edu/~ryantibs/statcomp-F16/lectures/exploratory_data_slides.html#(3)}{lecture notes on EDA}
+\href{https://www.stat.cmu.edu/~ryantibs/statcomp-F16/lectures/exploratory_data_slides.html#(3)}{lecture notes on EDA} #nolint
 
 \describe{
 \item{lpsa:}{log PSA score}

@@ -337,8 +337,8 @@ summary.performance <- function(object,
         #   first level of y is the reference class (e.g. control subjects).
         #   This behaviour is helpful when interpreting model coefficients
         #   as they represent the deviation from the reference.
-        # glmnet: to add to the confusion glmnet will reorder binary factors such that
-        #   levels are alphabetical.
+        # glmnet: to add to the confusion glmnet will reorder binary factors
+        #   such that levels are alphabetical.
         # dCVnet coerces input data into an alphabetical factor with the
         #   reference class as the first level, so when calculating
         #   classification perforamnce we must force level 2 as the
@@ -350,8 +350,7 @@ summary.performance <- function(object,
     # Next add the AUC:
     B <- ModelMetrics::auc(actual = performance$reference,
                            predicted = performance$prediction)
-    # following hack removed:
-    #B <- pmax(B, 1 - B)
+    # following hack removed: B <- pmax(B, 1 - B)
     B <- data.frame(Measure = "AUROC", Value = B, stringsAsFactors = FALSE)
 
     B$label <- A$label <- unique(performance$label)

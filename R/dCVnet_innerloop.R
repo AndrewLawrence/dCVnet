@@ -449,7 +449,7 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
   # if s missing use best s:
   if ( missing(s) ) {
     s <- object$best$lambda
-  } else {#
+  } else {
     warning(paste("alpha is selected optimally,",
                   "but lambda is manually specified.",
                   "manual alpha: ", s,
