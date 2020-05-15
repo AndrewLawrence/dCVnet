@@ -237,7 +237,8 @@ multialpha.repeated.cv.glmnet <- function(
                    mod = malist,
                    alpha = alphalist,
                    SIMPLIFY = FALSE)
-  malist <- as.data.frame(data.table::rbindlist(malist))
+  malist <- as.data.frame(data.table::rbindlist(malist),
+                          stringsAsFactors = FALSE)
 
   # Note that mods contains models fit to the complete dataset received by
   #   this function.

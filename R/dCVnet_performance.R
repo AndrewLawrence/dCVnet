@@ -207,7 +207,8 @@ performance.glm <- function(x,
                   reference = reference,
                   prediction = prediction,
                   classification = classification,
-                  label = label)
+                  label = label,
+                  stringsAsFactors = FALSE)
   # return merged df or list.
   if ( as.data.frame ) {
     return(structure(R, class = c("performance", "data.frame")))
@@ -298,7 +299,8 @@ summary.performance <- function(object,
 
   if ( "list" %in% class(object) ) {
     # convert lists to data.frames.
-    object <- structure(data.frame(do.call(rbind, object)),
+    object <- structure(data.frame(do.call(rbind, object),
+                                   stringsAsFactors = FALSE),
                         class = c("performance", "data.frame"))
   }
 
@@ -350,7 +352,7 @@ summary.performance <- function(object,
                            predicted = performance$prediction)
     # following hack removed:
     #B <- pmax(B, 1 - B)
-    B <- data.frame(Measure = "AUROC", Value = B)
+    B <- data.frame(Measure = "AUROC", Value = B, stringsAsFactors = FALSE)
 
     B$label <- A$label <- unique(performance$label)
     return(rbind(A, B))
@@ -433,7 +435,9 @@ report_performance_summary <- function(dCVnet_object,
     })
   } )
 
-  S <- do.call(data.frame, list(Measure = ols[, 1, drop = FALSE], S))
+  S <- do.call(data.frame, list(Measure = ols[, 1, drop = FALSE],
+                                S,
+                                stringsAsFactors = FALSE))
 
   S <- data.frame(S,
                   "..." = " - ",
@@ -463,7 +467,7 @@ casesummary.performance <- function(object,
                                          ...) {
   type <- match.arg(type)
 
-  object <- as.data.frame(object)
+  object <- as.data.frame(object, stringsAsFactors = FALSE)
   labs <- unique(object$label)
   names(labs) <- make.names(labs, unique = TRUE)
 

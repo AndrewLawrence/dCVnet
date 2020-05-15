@@ -85,7 +85,9 @@ reflogreg.dCVnet <- function(object,
     x_pca <- prcomp(parsed$x_mat,
                     rank. = ncomp,
                     retx = TRUE)
-    pglm.data <- data.frame(y = parsed$y, as.data.frame.matrix(x_pca$x))
+    pglm.data <- data.frame(y = parsed$y,
+                            as.data.frame.matrix(x_pca$x),
+                            stringsAsFactors = FALSE)
 
     pglm <- glm(y ~ ., data = pglm.data, family = "binomial")
   } else {
@@ -99,7 +101,10 @@ reflogreg.dCVnet <- function(object,
   } else {
     punivariate <- lapply(1:k, function(i) {
       f <- as.formula(paste0("y ~ ", colnames(parsed$x_mat)[i]))
-      glm(f, data = data.frame(y = parsed$y, parsed$x_mat), family = "binomial")
+      glm(f, data = data.frame(y = parsed$y,
+                               parsed$x_mat,
+                               stringsAsFactors = FALSE),
+          family = "binomial")
     } )
     names(punivariate) <- colnames(parsed$x_mat)
     punivariate <- structure(punivariate,
@@ -152,7 +157,7 @@ report_reference_performance_summary <- function(refobj) {
 
     names(univ)[2:5] <- paste("UnivPred", names(univ)[2:5])
 
-    return(data.frame(glm, univ[, -1]))
+    return(data.frame(glm, univ[, -1], stringsAsFactors = FALSE))
   } else {
     return(glm)
   }
@@ -188,8 +193,8 @@ coef_reflogreg <- function(refobj) {
     names(U) <- c("(Intercept)", names(refobj$univariate))
   }
 
-  if ( a & b ) return(data.frame(glm = G, univariate = U))
-  if ( a ) return(data.frame(glm = G))
-  if ( b ) return(data.frame(univariate = U))
+  if ( a & b ) return(data.frame(glm = G, univariate = U, stringsAsFactors = FALSE))
+  if ( a ) return(data.frame(glm = G, stringsAsFactors = FALSE))
+  if ( b ) return(data.frame(univariate = U, stringsAsFactors = FALSE))
   return(NA)
 }

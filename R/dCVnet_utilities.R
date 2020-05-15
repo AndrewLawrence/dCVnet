@@ -196,9 +196,10 @@ parseddata_summary <- function(object) {
                               max = max(x, na.rm = TRUE),
                               skew = e1071::skewness(x, na.rm = TRUE, type = 2),
                               kurt = e1071::kurtosis(x, na.rm = TRUE, type = 2),
-                              nnz = sum(x != 0))
+                              nnz = sum(x != 0),
+                              stringsAsFactors = FALSE)
                  })
-  xdes <- as.data.frame(data.table::rbindlist(xdes))
+  xdes <- as.data.frame(data.table::rbindlist(xdes), stringsAsFactors = FALSE)
   rownames(xdes) <- colnames(object$x_mat)
   return(list(OutcomeData = stry,
               PredictorData = xdes))
@@ -378,12 +379,13 @@ lambda_rangefinder <- function(y, x,
                                                 y = y[subsamp],
                                                 alphalist = alphalist)
                                })
-  result <- as.data.frame(data.table::rbindlist(result))
+  result <- as.data.frame(data.table::rbindlist(result), stringsAsFactors = FALSE)
 
   if ( length(alphalist) == 1 ) {
     return(max(result))
   } else {
-    result <- setNames(data.frame(result), as.character(alphalist))
+    result <- setNames(data.frame(result, stringsAsFactors = FALSE),
+                       as.character(alphalist))
     return(apply(result, 2, max))
   }
 }
@@ -676,8 +678,10 @@ amalgamate_cv.glmnet <- function(cvglmlist,
   }
 
   # merge the list of results:
-  cvm <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "cvm")))
-  cvsd <- as.data.frame(base::Map("[[", cvglmlist, "cvsd"))
+  cvm <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "cvm"),
+                                stringsAsFactors = FALSE))
+  cvsd <- as.data.frame(base::Map("[[", cvglmlist, "cvsd"),
+                        stringsAsFactors = FALSE)
   # for sd take variance, average and return to sd.
   cvsd <- sqrt(rowMeans(cvsd ^ 2))
   # Note: cv.glmnet (2.0.16) gets nzero from the reference glmnet (prior to
@@ -685,7 +689,8 @@ amalgamate_cv.glmnet <- function(cvglmlist,
   #       fold.
   #       This makes the below averaging unneccesary when dealing with
   #       a list of calls to cv.glmnet with different folds.
-  nz <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "nzero")))
+  nz <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "nzero"),
+                               stringsAsFactors = FALSE))
   # format nzero:
   nm <- paste0("s", seq.int(from = 0, length.out = length(lambda)))
   names(nz) <- nm
@@ -784,10 +789,10 @@ tidy_predict.glmnet <- function(mod,
     p <- p[,,1] # nolint # extra dims not needed.
   }
 
-  p <- as.data.frame(p)
+  p <- as.data.frame(p, stringAsFactors = FALSE)
 
   if ( !is.null(newy)) {
-    a <- as.data.frame(newy)
+    a <- as.data.frame(newy, stringsAsFactors = FALSE)
   }
 
   # different rules for column names of p:
@@ -827,7 +832,7 @@ tidy_predict.glmnet <- function(mod,
   if ( family == "mgaussian" ) {
     if ( !is.null(newy) ) {
       colnames(a) <- paste0("reference", colnames(a))
-      p <- data.frame(p, a)
+      p <- data.frame(p, a, stringsAsFactors = FALSE)
     }
     p$label <- label
   }
@@ -883,7 +888,7 @@ tidy_coef.glmnet <- function(mod,
       return(x)
     },
     x = p, n = nm, SIMPLIFY = FALSE)
-    p <- as.data.frame(data.table::rbindlist(p))
+    p <- as.data.frame(data.table::rbindlist(p), stringsAsFactors = FALSE)
   } else {
     p <- as.matrix(p)
   }
@@ -904,9 +909,11 @@ tidy_coef.glmnet <- function(mod,
 #' @return a one column data.frame
 #' @export
 tidy_confusionmatrix <- function(mat) {
-  tab <- as.data.frame(mat$table)
+  tab <- as.data.frame(mat$table, stringsAsFactors = FALSE)
   tablabs <- paste("Predicted", tab[, 1], "Actual", tab[, 2])
-  tab <- data.frame(Measure = tablabs, Value = tab[, 3])
+  tab <- data.frame(Measure = tablabs,
+                    Value = tab[, 3],
+                    stringsAsFactors = FALSE)
 
   overall <- data.frame(Measure = names(mat$overall),
                         Value = mat$overall,
@@ -1002,7 +1009,9 @@ cv_performance_glm <- function(y,
   y <- parsed$y
 
   # observed model:
-  m0 <- glm(y ~ ., data = data.frame(y = y, x), family = family)
+  m0 <- glm(y ~ .,
+            data = data.frame(y = y, x, stringsAsFactors = FALSE),
+            family = family)
 
   # prediction performance:
   p0 <- summary(performance(m0), label = "observed")
@@ -1035,12 +1044,18 @@ cv_performance_glm <- function(y,
       xtest <- x[rep == j, ]
       ytest <- y[rep == j]
 
-      m <- glm(y ~ ., data = data.frame(y = ytrain, xtrain), family = family)
-      p <- performance(m, newdata = data.frame(y = ytest, xtest))
+      m <- glm(y ~ .,
+               data = data.frame(y = ytrain, xtrain, stringsAsFactors = FALSE),
+               family = family)
+      p <- performance(m,
+                       newdata = data.frame(y = ytest,
+                                            xtest,
+                                            stringsAsFactors = FALSE))
       return(p)
     } )
     # merge the folds:
-    ppp <- structure(as.data.frame(data.table::rbindlist(ppp)),
+    ppp <- structure(as.data.frame(data.table::rbindlist(ppp),
+                                   stringsAsFactors = FALSE),
                      class = c("performance", "data.frame"))
     ppp$label <- paste("rep", as.character(i))
     return(ppp)
@@ -1048,7 +1063,8 @@ cv_performance_glm <- function(y,
 
   # merge the repetitions:
 
-  pp <- structure(as.data.frame(data.table::rbindlist(pp)),
+  pp <- structure(as.data.frame(data.table::rbindlist(pp),
+                                stringsAsFactors = FALSE),
                   class = c("performance", "data.frame"))
 
 

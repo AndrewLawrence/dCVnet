@@ -342,7 +342,8 @@ dCVnet <- function(
   performance <- as.data.frame(
     data.table::rbindlist(
       lapply(outers, "[[", "performance")
-    )
+    ),
+    stringsAsFactors = FALSE
   )
   rownames(performance) <- NULL
   performance <- structure(performance,
@@ -452,7 +453,7 @@ coef.dCVnet <- function(object, type = "all", ...) {
                      stringsAsFactors = FALSE)
     return(RR)
   })
-  R <- as.data.frame(data.table::rbindlist(R))
+  R <- as.data.frame(data.table::rbindlist(R), stringsAsFactors = FALSE)
 
   R$Predictor <- factor(R$Predictor,
                         levels = c("(Intercept)",
@@ -508,7 +509,8 @@ print.dCVnet <- function(x, ...) {
 
   outerkey <- data.frame(do.call(rbind,
                                  strsplit(names(outerfolds),
-                                          split = ".", fixed = TRUE)))
+                                          split = ".", fixed = TRUE)),
+                         stringsAsFactors = FALSE)
   colnames(outerkey) <- c("Folds", "Reps")
 
   outer_k <- length(unique(outerkey$Folds))
@@ -594,14 +596,14 @@ selected_hyperparameters <- function(object,
   what <- match.arg(what)
 
   # what were the final hyperparams:
-  FF <- as.data.frame(object$final$tuning$best)
+  FF <- as.data.frame(object$final$tuning$best, stringsAsFactors = FALSE)
   FF.summary <- FF[, c("alpha", "lambda")]
 
   # What do the 'best-fitting' results of the inner loops look like:
   R <- lapply(object$tuning, function(x) {
     summary(x$tuning, print = FALSE)
   })
-  R <- data.frame(do.call(rbind, R))
+  R <- data.frame(do.call(rbind, R), stringsAsFactors = FALSE)
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
 
@@ -624,9 +626,10 @@ selected_hyperparameters <- function(object,
                `lambda mean` = mean(R$lambda[R$alpha == a]),
                `lambda sd` = sd(R$lambda[R$alpha == a]),
                `lambda min` = min(R$lambda[R$alpha == a]),
-               `lambda max` = max(R$lambda[R$alpha == a]))
+               `lambda max` = max(R$lambda[R$alpha == a]),
+               stringsAsFactors = FALSE)
   } )
-  J <- as.data.frame(data.table::rbindlist(J))
+  J <- as.data.frame(data.table::rbindlist(J), stringsAsFactors = FALSE)
 
   if ( what == "summary" ) {
     return(list(alpha = A, lambda = L, joint = J, FinalModel = FF.summary))
@@ -661,17 +664,22 @@ coefficients_summary <- function(object, ...) {
     kk <- Range$Coef[Range$Predictor == i]
     return(data.frame(min = min(kk),
                       max = max(kk),
-                      propnz = sum(kk != 0) / length(kk)))
+                      propnz = sum(kk != 0) / length(kk),
+                      stringsAsFactors = FALSE))
   } )
   names(Range) <- names(Range.preds)
-  Range <- as.data.frame(data.table::rbindlist(Range))
+  Range <- as.data.frame(data.table::rbindlist(Range),
+                         stringsAsFactors = FALSE)
 
   FinalModel <- coef.multialpha.repeated.cv.glmnet(object$final$model)
-  FinalModel <- setNames(as.data.frame(as.matrix(FinalModel)), "FinalModel")
+  FinalModel <- setNames(as.data.frame(as.matrix(FinalModel),
+                                       stringsAsFactors = FALSE),
+                         "FinalModel")
 
   return(data.frame(FinalModel,
                     OuterMedian = Medians[, 2],
-                    Range))
+                    Range,
+                    stringsAsFactors = FALSE))
 }
 
 
@@ -733,7 +741,7 @@ summary.dCVnet <- function(object, ...) {
     summary.multialpha.repeated.cv.glmnet(x$tuning, print = FALSE)
   })
 
-  R <- data.frame(do.call(rbind, R))
+  R <- data.frame(do.call(rbind, R), stringsAsFactors = FALSE)
   R <- R[R$best, names(R)[!names(R) %in% "best"]]
   rownames(R) <- names(object$tuning)
 

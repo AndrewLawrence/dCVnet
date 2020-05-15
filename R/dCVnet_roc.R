@@ -59,7 +59,8 @@ extract_rocdata <- function(performance,
     outer.df <- data.frame(Sens = do.call(c, perf@y.values),
                            InvSpec = do.call(c, perf@x.values),
                            alpha = do.call(c, perf@alpha.values),
-                           run = runs)
+                           run = runs,
+                           stringsAsFactors = FALSE)
     return(outer.df)
   }
 
@@ -150,7 +151,7 @@ average_rocdata <- function(rocdata,
     return(d)
   } )
   # merge results:
-  res <- as.data.frame(data.table::rbindlist(res))
+  res <- as.data.frame(data.table::rbindlist(res), stringsAsFactors = FALSE)
 
   # average results for threshold values:
   av <- aggregate(res[, !names(res) %in% c("run", "alab")],

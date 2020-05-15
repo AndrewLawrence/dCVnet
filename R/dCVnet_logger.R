@@ -70,16 +70,18 @@ log_results_to_excel <- function(object,
   }
 
   if ( "reflogreg" %in% class(referencemodel) ) {
-    ces <- data.frame(ces, `...` = "-", coef_reflogreg(referencemodel))
+    ces <- data.frame(ces, `...` = "-", coef_reflogreg(referencemodel),
+                      stringsAsFactors = FALSE)
   }
 
   # merge bits:
   sheets <- list(
     coversheet = setNames(as.data.frame(
-      utils::capture.output(summary(object))
+      utils::capture.output(summary(object)),
+      stringsAsFactors = FALSE
     ), ""),
-    dqs.1 = setNames(as.data.frame(pds[[1]]), ""),
-    dqs.2 = as.data.frame(pds[[2]]),
+    dqs.1 = setNames(as.data.frame(pds[[1]], stringsAsFactors = FALSE), ""),
+    dqs.2 = as.data.frame(pds[[2]], stringsAsFactors = FALSE),
     classif = report_performance_summary(object),
     subclass = casesummary.performance(object$performance),
     hyperparameters = hps$joint,

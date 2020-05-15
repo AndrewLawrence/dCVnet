@@ -225,7 +225,7 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
                  return(R)
                })
 
-  df <- as.data.frame(data.table::rbindlist(df))
+  df <- as.data.frame(data.table::rbindlist(df), stringsAsFactors = FALSE)
   rownames(df) <- NULL
 
   df$Fold <- vapply(X = strsplit(df$outfold, split = "\\."),
@@ -351,7 +351,8 @@ plot_outerloop_coefs <- function(object,
                                               levels = levels(df$Predictor)),
                            stdbeta = as.vector(fcoef),
                            fold = "Final",
-                           rep = "Final")
+                           rep = "Final",
+                           stringsAsFactors = FALSE)
     if ( ! intercept ) {
       fcoef.df <- fcoef.df[fcoef.df$Predictor != "(Intercept)",]
     }
