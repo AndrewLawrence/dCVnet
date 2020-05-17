@@ -1,7 +1,3 @@
----
-output: github_document
----
-
 # dCVnet
 
 **dCVnet** is an R package to estimate 
@@ -71,7 +67,7 @@ This project is licensed under the
 
 # What is dCVnet?
 
-The motivating problem behind dCVnet is prediction modelling^[1](#fn1)^ in data 
+The motivating problem behind dCVnet is prediction modelling<sup>[1](#fn1)</sup> in data 
 with relatively few observations (*n*) for the number of 
 predictors (*p*), especially where there may be uninformative or redundant 
 predictors which the analyst isn't willing, or able, to remove.
@@ -83,7 +79,7 @@ For example, it is often a necessary step to justify funding for further researc
 increase *n* or reduce *p*.
 
 With few observations and many predictors several inter-related 
-statistical problems arise. These problems become worse^[2](#fn2)^ with greater ratios
+statistical problems arise. These problems become worse<sup>[2](#fn2)</sup> with greater ratios
 of *p*/*n*:
 
 * [Overfitting](https://en.wikipedia.org/wiki/Overfitting)
@@ -91,7 +87,7 @@ of *p*/*n*:
 * [Variable Selection](https://en.wikipedia.org/wiki/Feature_selection)
 
 *dCVnet* uses *elastic-net regularisation* (from glmnet) to combat these problems. 
-*double cross-validation*^[3](#fn3)^ is applied to tune the regularisation and
+*double cross-validation*<sup>[3](#fn3)</sup> is applied to tune the regularisation and
 validly assess model performance.
 
 #### Cross-validation for generalisation error
@@ -167,7 +163,7 @@ can achieve this.
 
 #### Nested Cross-validation
 
-Double cross-validation^[4](#fn4)^ is implemented to allow principled (and independent) selection 
+Double cross-validation<sup>[4](#fn4)</sup> is implemented to allow principled (and independent) selection 
 of the optimal hyperparameters for generalisability, and estimation of 
 performance in out-of-sample data when hyperparameters are estimated in this 
 way. Double cross-validation is computationally expensive, 
@@ -188,17 +184,17 @@ but work on implementing other model families supported by glmnet is ongoing.
 
 ### Footnotes
 
-<a name="fn1">^1^</a> regularised-models/dCVnet can be useful for inference, 
+<a name="fn1"><sup>1</sup></a> regularised-models/dCVnet can be useful for inference, 
 but this is not really their main purpose, and the time-consuming outer 
 cross-validation loop is not very important for inference.
 
-<a name="fn2">^2^</a> Where *p*/*n* > 1, the standard least-squares regression 
+<a name="fn2"><sup>2</sup></a> Where *p*/*n* > 1, the standard least-squares regression 
 solutions are not defined and generalised models will have convergence problems.
 In both cases predictors will have perfect mutlicollinearity. Where *p*/*n* > 0.1,
 common [rules of thumb](https://en.wikipedia.org/wiki/One_in_ten_rule) 
 for sample size are violated.
 
-<a name="fn3">^3^</a> Double cross-validation is also called *nested* 
+<a name="fn3"><sup>3</sup></a> Double cross-validation is also called *nested* 
 or *nested-loop* cross-validation.
 
 With stable models with enough data the optimism which nested-CV addresses can 
@@ -207,7 +203,7 @@ and demonstrating internal validity without validation leakage is important for
 [reproducible research](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5238707/).
 
 
-<a name="fn4">^4^</a> Other examples of nested CV in R:
+<a name="fn4"><sup>4</sup></a> Other examples of nested CV in R:
 [MLR](https://pat-s.github.io/mlr/articles/tutorial/devel/nested_resampling.html),
 [TANDEM](https://www.rdocumentation.org/packages/TANDEM/versions/1.0.2/topics/nested.cv),
 [nlcv](https://cran.r-project.org/web/packages/nlcv/vignettes/nlcv.pdf),
