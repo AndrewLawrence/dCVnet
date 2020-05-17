@@ -854,6 +854,72 @@ tidy_predict.glmnet <- function(mod,
   return(p)
 }
 
+#' tidy_predict.multialpha.repeated.cv.glmnet
+#'
+#' return a dataframe of glmnet predictions associated with outcomes (when these
+#'     are provided). Standardises return over different model families.
+#'
+#' @param alpha specify an alpha, or leave NULL to use the optimal alpha
+#'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
+#' @param s specfy a lambda, or leave NULL to use the optimal lambda
+#'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
+#'
+#' @inheritParams tidy_predict.glmnet
+#'
+#' @export
+tidy_predict.multialpha.repeated.cv.glmnet <- function(mod,
+                                                       newx,
+                                                       s = NULL,
+                                                       alpha = NULL,
+                                                       newy = NULL,
+                                                       newoffset = NULL,
+                                                       label = "",
+                                                       binomial_thresh = 0.5,
+                                                       ...) {
+  # multialpha objects have attributes:
+  #   family, type.measure, type.lambda, opt.keep_models
+  if ( !is_multialpha.repeated.cv.glmnet(mod) ) {
+    stop("Input must be a multialpha.repeated.cv.glmnet model")
+  }
+
+  if ( attr(mod, "opt.keep_models") == "none" ) {
+    stop(paste0("The object ", deparse(substitute(object)),
+                " does not include the fitted models required for predict.\n",
+                "Rerun multialpha.repeated.cv.glmnet with ",
+                "opt.keep_models = best",
+                "or opt.keep_models = all",
+                "to make predictions"))
+  }
+  if ( !is.null(alpha) && attr(mod, "opt.keep_models") == "best" ) {
+    stop(paste0("The object ", deparse(substitute(object)),
+                " does not include all fitted models required for predict.\n",
+                "Rerun multialpha.repeated.cv.glmnet with ",
+                "opt.keep_models = all",
+                "in order to predict at the non-best alpha."))
+  }
+
+  if ( is.null(s) ) s <- mod$best$lambda
+  if ( is.null(alpha) ) {
+    # use best alpha:
+    alpha <- mod$best$alpha
+    gmod <- mod$models[[mod$bestmodel]]
+  } else {
+    # look for the specified alpha.
+    sel <- alpha %in% mod$alphas
+    if ( !any(sel) ) stop("Error requested alpha not found in model.")
+    gmod <- mod$models[[which(sel)]]
+  }
+
+  tidy_predict.glmnet(gmod,
+                      newx = newx,
+                      s = s,
+                      family = attr(mod, "family"),
+                      newy = newy,
+                      newoffset = newoffset,
+                      label = label,
+                      binomial_thresh = binomial_thresh,
+                      ...)
+}
 
 #' tidy_coef.glmnet
 #'
