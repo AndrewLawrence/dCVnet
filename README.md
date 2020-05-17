@@ -1,3 +1,7 @@
+---
+output: github_document
+---
+
 # dCVnet
 
 **dCVnet** is an R package to estimate 
