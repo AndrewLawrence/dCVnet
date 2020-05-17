@@ -153,8 +153,6 @@ performance.glm <- function(x,
                                  threshold = 0.5,
                                  newdata = NULL,
                                  ...) {
-  family <- check_model_family(x$family$family)
-
   # dataframe of prediction results from a glm
   #     given a threshold (default = 0.5).
 

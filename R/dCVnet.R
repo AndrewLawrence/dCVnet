@@ -38,7 +38,7 @@ NULL
 
 # model families are being added gradually to this package.
 #   supported model families and methods for checking are set here
-supported_model_families <- function() c("binomial", "gaussian")
+supported_model_families <- function() c("binomial")
 
 check_model_family <- function(family) {
   if ( ! family %in% supported_model_families() ) {

@@ -285,6 +285,22 @@ multialpha.repeated.cv.glmnet <- function(
   return(R)
 }
 
+#' is_multialpha.repeated.cv.glmnet
+#'
+#' Checks if x is a mutlialpha.repeated.cv.glmnet object.
+#'
+#' @param x object to test
+#'
+#' @return TRUE if object appears to be a valid instance of
+#'     multialpha.repeated.cv.glmnet, FALSE otherwise.
+#'
+#' @export
+is_multialpha.repeated.cv.glmnet <- function(x) {
+  attrchk <- c("type.measure", "family", "type.lambda", "opt.keep_models")
+  inherits(x, "multialpha.repeated.cv.glmnet") &&
+    all(attrchk %in% names(attributes(x)))
+}
+
 #' @export
 print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 
