@@ -135,8 +135,8 @@ plot.dCVnet <- function(x, type = "tuning", ...) {
 #' @param guide_labels a named list of 3 labels used in the legend:
 #'     \itemize{
 #'     \item{group = label for the Grouping factor}
-#'     \item{threshold = label for the threshold factor}
-#'     \item{refline = label for the reference line}
+#'     \item{threshold = label for the Threshold factor}
+#'     \item{refline = label for the Reference line}
 #'     }
 #' @param ... additional arguments (unused)
 #' @return a ROC plot, as above.
@@ -149,9 +149,18 @@ plot.rocdata <- function(x,
                                           threshold = expression(P[Threshold]),
                                           refline = "Chance\nPerformance"),
                          ...) {
+  guide_labels_expect <- c("group", "threshold", "refline")
+  if ( ! all( guide_labels_expect %in% names(guide_labels)) ) {
+    warning(paste("guide_labels must contain named elements:",
+                  "\t\t'group', 'threshold' and 'refline'",
+                  " Using defaults instead", sep = "\n"))
+    guide_labels <- c(group = "Model",
+                      threshold = expression(P[Threshold]),
+                      refline = "Chance\nPerformance")
+  }
   # were thresholds supplied?
   hasalphas <- !any(is.na(alphalabel)) && !identical(FALSE, alphalabel)
-  print(hasalphas)
+
   .closest <- function(vals, x) {
     locs <- vapply(vals, function(v) which.min(abs(x - v)), FUN.VALUE = 1L)
     r <- rep(NA_character_, NROW(x))
@@ -196,41 +205,50 @@ plot.rocdata <- function(x,
         xend = ~InvSpecEnd,
         yend = ~SensEnd,
         lty = ~lty),
-      show.legend = TRUE,
+      show.legend = legend,
       data = refline,
       inherit.aes = FALSE) +
     ggplot2::geom_line(ggplot2::aes_string(colour = "run"),
                        show.legend = legend) +
-    ggplot2::xlab("False positive rate") +
-    ggplot2::ylab("True positive rate") +
+    ggplot2::xlab("False Positive Rate") +
+    ggplot2::ylab("True Positive Rate") +
     ggplot2::scale_x_continuous(breaks = seq(0, 1, 0.1), minor_breaks = NULL) +
     ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.1), minor_breaks = NULL) +
     ggplot2::scale_size_manual(values = c(0.7)) +
-    ggplot2::guides(
-      colour = ggplot2::guide_legend(title = guide_labels$group),
+    ggplot2::coord_equal() +
+    ggplot2::theme_light()
+
+  if ( legend ) {
+    p <- p + ggplot2::guides(
+      colour = ggplot2::guide_legend(title = guide_labels$group, order = 1),
       lty = ggplot2::guide_legend(title = NULL,
+                                  order = 3,
                                   override.aes = list(
                                     linetype = 1,
                                     shape = 32,
-                                    alpha = 1))) +
-    ggplot2::coord_equal() +
-    ggplot2::theme_light()
+                                    alpha = 1)))
+  }
 
   if ( hasalphas ) {
     p <- p +
       ggplot2::geom_point(data = x[!is.na(x$PThreshold), ],
                           mapping = ggplot2::aes_string(shape = "PThreshold",
                                                         colour = "run"),
-                          show.legend = legend) +
-      ggplot2::guides(
+                          show.legend = legend)
+
+    if ( legend ) {
+      p <- p + ggplot2::guides(
         shape = ggplot2::guide_legend(title = guide_labels$threshold,
+                                      order = 2,
                                       override.aes = list(linetype = NA))
       )
+    }
   }
   print(p)
   return(invisible(list(plot = p,
                         data = x)))
 }
+
 
 
 #  ~ non-S3 plotters ------------------------------------------------------

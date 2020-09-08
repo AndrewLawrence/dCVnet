@@ -24,8 +24,8 @@ on the curve be highlighted with symbols indicating threshold?}
 \item{guide_labels}{a named list of 3 labels used in the legend:
 \itemize{
 \item{group = label for the Grouping factor}
-\item{threshold = label for the threshold factor}
-\item{refline = label for the reference line}
+\item{threshold = label for the Threshold factor}
+\item{refline = label for the Reference line}
 }}
 
 \item{...}{additional arguments (unused)}
