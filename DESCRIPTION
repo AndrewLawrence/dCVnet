@@ -33,6 +33,7 @@ Suggests:
     rmarkdown,
     openxlsx,
     car,
+    dplyr,
     psych,
     boot,
     tidyverse,
