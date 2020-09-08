@@ -861,7 +861,7 @@ tidy_predict.glmnet <- function(mod,
 #'
 #' @param alpha specify an alpha, or leave NULL to use the optimal alpha
 #'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
-#' @param s specfy a lambda, or leave NULL to use the optimal lambda
+#' @param s specify a lambda, or leave NULL to use the optimal lambda
 #'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
 #'
 #' @inheritParams tidy_predict.glmnet
