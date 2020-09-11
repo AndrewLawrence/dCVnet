@@ -3,6 +3,7 @@
 
 context("tests of model performance objects")
 
+# Setup
 perfect_classification <- structure(
   data.frame(
     reference = c("A", "A", "B", "B"),
@@ -13,19 +14,31 @@ perfect_classification <- structure(
   ), class = c("performance", "data.frame")
 )
 
+imperfect_classification <- perfect_classification
+imperfect_classification$reference <- rev(perfect_classification$reference)
+
 perfect_classification.s <- summary(perfect_classification)
+imperfect_classification.s <- summary(imperfect_classification)
 
 class_measures <- c("Accuracy", "Kappa",
                     "Sensitivity", "Specificity",
                     "Pos Pred Value", "Neg Pred Value",
                     "Precision", "Recall",
                     "F1", "Prevalence", "Detection Rate",
-                    "Detection Prevalence", "Balanced Accuracy", "AUROC")
+                    "Detection Prevalence", "Balanced Accuracy",
+                    "AUROC", "Brier")
 
-
-test_that("prediction measures work", {
+# The tests:
+test_that("perfect binomial classification is as expected", {
   expect_equal(perfect_classification.s$Value[
     perfect_classification.s$Measure %in% class_measures],
-               c(1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.5, 1, 1)
+    c(1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.5, 1, 1, 0.0875)
+  )
+})
+
+test_that("imperfect binomial classification is as expected", {
+  expect_equal(imperfect_classification.s$Value[
+    imperfect_classification.s$Measure %in% class_measures],
+    c(0, -1, 0, 0, 0, 0, 0, 0, NaN, 0.5, 0.0, 0.5, 0, 0, 0.5875)
   )
 })
