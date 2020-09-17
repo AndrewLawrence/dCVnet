@@ -177,14 +177,14 @@ parseddata_summary <- function(object) {
                    sprintf(ytab, fmt = "%i"),
                    " (", yptab, "%)")
   } else if ( object$family == "cox") {
-      stry <- aggregate(list(Time = object$y[, 1]),
-                        by = list(Outcome = object$y[, 2]),
-                        summary)
+    stry <- aggregate(list(Time = object$y[, 1]),
+                      by = list(Outcome = object$y[, 2]),
+                      summary)
   } else {
-      # should be gaussian (1d mat / vector),
-      #           poisson (1d mat / vector) or
-      #           mgaussian (data.frame)
-      stry <- summary(object$y)
+    # should be gaussian (1d mat / vector),
+    #           poisson (1d mat / vector) or
+    #           mgaussian (data.frame)
+    stry <- summary(object$y)
   }
 
   # Next the predictor matrix:
@@ -1044,6 +1044,8 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #' @param y outcome vector (numeric or factor)
 #' @param data predictors in a data.frame
 #' @param f a formula to apply to x
+#' @param return_summary bool. return summarised performance (default), or
+#'     \code{\link{performance}} objects for further analysis (set to FALSE)
 #' @param ... other arguments
 #' @inheritParams multialpha.repeated.cv.glmnet
 #' @inheritParams repeated.cv.glmnet
@@ -1059,15 +1061,16 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #' @seealso \code{\link[boot]{cv.glm}}, \code{\link{performance}}
 #' @export
 cv_performance_glm <- function(y,
-                                    data,
-                                    f = "~.", # nolint
-                                    folds = NULL,
-                                    k = 10,
-                                    nrep = 2,
-                                    family = "binomial",
-                                    opt.ystratify = TRUE,
-                                    opt.uniquefolds = FALSE,
-                                    ...) {
+                               data,
+                               f = "~.", # nolint
+                               folds = NULL,
+                               k = 10,
+                               nrep = 2,
+                               family = "binomial",
+                               opt.ystratify = TRUE,
+                               opt.uniquefolds = FALSE,
+                               return_summary = TRUE,
+                               ...) {
   cl <- as.list(match.call())[-1]
 
   parsed <- parse_dCVnet_input(data = data, y = y, f = f, family = family)
@@ -1135,13 +1138,22 @@ cv_performance_glm <- function(y,
                   class = c("performance", "data.frame"))
 
 
-  pp <- report_performance_summary(pp)
+  ppp <- report_performance_summary(pp)
+
+  if ( return_summary ) {
+    return(list(
+      glm.performance = p0,
+      cv.performance = ppp,
+      folds = folds,
+      call = cl))
+  }
 
   return(list(
-    glm.performance = p0,
+    glm.performance = performance(m0),
     cv.performance = pp,
     folds = folds,
-    call = cl))
+    call = cl
+  ))
 }
 
 # function was removed from glmnet in 3.0 update.

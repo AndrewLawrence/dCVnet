@@ -398,7 +398,6 @@ summary.performance <- function(object,
   return(R)
 }
 
-
 #' report_performance_summary
 #'
 #' extracts performance from a dCVnet object

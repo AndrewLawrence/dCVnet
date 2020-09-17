@@ -14,6 +14,7 @@ cv_performance_glm(
   family = "binomial",
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
+  return_summary = TRUE,
   ...
 )
 }
@@ -43,6 +44,9 @@ This is implemented with \code{\link[caret]{createFolds}}}
 In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
 Currently it warns if non-unique values are found.}
+
+\item{return_summary}{bool. return summarised performance (default), or
+\code{\link{performance}} objects for further analysis (set to FALSE)}
 
 \item{...}{other arguments}
 }
