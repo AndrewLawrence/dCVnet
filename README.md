@@ -84,7 +84,7 @@ of *p*/*n*:
 
 * [Overfitting](https://en.wikipedia.org/wiki/Overfitting)
 * [Multicollinearity](https://en.wikipedia.org/wiki/Multicollinearity)
-* [Variable Selection](https://en.wikipedia.org/wiki/Feature_selection)
+* [need for Variable Selection](https://en.wikipedia.org/wiki/Feature_selection)
 
 *dCVnet* uses *elastic-net regularisation* (from glmnet) to combat these problems. 
 *double cross-validation*<sup>[3](#fn3)</sup> is applied to tune the regularisation and
@@ -94,11 +94,10 @@ validly assess model performance.
 
 A model which is overfit is tuned to the noise in the sample rather than 
 reproducible relationships. As a result it will perform poorly in new (unseen) 
-data. This failure to perform well in new data is termed 
-[generalisation (or out-of-sample) error](https://en.wikipedia.org/wiki/Generalization_error).
+data. This failure to perform well in new data is termed generalisation 
+(or out-of-sample) error.
 
-Generalisation error can be assessed using properly conducted 
-[cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)). 
+Generalisation error can be assessed using properly conducted cross-validation. 
 The model is repeatedly refit in different subsets of the 
 data and performance evaluated in the cases which were not used for model 
 fitting. Cross-validated estimates of model performance are unaffected by the 
@@ -114,37 +113,40 @@ produces more cautious models which are likely to generalise better to new data.
 
 #### Elastic-net Regularisation
 
-[Regularisation](https://en.wikipedia.org/wiki/Regularization_\(mathematics\)) 
-adds a cost to the complexity of the model. Unregularised models optimise the 
-fit of the model to the data, regularised models optimise the fit of the model
-given a budget of allowable complexity. This results in [shrinkage](https://en.wikipedia.org/wiki/Shrinkage_estimator) of 
+Regularisation adds a cost to the complexity of the model. Unregularised models
+optimise the fit of the model to the data, regularised models optimise the fit of the model
+given a budget of allowable complexity. This results in shrinkage of 
 model coefficients towards zero. This makes models more cautious and can 
 substantially improve generalisation to unseen data. 
 *dCVnet* uses elastic-net regularisation from the  [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html) package for
 R.
 
-The type of regularisation employed by *dCVnet* ([Elastic-net](https://en.wikipedia.org/wiki/Elastic_net_regularization))
-allows predictors with perfect *collinearity*
-and performs *variable selection* (by incorporating *L1*-penalisation - 
-also called the Least Absolute Shrinkage and Selection Operator; LASSO).
+The type of regularisation used by *dCVnet* ([Elastic-net Regularisation](https://en.wikipedia.org/wiki/Elastic_net_regularization))
+is a combination of two types of regularisation with the aim of avoiding their
+weaknesses and benefitting from their strengths:
+
+* Ridge regression (using a *L2-*penalty) allows predictors with perfect *collinearity*,
+but every predictor contributes (the solution is not sparse).
+
+* LASSO (Least Absolute Shrinkage and Selection Operator) regression uses the
+*L1-*penalty. It produces variable selection effect by favouring a sparse 
+solution (meaning less important coefficients drop to zero), however LASSO 
+is unstable when working with correlated predictors.
 
 #### Elastic-net Hyperparameters
 
-However, adding regularisation to a model introduces "algorithm 
+Adding regularisation to a model introduces "algorithm 
 [hyperparameters](https://en.wikipedia.org/wiki/Hyperparameter_(machine_learning))"
 - these are settings which which must be tuned/optimised for each problem.
 
 Elastic-net regularisation requires two hyperparameters be specified:
 
 * `alpha` - the balance of *L1*- and *L2*-regularisation penalties.
-(L2 only : alpha = 0, L1 only : alpha = 1)
-* `lambda` - the total amount of regularisation.
+(L2/Ridge only : alpha = 0, L1/LASSO only : alpha = 1)
+* `lambda` - penalty factor determining the combined amount of regularisation.
 
-there are no *default* values for these parameters, and suitable values 
-vary depending on the problem. Some considerations are:
-
-* Problems with a greater number of relevant variables (and/or stronger relationships for those relevant predictors) will be fit best with a greater lambda.
-* Problems which are sparse (i.e. many predictors are irrelevant) are better fit with more L1-like models.
+There are no *default* values for these parameters, suitable values 
+vary depending on the problem and so should be 'tuned'.
 
 One way to tune parameters without overfitting is to use Cross-validation 
 to select values which perform well in unseen data. This is a form of model 
@@ -159,7 +161,6 @@ independent of the cross-validation for hyperparameter selection, see
 [Crawley & Talbot (2010; JMLR 11:2079-2107)](http://www.jmlr.org/papers/v11/cawley10a.html) 
 for a fuller description of the issue. Nesting the hyperparameter tuning 
 can achieve this.
-
 
 #### Nested Cross-validation
 
