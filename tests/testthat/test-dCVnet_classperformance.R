@@ -1,7 +1,8 @@
 
-# class performance object (from scratch)
 
 context("tests of model performance objects")
+
+# class performance object (from scratch)
 
 # Setup
 perfect_classification <- structure(

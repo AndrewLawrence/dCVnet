@@ -18,7 +18,8 @@ parse_dCVnet_input(
 \item{data}{a data.frame containing variables needed for the formula (f).}
 
 \item{y}{the outcome (can be numeric vector,
-a factor (for binomial / multinomial) or a matrix for cox/mgaussian)}
+a factor (for binomial / multinomial) or a matrix for cox/mgaussian)
+For factors see Factor Outcomes section below.}
 
 \item{family}{the model family (see \code{\link{glmnet}})}
 
@@ -32,7 +33,8 @@ The formula \emph{must} include an intercept.}
 
 \item{yname}{an optional label for the outcome / y variable.}
 
-\item{passNA}{should NA values be excluded (FALSE) or passed through (TRUE)?}
+\item{passNA}{should NA values in data be excluded (FALSE)
+or passed through (TRUE)?}
 }
 \value{
 a list containing
@@ -52,21 +54,28 @@ transformations and expansions using R formula notation.
 }
 \section{Factor Outcomes}{
 
-For binomial and multinomial families \code{\link[glmnet]{glmnet}}
-coerces non-numeric y data to a factor with labels sorted alphabetically.
-Numeric y is left unchanged (behaviour verified in version 2.0.18).
-This matters because most R functions (e.g. glm) honour the ordering
-of the factor levels. A binomial glm fit to a factor with levels
-\code{c("control", "case")}, will predict "case" and the model will return
-predicted probabilities of being a "case". \code{\link[glmnet]{glmnet}}
-will return the predicted probabilities of being "control" because it
-follows "case" alphabetically. Currently cannot be avoided while using
-glmnet.
-To ensure dCVnet results are comparable between glmnet and glm / other
-packages an error will be thrown if y is a factor and the levels are not
-sorted alphabetically. Factor levels should be corrected such that
-levels(y) and sort(levels(y)) agree.
-e.g. \code{y <- forcats::fct_recode(y, case = "zcase")}
+For categorical families (binomial, multinomial) input can be:
+\itemize{
+\item{numeric (integer): c(0,1,2)}
+\item{factor: factor(1:3, labels = c("A", "B", "C")))}
+\item{character: c("A", "B", "C")}
+\item{other}
+}
+These are treated differently.
+
+Numeric data is used as provided.
+Character data will be coerced to a factor:
+\code{factor(x, levels = sort(unique(x)))}.
+Factor data will be used as provided, but \emph{must} have levels in
+alphabetical order.
+
+In all cases \emph{the reference category must be ordered first},
+this means for the binomial family the 'positive' category is second.
+
+Why alphabetical? Previously bugs arose due to different handling
+of factor levels between functions called by dCVnet. These appear to be
+resolved in the latest versions of the packages, but this restriction will
+stay until I can verify.
 }
 
 \section{Notes}{

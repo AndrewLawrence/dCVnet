@@ -26,7 +26,8 @@ dCVnet(
 }
 \arguments{
 \item{y}{the outcome (can be numeric vector,
-a factor (for binomial / multinomial) or a matrix for cox/mgaussian)}
+a factor (for binomial / multinomial) or a matrix for cox/mgaussian)
+For factors see Factor Outcomes section below.}
 
 \item{data}{a data.frame containing variables needed for the formula (f).}
 
@@ -98,6 +99,37 @@ Elasticnet hyperparameters are
 \bold{lambda} (the total regularisation penalty)
 and \bold{alpha} (the balance of L1 and L2 regularisation types).
 }
+\section{Factor Outcomes}{
+
+For categorical families (binomial, multinomial) input can be:
+\itemize{
+\item{numeric (integer): c(0,1,2)}
+\item{factor: factor(1:3, labels = c("A", "B", "C")))}
+\item{character: c("A", "B", "C")}
+\item{other}
+}
+These are treated differently.
+
+Numeric data is used as provided.
+Character data will be coerced to a factor:
+\code{factor(x, levels = sort(unique(x)))}.
+Factor data will be used as provided, but \emph{must} have levels in
+alphabetical order.
+
+In all cases \emph{the reference category must be ordered first},
+this means for the binomial family the 'positive' category is second.
+
+Why alphabetical? Previously bugs arose due to different handling
+of factor levels between functions called by dCVnet. These appear to be
+resolved in the latest versions of the packages, but this restriction will
+stay until I can verify.
+}
+
+\section{Notes}{
+
+Sparse matrices are not supported by dCVnet.
+}
+
 \examples{
 \dontrun{
 

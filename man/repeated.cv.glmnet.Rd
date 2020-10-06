@@ -57,7 +57,8 @@ cross-validation? The default (nfolds=NULL) uses 10-fold.}
 \item{nreps}{if folds are not specified, how many times to repeat k-fold
 cross-validation? The default (nreps=NULL) uses 5 repeats.}
 
-\item{family}{Response type (see above)}
+\item{family}{Response type (see above). Either a character string representing
+one of the built-in families, or else a \code{glm()} family object.}
 
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
 

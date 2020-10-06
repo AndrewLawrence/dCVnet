@@ -65,7 +65,8 @@ In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
 Currently it warns if non-unique values are found.}
 
-\item{family}{Response type (see above)}
+\item{family}{Response type (see above). Either a character string representing
+one of the built-in families, or else a \code{glm()} family object.}
 
 \item{opt.keep_models}{The models take up memory. What should we return?
 \itemize{

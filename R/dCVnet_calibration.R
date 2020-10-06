@@ -21,6 +21,8 @@
 #'
 #' @return calibration intercept and calibration slope
 #'
+#' @importFrom stats qlogis
+#'
 #' @export
 calibration <- function(x, ...) {
   UseMethod("calibration")
