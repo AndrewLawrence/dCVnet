@@ -29,8 +29,20 @@ calibration <- function(x, ...) {
 # Internal function to run the actual calculation:
 calibration_ <- function(predictedprobability,
                          observedoutcome) {
+  logit <- qlogis(predictedprobability)
+  finite <- is.finite(logit)
+  if ( any(!finite) ) {
+    # remove from fit:
+    logit <- logit[finite]
+    observedoutcome <- observedoutcome[finite]
+    # warn:
+    n <- length(finite)
+    i <- sum(!finite)
+    warning(paste0(i, "/", n,
+                   "values removed due to predictions equal to 0 / 1"))
+  }
   # xx is data.frame with reference & prediction (no group)
-  m <- glm(formula = observedoutcome ~ qlogis(predictedprobability),
+  m <- glm(formula = observedoutcome ~ logit,
            family = "binomial")
   cc <- coef(m)
   return(c(Intercept = cc[[1]], Slope = cc[[2]]))
