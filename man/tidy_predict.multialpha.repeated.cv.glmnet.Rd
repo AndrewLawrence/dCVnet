@@ -21,7 +21,7 @@ tidy_predict.multialpha.repeated.cv.glmnet(
 
 \item{newx}{new values of x for which predictions are desired.}
 
-\item{s}{specfy a lambda, or leave NULL to use the optimal lambda
+\item{s}{specify a lambda, or leave NULL to use the optimal lambda
 identified by \code{\link{multialpha.repeated.cv.glmnet}}.}
 
 \item{alpha}{specify an alpha, or leave NULL to use the optimal alpha

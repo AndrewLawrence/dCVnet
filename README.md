@@ -24,14 +24,19 @@ The commands below will install missing package dependencies
 (see the [DESCRIPTION](DESCRIPTION) file *Imports* section). It will then
 run a toy example from the package's main function.
 
-#### Install dCVnet from GitHub:
+#### Install dCVnet (from GitHub):
 ```
-devtools::install_github("AndrewLawrence/dCVnet", dependencies = TRUE)
+devtools::install_github("AndrewLawrence/dCVnet", dependencies = TRUE, build_vignettes = TRUE)
 ```
 
-#### Install dCVnet from an Archive:
+#### -or- install the dev version of dCVnet (from GitHub):
 ```
-devtools::install_local("path/to/dCVnet_1.0.6.tar.gz", dependencies = TRUE)
+devtools::install_github("AndrewLawrence/dCVnet@dev", dependencies = TRUE, build_vignettes = TRUE)
+```
+
+#### Install dCVnet (from an Archive):
+```
+devtools::install_local("path/to/dCVnet_1.0.7.tar.gz", dependencies = TRUE, build_vignettes = TRUE)
 ```
 
 #### Run a simple example:

@@ -14,6 +14,8 @@
 #'     and \bold{alpha} (the balance of L1 and L2 regularisation types).
 #'
 #' @inheritParams parse_dCVnet_input
+#' @inheritSection parse_dCVnet_input Factor Outcomes
+#' @inheritSection parse_dCVnet_input Notes
 #' @inheritParams multialpha.repeated.cv.glmnet
 #'
 #' @param k_inner an integer, the k in the inner k-fold CV.

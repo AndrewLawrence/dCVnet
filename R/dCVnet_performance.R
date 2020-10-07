@@ -334,7 +334,9 @@ summary.performance <- function(object,
         #   However glm / model.matrix uses treatment-coding: the
         #   first level of y is the reference class (e.g. control subjects).
         #   This behaviour is helpful when interpreting model coefficients
-        #   as they represent the deviation from the reference.
+        #   as they represent the deviation from the reference such that
+        #   a positive coefficient indicates an increased probability of
+        #   the 'positive' class.
         # glmnet: to add to the confusion glmnet will reorder binary factors
         #   such that levels are alphabetical.
         # dCVnet coerces input data into an alphabetical factor with the
@@ -348,8 +350,18 @@ summary.performance <- function(object,
     # Next add the AUC:
     B <- ModelMetrics::auc(actual = performance$reference,
                            predicted = performance$prediction)
+    # and the Brier Score:
+    if ( is.numeric(performance$reference) ) {
+      Bs <- ModelMetrics::brier(actual = performance$reference,
+                                predicted = performance$prediction)
+    } else {
+      Bs <- ModelMetrics::brier(actual = as.numeric(performance$reference) - 1,
+                                predicted = performance$prediction)
+    }
     # following hack removed: B <- pmax(B, 1 - B)
-    B <- data.frame(Measure = "AUROC", Value = B, stringsAsFactors = FALSE)
+    B <- data.frame(Measure = c("AUROC", "Brier"),
+                    Value = c(B, Bs),
+                    stringsAsFactors = FALSE)
 
     B$label <- A$label <- unique(performance$label)
     return(rbind(A, B))
@@ -385,7 +397,6 @@ summary.performance <- function(object,
   if ( label %in% "None" ) R$label <- NULL
   return(R)
 }
-
 
 #' report_performance_summary
 #'

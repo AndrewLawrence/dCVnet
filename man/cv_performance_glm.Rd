@@ -14,6 +14,7 @@ cv_performance_glm(
   family = "binomial",
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
+  return_summary = TRUE,
   ...
 )
 }
@@ -33,7 +34,8 @@ and the k in repeated k-fold cv.}
 
 \item{nrep}{the number of repetitions}
 
-\item{family}{Response type (see above)}
+\item{family}{Response type (see above). Either a character string representing
+one of the built-in families, or else a \code{glm()} family object.}
 
 \item{opt.ystratify}{Boolean.
 Outer and inner sampling is stratified by outcome.
@@ -43,6 +45,9 @@ This is implemented with \code{\link[caret]{createFolds}}}
 In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
 Currently it warns if non-unique values are found.}
+
+\item{return_summary}{bool. return summarised performance (default), or
+\code{\link{performance}} objects for further analysis (set to FALSE)}
 
 \item{...}{other arguments}
 }

@@ -1,6 +1,30 @@
 
 # Utility Functions -------------------------------------------------------
 
+check_categorical_outcome <- function(cat) {
+
+  .is_alphabetical <- function(factor) {
+    lvl <- levels(factor)
+    identical(lvl, sort(lvl))
+  }
+
+  if ( is.numeric(cat) ) return(cat)
+  if ( is.factor(cat) ) {
+    if ( ! .is_alphabetical(cat) ) {
+      stop("The order of factor levels is not alphabetical.
+            glmnet ignores levels and treats factor levels in y
+            alphabetically.")
+    }
+    return(cat)
+  }
+  if ( is.character(cat) ) return(factor(cat, levels = sort(unique(cat))))
+  # at this point we have already returned for:
+  #     is.numeric, is.factor and is.character.
+  # failure mode: co-erce factor
+  return(as.factor(cat))
+}
+
+
 #' parse_dCVnet_input
 #'
 #' Collate an outcome (y) predictor matrix (x) into a standardised object ready
@@ -9,21 +33,28 @@
 #'    transformations and expansions using R formula notation.
 #'
 #' @section Factor Outcomes:
-#'    For binomial and multinomial families \code{\link[glmnet]{glmnet}}
-#'    coerces non-numeric y data to a factor with labels sorted alphabetically.
-#'    Numeric y is left unchanged (behaviour verified in version 2.0.18).
-#'    This matters because most R functions (e.g. glm) honour the ordering
-#'    of the factor levels. A binomial glm fit to a factor with levels
-#'    \code{c("control", "case")}, will predict "case" and the model will return
-#'    predicted probabilities of being a "case". \code{\link[glmnet]{glmnet}}
-#'    will return the predicted probabilities of being "control" because it
-#'    follows "case" alphabetically. Currently cannot be avoided while using
-#'    glmnet.
-#'    To ensure dCVnet results are comparable between glmnet and glm / other
-#'    packages an error will be thrown if y is a factor and the levels are not
-#'    sorted alphabetically. Factor levels should be corrected such that
-#'    levels(y) and sort(levels(y)) agree.
-#'    e.g. \code{y <- forcats::fct_recode(y, case = "zcase")}
+#'    For categorical families (binomial, multinomial) input can be:
+#'    \itemize{
+#'        \item{numeric (integer): c(0,1,2)}
+#'        \item{factor: factor(1:3, labels = c("A", "B", "C")))}
+#'        \item{character: c("A", "B", "C")}
+#'        \item{other}
+#'    }
+#'    These are treated differently.
+#'
+#'    Numeric data is used as provided.
+#'    Character data will be coerced to a factor:
+#'        \code{factor(x, levels = sort(unique(x)))}.
+#'    Factor data will be used as provided, but *must* have levels in
+#'    alphabetical order.
+#'
+#'    In all cases *the reference category must be ordered first*,
+#'    this means for the binomial family the 'positive' category is second.
+#'
+#'    Why alphabetical? Previously bugs arose due to different handling
+#'    of factor levels between functions called by dCVnet. These appear to be
+#'    resolved in the latest versions of the packages, but this restriction will
+#'    stay until I can verify.
 #'
 #' @section Notes:
 #'    Sparse matrices are not supported by dCVnet.
@@ -33,6 +64,7 @@
 #' @param data a data.frame containing variables needed for the formula (f).
 #' @param y the outcome (can be numeric vector,
 #'      a factor (for binomial / multinomial) or a matrix for cox/mgaussian)
+#'      For factors see Factor Outcomes section below.
 #' @param f a one sided formula.
 #'     The RHS must refer to columns in \code{data} and may include
 #'     interactions, transformations or expansions (like \code{\link{poly}}, or
@@ -41,7 +73,8 @@
 #' @param family the model family (see \code{\link{glmnet}})
 #' @param offset optional model offset (see \code{\link{glmnet}})
 #' @param yname an optional label for the outcome / y variable.
-#' @param passNA should NA values be excluded (FALSE) or passed through (TRUE)?
+#' @param passNA should NA values in data be excluded (FALSE)
+#'                   or passed through (TRUE)?
 #'
 #' @return a list containing
 #'     \itemize{
@@ -76,44 +109,42 @@ parse_dCVnet_input <- function(data,
 
   data <- data[, vars, drop = FALSE]
 
-  # Custom, paired x/y removal of incomplete data:
+  # Paired removal of incomplete data from x/y
+  #     missing y is never passed,
+  #     missing x (data) is optionally passed according to passNA
+  ycomplete <- stats::complete.cases(y)
+  dcomplete <- stats::complete.cases(data)
+  # only worry about missing data if y is not missing:
+  dmiss <- any( (!dcomplete) & ycomplete )
 
-  # remove missing in x/data (unless pass NAs for imputing):
-  if ( !passNA && any(!stats::complete.cases(data)) ) {
-    cat(paste0("Removing ", sum(!stats::complete.cases(data)),
-               " of ", NROW(data),
-               " subjects due to missing data.\n"))
-    y <- subset(y, stats::complete.cases(data))
-    data <- subset(data, stats::complete.cases(data))
+  # special behaviour for missing in data not y if passNA:
+  if ( passNA && dmiss ) {
+    dcomplete <- rep(TRUE, length(dcomplete))
+    dmiss <- FALSE
+    warning("Passing NAs - missing data (non-outcome)")
   }
-  # always remove missing in y:
-  if ( any(!stats::complete.cases(y)) ) {
-    cat(paste0("Removing ", sum(!stats::complete.cases(y)),
-               " of ", NROW(y),
-               " subjects due to missing y.\n"))
-    data <- subset(data, stats::complete.cases(y))
-    y <- subset(y, stats::complete.cases(y))
+
+  # joint removal:
+  complete <- ycomplete & dcomplete
+  miss <- any(!complete)
+
+  if ( miss ) {
+    y <- subset(y, complete)
+    data <- subset(data, complete)
+    warning(paste0("Removing ", sum(!complete),
+               " of ", length(complete),
+               " subjects due to missing data.\n"))
   }
 
   # coerce y into factor and check, because...
   #   - glmnet (for its own infernal reasons) does not honour factor ordering,
   #     the factor levels are converted to character and sorted alphabetically
-  #   - previously there was functionality to change factor ordering according
-  #     to a reference category, but this is inconsistent with glmnet.
+  #   - previously in dCVnet there was an argument ('positive') to change factor
+  #     ordering from the call to dCVnet. This was not honoured by glmnet.
   #   - if y is numeric it is assumed the user knows what they are doing.
-  if ( family %in% c("binomial", "multinomial") && !is.numeric(y)) {
-
-    y <- as.factor(y) # coerce y to factor
-
-    # check if
-    lvl <- levels(y)
-    alvl <- sort(lvl)
-
-    if ( !identical(lvl, alvl) ) {
-      stop("The order of factor levels is not alphabetical.
-            glmnet ignores levels and treats factor levels in y
-            alphabetically.")
-    }
+  #   NOTE: now not certain if this was my bug rather than glmnet.
+  if ( family %in% c("binomial", "multinomial") ) {
+    y <- check_categorical_outcome(y)
   }
 
   # Make a model matrix of RHS variables
@@ -177,14 +208,14 @@ parseddata_summary <- function(object) {
                    sprintf(ytab, fmt = "%i"),
                    " (", yptab, "%)")
   } else if ( object$family == "cox") {
-      stry <- aggregate(list(Time = object$y[, 1]),
-                        by = list(Outcome = object$y[, 2]),
-                        summary)
+    stry <- aggregate(list(Time = object$y[, 1]),
+                      by = list(Outcome = object$y[, 2]),
+                      summary)
   } else {
-      # should be gaussian (1d mat / vector),
-      #           poisson (1d mat / vector) or
-      #           mgaussian (data.frame)
-      stry <- summary(object$y)
+    # should be gaussian (1d mat / vector),
+    #           poisson (1d mat / vector) or
+    #           mgaussian (data.frame)
+    stry <- summary(object$y)
   }
 
   # Next the predictor matrix:
@@ -786,22 +817,20 @@ tidy_predict.glmnet <- function(mod,
                exact = FALSE,
                newoffset = newoffset,
                ...)
-  if ( class(p) == "array" ) {
-    p <- p[,,1] # nolint # extra dims not needed.
-  }
-
-  p <- as.data.frame(p, stringAsFactors = FALSE)
+  # remove excess dims, convert to data.frame
+  p <- as.data.frame(drop(p), stringAsFactors = FALSE)
 
   if ( !is.null(newy)) {
     a <- as.data.frame(newy, stringsAsFactors = FALSE)
   }
 
+  cn <- "prediction"
   # different rules for column names of p:
   if ( family %in% c("mgaussian", "multinomial") ) {
-    colnames(p) <- paste0("prediction", colnames(p))
-  } else {
-    colnames(p) <- "prediction"
+    cn <- paste0("prediction", colnames(p))
   }
+
+  colnames(p) <- cn
 
   p$rowid <- rownames(p)
 
@@ -861,7 +890,7 @@ tidy_predict.glmnet <- function(mod,
 #'
 #' @param alpha specify an alpha, or leave NULL to use the optimal alpha
 #'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
-#' @param s specfy a lambda, or leave NULL to use the optimal lambda
+#' @param s specify a lambda, or leave NULL to use the optimal lambda
 #'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
 #'
 #' @inheritParams tidy_predict.glmnet
@@ -1044,6 +1073,8 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #' @param y outcome vector (numeric or factor)
 #' @param data predictors in a data.frame
 #' @param f a formula to apply to x
+#' @param return_summary bool. return summarised performance (default), or
+#'     \code{\link{performance}} objects for further analysis (set to FALSE)
 #' @param ... other arguments
 #' @inheritParams multialpha.repeated.cv.glmnet
 #' @inheritParams repeated.cv.glmnet
@@ -1059,15 +1090,16 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #' @seealso \code{\link[boot]{cv.glm}}, \code{\link{performance}}
 #' @export
 cv_performance_glm <- function(y,
-                                    data,
-                                    f = "~.", # nolint
-                                    folds = NULL,
-                                    k = 10,
-                                    nrep = 2,
-                                    family = "binomial",
-                                    opt.ystratify = TRUE,
-                                    opt.uniquefolds = FALSE,
-                                    ...) {
+                               data,
+                               f = "~.", # nolint
+                               folds = NULL,
+                               k = 10,
+                               nrep = 2,
+                               family = "binomial",
+                               opt.ystratify = TRUE,
+                               opt.uniquefolds = FALSE,
+                               return_summary = TRUE,
+                               ...) {
   cl <- as.list(match.call())[-1]
 
   parsed <- parse_dCVnet_input(data = data, y = y, f = f, family = family)
@@ -1135,13 +1167,22 @@ cv_performance_glm <- function(y,
                   class = c("performance", "data.frame"))
 
 
-  pp <- report_performance_summary(pp)
+  ppp <- report_performance_summary(pp)
+
+  if ( return_summary ) {
+    return(list(
+      glm.performance = p0,
+      cv.performance = ppp,
+      folds = folds,
+      call = cl))
+  }
 
   return(list(
-    glm.performance = p0,
+    glm.performance = performance(m0),
     cv.performance = pp,
     folds = folds,
-    call = cl))
+    call = cl
+  ))
 }
 
 # function was removed from glmnet in 3.0 update.

@@ -23,12 +23,14 @@ Elasticnet
 enet
 errorbars
 foldid
+ggplot
 Github
 glm
 glmlist
 glmnet
 innerloop
 JMLR
+lm
 Maudsley
 mgaussian
 MLR

@@ -1,0 +1,229 @@
+---
+title: "Merging and Manipulating ROC plots"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Merging and Manipulating ROC plots}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+collapse = TRUE,
+comment = "#>"
+)
+```
+
+This vignette will demonstrate:
+
+ * Plotting a ROC curve for a dCVnet object
+ * ROC plots with data from different dCVnet models.
+ * ROC plot customisation
+
+First, setup the R environment and make some example dCVnet objects:
+
+```{r setup, echo=TRUE, warning=FALSE, message=FALSE, results='hide'}
+library(ggplot2)
+library(dplyr)
+library(dCVnet)
+
+data(prostate, package = "dCVnet")
+
+prostate$agecat <- factor(prostate$age > 65,
+                          levels = c(FALSE, TRUE),
+                          labels = c("le65", "over65"))
+
+set.seed(42)
+# Model 1 predicts SVI (seminal vesicle invasion):
+mod1 <- dCVnet::dCVnet(y = prostate$svi,
+                       data = subset(prostate,
+                                     select = c(-train, -svi)),
+                       nrep_outer = 3, k_outer = 3,
+                       nrep_inner = 1, k_inner = 10)
+
+# Model 2 predicts whether Age > 65:
+mod2 <- dCVnet::dCVnet(y = prostate$agecat,
+                       data = subset(prostate, 
+                                     select = c(-train, -age, -agecat)),
+                       nrep_outer = 3, k_outer = 3,
+                       nrep_inner = 1, k_inner = 10)
+
+```
+
+# The default ROC plot
+By default, calling `plot(my_dCVnet, type = "ROC")` on a dCVnet object
+produces a plot of the cross-validated ROCs for the different outer-loop 
+repetitions (to show the variability).
+
+Under the hood this function is composing three steps:
+
+ 1. getting performance information from the outer-loop cross-validation
+      (using `dCVnet::performance`)
+ 2. extracting sensitivity, specificity and thresholds and turning this into a 
+      standardised *rocdata* format using `dCVnet::extract_rocdata`
+ 3. running the plot method for rocdata objects (`plot.rocdata`).
+
+```{r default plot, echo=TRUE, fig.height=7, fig.width=7}
+p1 <- plot(mod1, type = "ROC")
+
+# Note this is the same as:
+# p1 <- plot(extract_rocdata(dCVnet::performance(mod1)))
+
+```
+
+# Plots with averaged ROC
+To plot overall (average) cross-validated ROC taken over the repetitions of the
+repeated k-fold outer-loop cross-validation, use `dCVnet::average_rocdata()` on
+the *rocdata* object.
+
+```{r average plot, echo=TRUE, fig.height=7, fig.width=7}
+p2 <- plot(average_rocdata(extract_rocdata(performance(mod1))))
+# The above nested function is more readable if you use pipes (%>%):
+#   p2 <- mod1 %>% 
+#           performance %>% 
+#           extract_rocdata %>% 
+#           average_rocdata %>% 
+#           plot()
+
+```
+
+# Combining average and CV-variability
+Perhaps we want to see both the average performance, and its variability over 
+outerloop-cv repetitions. We can combine two rocdata objects with rbind
+(they are just data.frame format with a particular set of columns):
+
+```{r combined plot, echo=TRUE, fig.height=7, fig.width=7}
+combined_roc_data <- rbind(extract_rocdata(performance(mod1)),
+                           average_rocdata(extract_rocdata(performance(mod1))))
+p3 <- plot(combined_roc_data)
+
+# Or, as above, but (mostly) using pipes:
+#   p3 <- rbind(mod1 %>% 
+#                 performance() %>% 
+#                 extract_rocdata(),
+#               mod1 %>% 
+#                 performance() %>% 
+#                 extract_rocdata() %>% 
+#                 average_rocdata())
+
+
+```
+
+# Plotting uncrossvalidated ROC
+The 'final model' of dCVnet is the model we cross-validated, it would be used 
+to make a prediction for new data. However its performance in the training data 
+not crossvalidated, and so is typically an overestimate.
+
+Sometimes we want to see this training set performance all the same - it forms
+an upper bound on cross-validated performance. *However, care must always be *
+*taken not to interpret this as a cross-validated estimate.*
+
+To plot the uncrossvalidated performance of a final model:
+```{r final model, echo=TRUE, fig.height=7, fig.width=7}
+plot(extract_rocdata(performance(mod1$final)))
+```
+
+
+# Plotting from multiple models
+Sometimes we want to display the results from two or more models
+in the same ROC plot. Do this by `rbind`-ing the separate rocdata objects.
+However, we first need to give informative names in the run column:
+
+```{r multimodel plot, echo=TRUE, fig.height=7, fig.width=7}
+d1 <- mod1 %>% 
+  performance() %>% 
+  extract_rocdata() %>% 
+  average_rocdata() %>% 
+  mutate(run = "Model 1") # labels the data from this model.
+
+d2 <- mod2 %>% 
+  performance() %>% 
+  extract_rocdata() %>% 
+  average_rocdata() %>% 
+  mutate(run = "Model 2") # labels the data from this model
+
+d3 <- mod1$final %>% 
+  performance() %>% 
+  extract_rocdata() %>% 
+  average_rocdata() %>% 
+  mutate(run = "Model 1 (train)") # labels the data from this model.
+
+d4 <- mod2$final %>% 
+  performance() %>% 
+  extract_rocdata() %>% 
+  average_rocdata() %>% 
+  mutate(run = "Model 2 (train)") # labels the data from this model.
+
+p4 <- plot(rbind(d1, d2, d3, d4))
+
+
+```
+
+# Plot options
+
+A good deal of customisation can be done with ggplot (see below), but there are
+a few options provided for plot customisation in `plot.rocdata`. The legend can
+be toggled off with `legend = FALSE`, different threshold label points can be
+chosen (`alphalabel = c(0.05, 0.5, 0.95)`) or these can be omitted
+(`alphalabel = FALSE`). Finally alternative labels can be provided for 
+legend headings with the `guide_labels` argument.
+
+```{r options1, echo=TRUE, fig.height=7, fig.width=7}
+# Make a version of p4 without a legend or markers for threshold:
+p5 <- plot(rbind(d1, d2),
+           alphalabel = FALSE,
+           legend = FALSE)
+
+# And one with custom threshold markers and legend headings:
+p5 <- plot(rbind(d1, d2),
+           alphalabel = c(0.5),
+           guide_labels = list(group = "plotdata",
+                               threshold = "50% Threshold",
+                               refline = "line"))
+
+```
+
+# Customising plots
+
+dCVnet ROC plots are ggplot2 objects. As a result many manipulations can be done
+without recalculating the plot. In the following example I will modify `p4$plot`
+(the multiple-models plot) in order to...
+
+ 1. Add a plot title and change axis labels
+ 2. Manually set colours
+ 3. Change the plot appearance with a different ggplot2 theme
+ 4. Suppress the legend for the reference line but not other plot features
+ 
+Note: ggplot2 legends are determined by aesthetics which are mapped to the data,
+in this this plot Model is mapped to *colour*, Threshold markers to *shape*
+and the reference line to *lty* (linetype).
+
+```{r options2, echo=TRUE, fig.height=7, fig.width=7}
+p4$plot +
+  # add a title, change axis labels:
+  labs(title = "Comparison of ROC Performance") +
+  xlab("1 - Specificity") +
+  ylab("Sensitivity") +
+  # set manual colours:
+  scale_colour_manual(values = c(`Model 2` = "hotpink4",
+                                 `Model 2 (train)` = "hotpink",
+                                 `Model 1` = "blue4",
+                                 `Model 1 (train)` = "blue")) +
+  # suppress part of the legend:
+  guides(lty = guide_none()) +
+  # use a different theme:
+  theme_classic() 
+
+```
+
+# Further Customisation
+
+If you need more control over the display, or would prefer to plot using 
+base R, or different software entirely, the underlying data are
+returned by the call to `plot.rocdata`.
+
+```{r plotdata, echo=TRUE}
+head(p4$data)
+```
+
+

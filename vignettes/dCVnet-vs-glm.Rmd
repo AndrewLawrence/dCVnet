@@ -260,7 +260,7 @@ however repeated cross-validation will not be liberal when this is not possible.
 ## Random Labels
 
 We have shown that regularisation with elastic net can produce models which
-generalise better, but is the proceedure robust? What happens 
+generalise better, but is the procedure robust? What happens 
 when it is asked to predict noise/nonsense?
 
 In the next section (note: output suppressed for brevity) the class labels of 
