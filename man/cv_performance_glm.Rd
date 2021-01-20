@@ -34,8 +34,10 @@ and the k in repeated k-fold cv.}
 
 \item{nrep}{the number of repetitions}
 
-\item{family}{Response type (see above). Either a character string representing
-one of the built-in families, or else a \code{glm()} family object.}
+\item{family}{Either a character string representing
+one of the built-in families, or else a \code{glm()} family object. For more
+information, see Details section below or the documentation for response
+type (above).}
 
 \item{opt.ystratify}{Boolean.
 Outer and inner sampling is stratified by outcome.

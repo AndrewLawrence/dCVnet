@@ -31,9 +31,10 @@ error is within 1 standard error of the minimum.} \item{fit.preval}{if
 \code{keep=TRUE}, this is the array of prevalidated fits. Some entries can
 be \code{NA}, if that and subsequent values of \code{lambda} are not reached
 for that fold} \item{foldid}{if \code{keep=TRUE}, the fold assignments used}
+\item{index}{a one column matrix with the indices of \code{lambda.min} and \code{lambda.1se} in the sequence of coefficients, fits etc.}
 \item{relaxed}{if \code{relax=TRUE}, this additional item has the CV info
 for each of the mixed fits. In particular it also selects \code{lambda,
-gamma} pairs corresponding to the 1SE rule, as well as the minimum error.}
+gamma} pairs corresponding to the 1se rule, as well as the minimum error. It also has a component \code{index}, a two-column matrix  which contains the \code{lambda} and \code{gamma} indices corresponding to the "min" and "1se" solutions.}
 }
 \description{
 Gathers results from a list of \code{\link[glmnet]{cv.glmnet}} objects
