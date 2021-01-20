@@ -1,0 +1,33 @@
+citHeader("If you use the 'dCVnet' package in publications, please cite:")
+
+# year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
+# vers <- paste("R package version", meta$Version)
+
+citEntry(
+  entry    = "Article",
+  title    = "Neurocognitive measures of self-blame and risk prediction models of recurrence in major depressive disorder",
+  author   = personList(
+    person(given = "Andrew J.", family = "Lawrence"),
+    person(given = "Daniel", family = "Stahl"),
+    person(given = "Suqian", family = "Duan"),
+    person(given = "Diede", family = "Fennema"),
+    person(given = "Tanja", family = "Jaeckle"),
+    person(given = "Allan H.", family = "Young"),
+    person(given = "Paola", family = "Dazzan"),
+    person(given = "Jorge", family = "Moll"),
+    person(given = "Roland", family = "Zahn")
+  ),
+  journal  = "medRxiv",
+  year     = "2021",
+
+	`elocation-id` = "2021.01.13.21249739",
+	doi = "10.1101/2021.01.13.21249739",
+
+	URL = "https://www.medrxiv.org/content/early/2021/01/15/2021.01.13.21249739",
+	eprint = "https://www.medrxiv.org/content/early/2021/01/15/2021.01.13.21249739.full.pdf",
+	publisher = "Cold Spring Harbor Laboratory Press",
+
+	textVersion = "A. J. Lawrence, D. Stahl, S. Duan, et al. Neurocognitive measures of self-blame and risk prediction models of recurrence in major depressive disorder. In: medRxiv (2021).
+	DOI: 10.1101/2021.01.13.21249739.
+	URL: https://www.medrxiv.org/content/early/2021/01/15/2021.01.13.21249739."
+)

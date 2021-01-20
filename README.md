@@ -5,6 +5,8 @@
 regularised generalised linear models (glm) with an approachable interface.
 dCVnet adds nested repeated k-fold cross-validation, and convenience functions, to the regularised glm fit by the [glmnet package](https://cran.r-project.org/web/packages/glmnet/index.html).
 
+If you use dCVnet in your research please cite our preprint paper [Lawrence et al (2021)](https://www.medrxiv.org/content/early/2021/01/15/2021.01.13.21249739)
+
 ## Getting Started
 
 A working installation of [R](https://www.r-project.org/) is required.
@@ -186,13 +188,12 @@ performed by the R package
 dCVnet was developed to work with two-class outcomes (binary logistic), 
 but work on implementing other model families supported by glmnet is ongoing.
 
-\newpage
 
 ### Footnotes
 
 <a name="fn1"><sup>1</sup></a> regularised-models/dCVnet can be useful for inference, 
 but this is not really their main purpose, and the time-consuming outer 
-cross-validation loop is not very important for inference.
+cross-validation loop is not as important for inference.
 
 <a name="fn2"><sup>2</sup></a> Where *p*/*n* > 1, the standard least-squares regression 
 solutions are not defined and generalised models will have convergence problems.
