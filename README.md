@@ -130,7 +130,7 @@ R.
 
 The type of regularisation used by *dCVnet* ([Elastic-net Regularisation](https://en.wikipedia.org/wiki/Elastic_net_regularization))
 is a combination of two types of regularisation with the aim of avoiding their
-weaknesses and benefitting from their strengths:
+weaknesses and benefiting from their strengths:
 
 * Ridge regression (using a *L2-*penalty) allows predictors with perfect *collinearity*,
 but every predictor contributes (the solution is not sparse).
