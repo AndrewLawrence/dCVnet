@@ -287,7 +287,7 @@ multialpha.repeated.cv.glmnet <- function(
 
 #' is_multialpha.repeated.cv.glmnet
 #'
-#' Checks if x is a mutlialpha.repeated.cv.glmnet object.
+#' Checks if x is a multialpha.repeated.cv.glmnet object.
 #'
 #' @param x object to test
 #'
