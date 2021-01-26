@@ -14,5 +14,5 @@ TRUE if object appears to be a valid instance of
 multialpha.repeated.cv.glmnet, FALSE otherwise.
 }
 \description{
-Checks if x is a mutlialpha.repeated.cv.glmnet object.
+Checks if x is a multialpha.repeated.cv.glmnet object.
 }
