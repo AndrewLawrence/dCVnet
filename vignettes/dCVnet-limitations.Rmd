@@ -1,0 +1,128 @@
+---
+title: "dCVnet limitations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{dCVnet-limitations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+**This vignette is WORK IN PROGRESS, all feedback welcome.**
+
+---
+
+**dCVnet** (i.e. nested cross-validation of an elastic-net regularised regression) has certain assumptions and limitations -- sometimes alternative models would be better. This vignette will discuss these issues and illustrate the importance of some key assumptions for producing valid estimates of prediction performance.
+
+## The aim of dCVnet is prediction modelling
+
+dCVnet assumes the analyst wants to know about the likely predictive performance of an elastic-net model in unseen data, measured using cross-validation.
+
+Inference about individual coefficients - such as: *"given predictors X<sub>1</sub>, X<sub>2</sub>, ..., X<sub>n</sub>, does X<sub>i</sub> significantly predict Y?"*,
+is not an aim of dCVnet. dCVnet will return coefficients obtained at the optimal alpha and lambda values, but it's not simple to get or correctly interpret standard errors or p-values for elastic-net given it may be a high dimensional or multi-colinear setting. The R packages [hdi](https://cran.r-project.org/web/packages/hdi/index.html) and [selectiveInference](https://cran.r-project.org/web/packages/selectiveInference/index.html) have some inference functions and are a good source for more information.
+
+## GLM/Prediction Modelling assumptions
+
+Elastic-net regularised GLM are still GLM, although predictors can be correlated and models technically fit with more predictors than samples other assumptions 
+of GLM are not relaxes.
+
+*Note: detailed discussion of these and potential remedies are mostly out of scope for this document.*
+
+- ***Appropriate link function***
+- ***Linearity of the response-predictor relationship*** - after model selection steps (see below)
+- ***Absence of extreme outliers*** - extreme outliers can produce model instability, depending on whether the outliers land in the test or train set for a given fold. They will generally downwardly bias the CV-performance estimates.
+- ***Independence of observations*** - Related observations (e.g. repeated observations from the same experimental unit, or observations from pupils within schools) need to be considered carefully. dCVnet does not use a hierarchical version of elastic-net.
+- ***Representative data*** - The cross-validated predictive performance is unlikely to transfer to a different setting if the dataset used for training is 
+not representative of that setting.
+- ***Adequate sample size*** - regularised models allow fitting on small samples, but this does not 
+
+## Cross-validation Assumptions
+
+The key goal of dCVnet is to obtain valid (non-optimistic) estimates of the predictive performance of its elastic-net regression model. The main factor in obtaining this validity is the completeness of the cross-validation with respect to model selection. Optimistic estimates are obtained when model selection occurs *outside* of cross-validation.
+
+For regression models, *Model Selection* typically means questions of how to treat the predictors: which predictors to include, how many, should transformations (e.g. log, box-cox) or basis expansions (splines, polynomial) be done, how should multi-level factors be encoded, should interaction terms be included.
+
+If decisions about model selection are made based on the data that dCVnet will subsequently use, then there is a potential for inflating the 
+cross-validation estimates.
+
+In short dCVnet must receive a matrix of data with all important model selection
+decisions already resolved, without reference to that dataset, and especially
+without reference to the outcomes.
+
+In the below example I show what happens when this is egregiously violated: I 
+use a dataset to identify the predictors with the strongest correlations to an outcome, and then only provide these predictors to dCVnet instead of the full set. The cross-validated estimates from dCVnet will not fairly reflect fold-fold variation in this model selection as it occurred outside cross-validation. Note: if the selection was correctly nested within the cross-validation there would be no problem, however, in practice, data-driven variable selection is done natively by dCVnet (using the L1 elastic-net penalty), and so filtering variables by univariate association strength within the CV-loops is not typically necessary and so is not currently implemented within dCVnet.
+
+### Illustration: model selection outside of cross-validation
+*Note: this takes a long time to run. The results are loaded from a file.*
+
+```{r, include = FALSE}
+library(dCVnet)
+data("modsel_perf", package = "dCVnet")
+```
+
+```{r, eval = FALSE}
+library(dCVnet)
+set.seed(42)
+y <- rep(0:1, length.out = 150)
+# 10,000 predictors:
+X <- data.frame(matrix(rnorm(150*10000), nrow = 150, ncol = 10000))
+
+# Screening for 20 best predictors by R2:
+tests <- apply(X, 2,
+               function(x) {
+                 summary(lm(y ~ ., data = data.frame(y = y, x = x)))$r.squared
+               })
+Xbest <- sort(tests, decreasing = T)[1:20]
+# X6096 X3530 X7954  X180  X527 X6679  X259 X3112  X739 X7395 X8452 X6370
+# 0.111 0.085 0.078 0.078 0.075 0.071 0.069 0.066 0.066 0.065 0.062 0.061
+# X7124 X7741 X4644 X6175 X4216 X9230 X7945 X5058
+# 0.061 0.060 0.060 0.060 0.060 0.059 0.059 0.059
+
+# Cheating:
+#   (Use the 20 'best' predictors)
+dn1 <- dCVnet(y = y,
+              data = X[,names(X) %in% names(Xbest)],
+              nrep_outer = 10)
+
+# Playing Fair:
+#   (Use all predictors)
+dn2 <- dCVnet(y = y,
+              data = X,
+              nrep_outer = 10)
+
+# extract performance:
+modsel_perf <- list(
+  Cheating = report_performance_summary(dn1),
+  PlayingFair = report_performance_summary(dn2)
+)
+
+# report minimum and maximum Accuracy and AUROC
+modsel_perf <- lapply(modsel_perf, function(x) {
+  subset(x,
+         subset = x$Measure %in% c("Accuracy", "AUROC"),
+         select = c("Measure", "mean", "min", "max"))
+  })
+```
+
+We can inspect the results over the 10 repeats of 10-fold cross-validation:
+```{r}
+print(modsel_perf, digits = 2)
+```
+
+By construction, there is no 'true' relationship between the outcome and the predictors. This means collecting more data would reveal the best 20 predictors in the sample above are actually no better than any other selection of 20 predictors. The prediction performance of models constructed from this data should be at chance level.
+
+When used correctly (*"PlayingFair"*), dCVnet's cross-validated performance *is* at chance level -- desirable behaviour in these circumstances. However when model selection occurs outside the nested cross-validation loop (*"Cheating"*), highly optimistic cross-validated measures of prediction performance are obtained.
+
+This illustration is an extreme situation picked to yield dramatic results, but there are less obvious circumstances that will more modestly bias cross-validated estimates upwards. Things like: deciding whether to apply a log transformation to predictors based on strength of association with the outcome. If this is done in the full dataset and the optimally transformed variables then input to dCVnet, the additional flexibility in the model selection is not correctly captured by cross-validation and performance measures will be inflated. The 'correct' way to consider alternate transformations would be to decide on the transformation independently within each loop of the cross-validation (note: not supported by dCVnet), or use an entirely different model (like random forest, or SVM with radial basis function kernel) that is not linear in the predictors and so can 'discover' non-linear relationships between predictors and outcome.
+
+## Conclusion
+
+Elastic-net models perform variable selection, but they don't discover non-linear relationships, optimal factor coding, or important interactions amongst predictors. So, although potentially irrelevant features can be included, the analyst must be reasonably happy with the linearity of the relationship between outcome and important predictors; further, they must specify any important interactions. Unless all important interaction terms, non-linearities and/or predictor transformations are specified by the analyst before input to dCVnet, predictive performance may be underestimated. Making decisions about such model selection questions outside of cross-validation (i.e. on the basis of data *that dCVnet will later see*) produces inflated performance estimates. In contrast, performance measures will not be inflated if model selection decisions are made within in the cross-validation loop, or prior to input into dCVnet, but based on independent data, e.g. previous studies, literature review, held out data.
+
+There are alternatives to elastic-net which *do* discover non-linearities and interactions, e.g Decision Tree methods like random forest, or Support Vector Machines (SVM) with the radial basis function kernel. These should be considered if non-linear relationships and interactions are potentially highly important. However, in general the data-driven discovery of non-linear relationships and interactions typically requires a lot of data. As a result, such methods may not be more useful than elastic-net in typical clinical datasets which are often small, and a wealth of previous research and expert prior knowledge has gone into choosing which measures to use as predictors and how to best model them.

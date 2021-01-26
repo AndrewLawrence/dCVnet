@@ -65,3 +65,6 @@
 "prostate"
 # This is a link for the paper:
 # \href{https://www.ncbi.nlm.nih.gov/pubmed/2468795}{Stamey et al (1989)}
+
+#' Used for vignette: dCVnet-limitations
+"modsel_perf"
