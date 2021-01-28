@@ -91,7 +91,9 @@ reflogreg.dCVnet <- function(object,
 
     pglm <- glm(y ~ ., data = pglm.data, family = "binomial")
   } else {
-    pglm.data <- data.frame(y = parsed$y, parsed$x_mat)
+    pglm.data <- data.frame(y = parsed$y,
+                            parsed$x_mat,
+                            stringsAsFactors = FALSE)
     pglm <- glm(y ~ ., data = pglm.data, family = "binomial")
   }
 

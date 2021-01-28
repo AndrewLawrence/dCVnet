@@ -193,7 +193,8 @@ plot.rocdata <- function(x,
                         InvSpec = 0,
                         SensEnd = 1,
                         InvSpecEnd = 1,
-                        lty = guide_labels$refline)
+                        lty = guide_labels$refline,
+                        stringsAsFactors = FALSE)
 
   p <- ggplot2::ggplot(x,
                        ggplot2::aes_string(y = "Sens",

@@ -11,7 +11,8 @@ perfect_classification <- structure(
     prediction = c(0.15, 0.45, 0.65, 0.95),
     classification = c("A", "A", "B", "B"),
     label = c("example"),
-    rowid = paste0("s", 1:4)
+    rowid = paste0("s", 1:4),
+    stringsAsFactors = TRUE
   ), class = c("performance", "data.frame")
 )
 

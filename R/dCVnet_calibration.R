@@ -122,9 +122,7 @@ summary.calcoefs <- function(object,
                                       max = max),
                              ...) {
   if ( NCOL(object) < 2 ) return(object)
-  return(sapply(FUNS, function(f) {
-
+  return(vapply(FUNS, function(f) {
     apply(object, 1, f)
-
-  }))
+  }, FUN.VALUE = 0.0))
 }

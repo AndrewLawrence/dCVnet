@@ -148,11 +148,11 @@ performance.performance <- function(x, as.data.frame = TRUE, ...) {
 #'     for predicting class from probability.
 #' @export
 performance.glm <- function(x,
-                                 as.data.frame = TRUE,
-                                 label = deparse(substitute(x)),
-                                 threshold = 0.5,
-                                 newdata = NULL,
-                                 ...) {
+                            as.data.frame = TRUE,
+                            label = deparse(substitute(x)),
+                            threshold = 0.5,
+                            newdata = NULL,
+                            ...) {
   # dataframe of prediction results from a glm
   #     given a threshold (default = 0.5).
 
@@ -229,12 +229,12 @@ performance.glmlist <- function(x, as.data.frame = TRUE, ...) {
   R <- lapply(seq_along(x), function(i) {
     # for a list we force return of a dataframe as we wrap in a list anyway.
     performance.glm(x[[i]],
-                         as.data.frame = TRUE,
-                         label = names(x)[i], ...)
+                    as.data.frame = TRUE,
+                    label = names(x)[i], ...)
   })
   names(R) <- names(x)
   if ( !as.data.frame ) return(structure(R, class = class_list))
-  R <- as.data.frame(data.table::rbindlist(R))
+  R <- as.data.frame(data.table::rbindlist(R), stringsAsFactors = FALSE)
   rownames(R) <- NULL
   return(structure(R, class = class_df))
 }
@@ -288,9 +288,9 @@ print.performance <- function(x, ...) {
 #'
 #' @export
 summary.performance <- function(object,
-                                     label = NA,
-                                     pvprevalence = "observed",
-                                     ...) {
+                                label = NA,
+                                pvprevalence = "observed",
+                                ...) {
   # Function assigns a label if asked to (for multi performance mode.)
   #   In multiperformance mode it uses label to produce columns of data.
   # If label is 'None' then this column is removed.
@@ -418,7 +418,7 @@ summary.performance <- function(object,
 #'
 #' @export
 report_performance_summary <- function(dCVnet_object,
-                                            pvprevalence = "observed") {
+                                       pvprevalence = "observed") {
 
   outernreps <- length(unique(dCVnet_object$performance$label))
 
@@ -469,10 +469,10 @@ report_performance_summary <- function(dCVnet_object,
 #' @param ... additional arguments (not currently used)
 #' @export
 casesummary.performance <- function(object,
-                                         type = c("both",
-                                                  "data",
-                                                  "summary"),
-                                         ...) {
+                                    type = c("both",
+                                             "data",
+                                             "summary"),
+                                    ...) {
   type <- match.arg(type)
 
   object <- as.data.frame(object, stringsAsFactors = FALSE)
@@ -499,7 +499,7 @@ casesummary.performance <- function(object,
                       stringsAsFactors = FALSE)
   R.data <- data.frame(lapply(Rbits, function(x) {
     as.numeric(x == Rleft$reference)
-  } ))
+  } ), stringsAsFactors = FALSE)
 
   R <- switch(type,
               data = list(Rleft,
