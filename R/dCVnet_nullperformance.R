@@ -78,12 +78,11 @@ performance_with_permuted_labels <- function(x, n_times = 5) {
   }
   val_labs <- paste0("null", seq_len(n_times))
 
-  res <- parallel::mclapply(setNames(val_labs, val_labs),
-                            mc.cores = getOption("mc.cores", 1L),
-                            function(i) {
-                              .get_performance(.rerun_dCVnet(x,
-                                                             shuffley = TRUE))
-                            } )
+  res <- lapply(setNames(val_labs, val_labs),
+                function(i) {
+                  .get_performance(.rerun_dCVnet(x,
+                                                 shuffley = TRUE))
+                } )
   return(list(observed = .get_performance(x),
               permuted = as.data.frame(res)))
 }
