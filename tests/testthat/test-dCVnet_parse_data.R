@@ -2,7 +2,7 @@
 context("tests of data parsing")
 
 nested_anyna <- function(x) {
-  any(vapply(x, function(k) any(is.na(k)) , FUN.VALUE = FALSE))
+  any(vapply(x, function(k) any(is.na(k)), FUN.VALUE = FALSE))
 }
 
 # init some data:

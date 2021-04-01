@@ -593,7 +593,8 @@ print.dCVnet <- function(x, ...) {
 #'
 #' @export
 selected_hyperparameters <- function(object,
-                                     what = c("summary", "data", "both")) {
+                                     what = c("summary", "data", "both"),
+                                     ...) {
   what <- match.arg(what)
 
   # what were the final hyperparams:

@@ -4,7 +4,7 @@
 \alias{selected_hyperparameters}
 \title{selected_hyperparameters}
 \usage{
-selected_hyperparameters(object, what = c("summary", "data", "both"))
+selected_hyperparameters(object, what = c("summary", "data", "both"), ...)
 }
 \arguments{
 \item{object}{a dCVnet object}
