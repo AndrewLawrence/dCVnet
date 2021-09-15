@@ -8,6 +8,8 @@ Authors@R: c(person("Andrew J.", "Lawrence",
 Description: 
     Fit and evaluate elastic-net regularised two-class logistic regressions
     with double cross validation.
+URL: https://github.com/AndrewLawrence/dCVnet
+BugReports: https://github.com/AndrewLawrence/dCVnet/issues
 Depends: R (>= 3.01)
 License: GPL (>=3)
 Encoding: UTF-8
