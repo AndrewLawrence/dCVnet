@@ -7,9 +7,9 @@ context("tests of model performance objects")
 # Setup
 perfect_classification <- structure(
   data.frame(
-    reference = c("A", "A", "B", "B"),
+    reference = factor(c("A", "A", "B", "B"), levels = c("A", "B")),
     prediction = c(0.15, 0.45, 0.65, 0.95),
-    classification = c("A", "A", "B", "B"),
+    classification = factor(c("A", "A", "B", "B"), levels = c("A", "B")),
     label = c("example"),
     rowid = paste0("s", 1:4),
     stringsAsFactors = TRUE
