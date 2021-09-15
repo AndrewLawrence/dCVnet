@@ -75,6 +75,8 @@ This project is licensed under the
 
 # What is dCVnet?
 
+[ see the Presentations folder for slides from a talk on dCVnet given 2021-09-15 ]
+
 The motivating problem behind dCVnet is prediction modelling<sup>[1](#fn1)</sup> in data 
 with relatively few observations (*n*) for the number of 
 predictors (*p*), especially where there may be uninformative or redundant 
@@ -188,7 +190,6 @@ performed by the R package
 
 dCVnet was developed to work with two-class outcomes (binary logistic), 
 but work on implementing other model families supported by glmnet is ongoing.
-
 
 ### Footnotes
 
