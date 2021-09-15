@@ -14,12 +14,12 @@ A fully featured interface to R (e.g. [RStudio](https://www.rstudio.com/))
 is recommended.
 
 dCVnet is not (yet) on [CRAN](https://cran.r-project.org/),
-so the devtools package is useful to download and build 
-from source:
+so the remotes package is useful to download and build 
+from github:
 
-#### First, install devtools (if needed):
+#### First, install remotes (if needed):
 ```
-install.packages("devtools")
+install.packages("remotes")
 ```
 
 The commands below will install missing package dependencies 
@@ -28,17 +28,17 @@ run a toy example from the package's main function.
 
 #### Install dCVnet (from GitHub):
 ```
-devtools::install_github("AndrewLawrence/dCVnet", dependencies = TRUE, build_vignettes = TRUE)
+remotes::install_github("AndrewLawrence/dCVnet", dependencies = TRUE, build_vignettes = TRUE)
 ```
 
 #### -or- install the dev version of dCVnet (from GitHub):
 ```
-devtools::install_github("AndrewLawrence/dCVnet@dev", dependencies = TRUE, build_vignettes = TRUE)
+remotes::install_github("AndrewLawrence/dCVnet@dev", dependencies = TRUE, build_vignettes = TRUE)
 ```
 
 #### Install dCVnet (from an Archive):
 ```
-devtools::install_local("path/to/dCVnet_1.0.7.tar.gz", dependencies = TRUE, build_vignettes = TRUE)
+remotes::install_local("path/to/dCVnet_1.0.8.tar.gz", dependencies = TRUE, build_vignettes = TRUE)
 ```
 
 #### Run a simple example:
@@ -52,6 +52,7 @@ example(dCVnet, run.dontrun = TRUE)
 ```
 vignette(package = "dCVnet")
 ```
+This needs `build_vignettes = TRUE` to be set at installation.
 
 ## Support
 
