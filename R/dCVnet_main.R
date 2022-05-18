@@ -838,3 +838,17 @@ predict.dCVnet <- function(object,
                                         newx = newx,
                                         ...)
 }
+
+#' family.dCVnet
+#'
+#' Extracts the model family from a dCVnet object as a string
+#'
+#' @param object a a \code{\link{dCVnet}} object.
+#' @param ... further arguments passed to methods
+#'
+#' @return character vector (of length 1)
+#'
+#' @export
+family.dCVnet <- function(object, ...) {
+  object$input$callenv$family
+}

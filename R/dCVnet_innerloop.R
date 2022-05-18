@@ -520,3 +520,9 @@ drop_models.multialpha.repeated.cv.glmnet <- function(object) {
                  opt.keep_models = "none")
   return(R)
 }
+
+#' @describeIn family.dCVnet family for multialpha objects
+#' @export
+family.multialpha.repeated.cv.glmnet <- function(object, ...) {
+  attr(object, which = "family")
+}

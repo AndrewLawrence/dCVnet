@@ -24,7 +24,8 @@
 #' 'honest' by reducing optimism bias.
 #'
 #' @importFrom glmnet glmnet cv.glmnet
-#' @importFrom stats aggregate as.formula coef glm model.frame model.matrix
+#' @importFrom stats aggregate as.formula coef glm
+#' @importFrom stats model.frame model.matrix family
 #' @importFrom stats predict fitted predict.glm
 #' @importFrom caret confusionMatrix
 #' @importFrom graphics plot

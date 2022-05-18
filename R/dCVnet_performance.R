@@ -29,8 +29,8 @@
 #     rowid   - allowing performance to be broken down by subject, and
 #               simplifying the process of merging / augmentation of raw data.
 #
-# Practically the main difference between a class performance object and a
-#   predict object is the class performance object is tidy, and must also encode
+# Practically the main difference between a performance object and a
+#   predict object is the performance object is tidy, and must also encode
 #   the observed outcomes associated with newx - predict methods only require
 #   newx. We also add rownames / caselabels when these are present.
 #

@@ -28,7 +28,7 @@ specificity are extracted and mean averaged over the set of curves.
 This is intended to be used with k-fold cross-validation data.
 }
 \details{
-\preformatted{Warning: The averaging of roc-curves is difficult
+\if{html}{\out{<div class="sourceCode">}}\preformatted{Warning: The averaging of roc-curves is difficult
     (e.g. \\href\{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4112395/\}\{
     Chen & Samuelson Br J. Radiol Aug 2014\})
     , particularly while preserving the AUROC such that the AUROC
@@ -40,7 +40,7 @@ This is intended to be used with k-fold cross-validation data.
 
     Minimal testing suggests that there should be agreement in the
     AUROCs to the third decimal place.
-}
+}\if{html}{\out{</div>}}
 }
 \seealso{
 \code{\link{plot.rocdata}}, \code{\link{extract_rocdata}}
