@@ -545,7 +545,8 @@ print.dCVnet <- function(x, ...) {
       cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
     }
   } else {
-    print(summary(parsed$y)); cat("\n")
+    print(describe_outcome(as.data.frame(parsed$y), family = family(x)))
+    cat("\n")
   }
 
   cat("Hyperparameter Tuning:\n")

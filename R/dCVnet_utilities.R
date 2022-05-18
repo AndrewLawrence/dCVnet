@@ -878,7 +878,7 @@ tidy_predict.glmnet <- function(mod,
     p$label <- label
   }
 
-  class(p) <- c("dcvntidyperf", "data.frame")
+  # class(p) <- c("dcvntidyperf", "data.frame") # query remove?
   attr(p, "family") <- family
   return(p)
 }
@@ -1196,3 +1196,72 @@ glmnet_getmin <- function(lambda, cvm, cvsd) {
   lambda.1se <- max(lambda[idmin], na.rm = TRUE)
   list(lambda.min = lambda.min, lambda.1se = lambda.1se)
 }
+
+
+
+#' describe_outcome
+#'
+#' @param y a data.frame of outcome (produced by get_y_from_performance)
+#' @param family a glmnet style length(1) string
+#'
+#' @noRd
+#' @keywords internal
+describe_outcome <- function(y, family) {
+
+  .quick_summary <- function(x) {
+    nums <- c(mean = mean(x, na.rm = TRUE),
+              SD = sd(x, na.rm = TRUE),
+              median = median(x, na.rm = TRUE),
+              IQR = IQR(x, na.rm = TRUE),
+              min = min(x, na.rm = TRUE),
+              max = max(x, na.rm = TRUE))
+    R <- sapply(nums, function(N) {
+      formatC(signif(N, digits = 3),
+              digits = 3,
+              format="fg",
+              flag="#")
+    })
+    c(R, nnz = sprintf("%d", sum(!is.na(x))))
+  }
+
+  # deal with multivariable families first as these are not safe to tabulate.
+  if( family == "mgaussian" ) {
+    return(
+      do.call(rbind, lapply(y, .quick_summary))
+    )
+  }
+
+  if ( family == "cox" ) {
+    return(aggregate(
+      x = y[, 1, drop = FALSE],
+      by = list(Status = y[[2]]),
+      FUN = .quick_summary
+    ))
+  }
+
+
+  tab <- table(y)
+  ptab <- prop.table(tab)
+
+  otab <- paste0(
+    sprintf("%d", tab),
+    " (",
+    sprintf("%.1f", 100 * ptab),
+    "%)"
+  )
+  names(otab) <- names(tab)
+
+  nvals <- length(tab)
+
+  if ( (family == "binomial" && nvals < 3) || family == "multinomial" ) {
+    return(otab)
+  }
+
+  if ( family == "poisson" && nvals < 8) {
+    return(otab)
+  }
+
+  # default summary:
+  .quick_summary(as.numeric(y[,1]))
+}
+

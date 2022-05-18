@@ -13,6 +13,9 @@
 #     - label           (a grouping label e.g. rep10fold3, model1)
 #     - rowid           (observation labels from the rowids of the data)
 #
+#   The attributes of the performance object must contain the model
+#     family
+#
 # Conceptually a performance object contains all the data required to
 #   evaluate the performance of a model, or models.
 #
@@ -89,8 +92,12 @@ performance <- function(x, ...) {
 performance.default <- function(x, ...) {
   # if we are given a list, lets assume it is a dCVnet style object
   #   such as dCVnet$final
+  # check the structure:
   if (!"performance" %in% names(x)) {
-    stop("not a suitable list for performance")
+    stop("not a suitable list for performance (wrong names)")
+  }
+  if ( inherits(try( family(x), "try-error")) ) {
+    stop("model family missing")
   }
   expected <- c("label", "reference", "prediction")
   if ( any(!expected %in% names(x$performance)) ) {
@@ -109,11 +116,13 @@ performance.default <- function(x, ...) {
 #' @export
 performance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
   if ( identical(as.data.frame, TRUE) ) {
-    return(x$performance)
+    R <- x$performance
   } else {
-    R <- split(x$performance, x$performance$label)
-    return(structure(R, class = c("performance", "list")))
+    R <- structure(split(x$performance, x$performance$label),
+                   class = c("performance", "list"))
   }
+  attr(R, which = "family") <- family(x)
+  return(R)
 }
 
 
@@ -124,17 +133,19 @@ performance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
 #'     allows conversion between list/dataframe format.
 #' @export
 performance.performance <- function(x, as.data.frame = TRUE, ...) {
+  R <- x # fall-back
   if ( as.data.frame && !inherits(x, "data.frame") ) {
 
     xfac <- as.factor(unlist(lapply(x, "[[", "label"), use.names = FALSE))
-    return(structure(unsplit(x, xfac),
-                     class = c("performance", "data.frame")))
+    R <- structure(unsplit(x, xfac),
+                   class = c("performance", "data.frame"))
   }
   if ( ! as.data.frame && inherits(x, "data.frame") ) {
-    x <- split(x, x$label)
-    return(structure(x, class = c("performance", "list")))
+    R <- structure(split(x, x$label),
+                   class = c("performance", "list"))
   }
-  return(x)
+  attr(R, which = "family") <- family(x)
+  return(R)
 }
 
 #' performance.glm
@@ -161,6 +172,8 @@ performance.glm <- function(x,
   mf.y <- stats::model.response(mf)
   # name of outcome (always leftmost in model.frame):
   outcome <- colnames(mf)[[1]]
+  # name of family
+  familyname <- family(x)$family
 
   lvl <- NULL
   if ( is.factor(mf.y) ) {
@@ -189,30 +202,32 @@ performance.glm <- function(x,
                           type = "response", ...)
     reference <- newdata[[outcome]]
   }
-  # convert probabilities to classifications:
-  classification <- as.integer(prediction > threshold)
-  if ( !is.null(lvl) ) {
-    # use factor levels if they exist:
-    classification <- factor(lvl[classification + 1L], levels = lvl)
-  } else {
-    # if we don't have levels we have glm data which *must* be 0 1:
-    classification <- factor(classification, levels = c(0, 1))
-    # also cooerce the reference data:
-    reference <- factor(reference, levels = c(0, 1))
+  classification <- rep(NA, length(mf.y))
+
+  if ( familyname %in% c("binomial") && length(unique(mf.y)) < 3 ) {
+    # convert probabilities to classifications:
+    classification <- as.integer(prediction > threshold)
+    if ( !is.null(lvl) ) {
+      # use factor levels if they exist:
+      classification <- factor(lvl[classification + 1L], levels = lvl)
+    } else {
+      # if we don't have levels we have glm data which *must* be 0 1:
+      classification <- factor(classification, levels = c(0, 1))
+      # also cooerce the reference data:
+      reference <- factor(reference, levels = c(0, 1))
+    }
   }
 
-  R <- data.frame(rowid = rwid,
-                  reference = reference,
-                  prediction = prediction,
-                  classification = classification,
-                  label = label,
-                  stringsAsFactors = FALSE)
+  R <- structure(data.frame(rowid = rwid,
+                            reference = reference,
+                            prediction = prediction,
+                            classification = classification,
+                            label = label,
+                            stringsAsFactors = FALSE),
+                 class = c("performance", "data.frame"),
+                 family = familyname)
   # return merged df or list.
-  if ( as.data.frame ) {
-    return(structure(R, class = c("performance", "data.frame")))
-  } else {
-    return(structure(list(R), class = c("performance", "list")))
-  }
+  return(performance(R, as.data.frame = as.data.frame))
 }
 
 
@@ -226,8 +241,9 @@ performance.glmlist <- function(x, as.data.frame = TRUE, ...) {
   class_list <- c("performance", "list")
   class_df <- c("performance", "data.frame")
 
+  familyname <- family(x[[1]])$family
+
   R <- lapply(seq_along(x), function(i) {
-    # for a list we force return of a dataframe as we wrap in a list anyway.
     performance.glm(x[[i]],
                     as.data.frame = TRUE,
                     label = names(x)[i], ...)
@@ -236,7 +252,7 @@ performance.glmlist <- function(x, as.data.frame = TRUE, ...) {
   if ( !as.data.frame ) return(structure(R, class = class_list))
   R <- as.data.frame(data.table::rbindlist(R), stringsAsFactors = FALSE)
   rownames(R) <- NULL
-  return(structure(R, class = class_df))
+  return(structure(R, class = class_df, family = familyname))
 }
 
 
@@ -249,6 +265,7 @@ performance.glmlist <- function(x, as.data.frame = TRUE, ...) {
 # Simple print function for class performance objects.
 #' @export
 print.performance <- function(x, ...) {
+  familyname <- family(x)
   if ( inherits(x, "list") ) {
     type <- "list"
     n_models <- length(x)
@@ -265,9 +282,9 @@ print.performance <- function(x, ...) {
     stop("object must inherit list or data.frame")
   }
   cat(paste("\nperformance object of type: ", type, "\n"))
-  cat(paste("\tcontains results of", n_models, "model(s)\n"))
-  cat(paste("\nOutcomes:"))
-  print(table(px$reference))
+  cat(paste("\tcontains results of", n_models, familyname, "family model(s)\n"))
+  cat(paste("\nOutcomes:\n"))
+  print(describe_y_from_performance(x))
   cat(paste("\nModels:\n\t"))
   cat(mod_labs)
   invisible(x)
@@ -398,6 +415,14 @@ summary.performance <- function(object,
   return(R)
 }
 
+
+#' @describeIn family.dCVnet family for model performance objects
+#' @export
+family.performance <- function(object, ...) {
+  attr(object, which = "family")
+}
+
+
 #' report_performance_summary
 #'
 #' extracts performance from a dCVnet object
@@ -516,4 +541,34 @@ casesummary.performance <- function(object,
   )
 
   return(do.call(data.frame, R))
+}
+
+#' get_y_from_performance
+#'
+#' Extracts reference (y) values from a performance object
+#'
+#' @param object a performance object
+#' @keywords internal
+#' @noRd
+get_y_from_performance <- function(object) {
+  # convert to "list" type and take first element:
+  indata <- performance(object, as.data.frame = FALSE)[[1]]
+  sel <- grepl("^reference", colnames(indata))
+  y <- indata[,sel,drop = FALSE]
+  class(y) <- "data.frame"
+  return(y)
+}
+
+
+#' describe_y_from_performance
+#'
+#' Brief descriptives of y
+#'
+#' @param object a performance object
+#' @keywords internal
+#' @noRd
+describe_y_from_performance <- function(object) {
+  familyname <- family(object)
+  y <- get_y_from_performance(object)
+  describe_outcome(y, family = familyname)
 }
