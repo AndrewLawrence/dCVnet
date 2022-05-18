@@ -952,43 +952,46 @@ tidy_predict.multialpha.repeated.cv.glmnet <- function(mod,
 
 #' tidy_coef.glmnet
 #'
-#' return a dataframe of glmnet predictions associated with outcomes (when these
-#'     are provided.)
+#' return a dataframe of glmnet coefficients
 #'
 #' @inheritParams tidy_predict.glmnet
 #'
 #' @name tidy_coef.glmnet
 #' @export
 tidy_coef.glmnet <- function(mod,
-                             newx,
-                             newy,
                              s,
-                             family,
-                             label = "",
-                             newoffset = NULL,
-                             binomial_thresh = 0.5) {
+                             label = "coef") {
   # always specify a value for lambda (s)
   # if rownames were used in fitting the model they will be carried through
   p <- predict(object = mod,
-               newx = newx,
                type = "coefficients",
                s = s,
-               exact = FALSE,
-               newoffset = newoffset)
+               exact = FALSE)
+
+  nm <- label
 
   if ( is.null(dim(p)) ) {
     nm <- names(p)
     p <- mapply(function(x, n) {
-      x <- as.matrix(x)
-      rownames(x) <- paste0(rownames(x), "_", n)
+      x <- as.data.frame(as.matrix(x))
+      colnames(x) <- n
       return(x)
     },
-    x = p, n = nm, SIMPLIFY = FALSE)
-    p <- as.data.frame(data.table::rbindlist(p), stringsAsFactors = FALSE)
+    x = p,
+    n = nm,
+    SIMPLIFY = FALSE)
+    p <- data.frame(p, stringsAsFactors = FALSE)
+
+    if ( label != "" ) {
+      nm <- paste(label, nm, sep = "_")
+    }
   } else {
-    p <- as.matrix(p)
+    p <- as.data.frame(as.matrix(p))
   }
-  colnames(p) <- label
+  colnames(p) <- nm
+  p$term <- rownames(p)
+  p <- p[,c("term", nm)]
+  rownames(p) <- NULL
   return(p)
 }
 
