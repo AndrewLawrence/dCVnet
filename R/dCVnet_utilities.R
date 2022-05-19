@@ -1065,15 +1065,27 @@ tidy_confusionmatrix <- function(mat) {
                         Value = mat$overall,
                         stringsAsFactors = FALSE)
 
+  if ( inherits(mat$byClass, "numeric")) {
+    # k = 2
     byclass <- data.frame(Measure = names(mat$byClass),
                           Value = mat$byClass,
                           stringsAsFactors = FALSE)
+  } else {
+    # k > 2
+    byclass <- as.data.frame(t(mat$byClass))
+    rn <- rep(rownames(byclass), ncol(byclass))
+    byclass <- stack(byclass)
+    byclass <- data.frame(Measure = paste(byclass$ind, rn),
+                          Value = byclass$values,
+                          stringsAsFactors = FALSE)
+  }
 
   tab <- rbind(tab, overall)
   tab <- rbind(tab, byclass)
   rownames(tab) <- NULL
   return(tab)
 }
+
 
 #' predict_cat.glm
 #'
