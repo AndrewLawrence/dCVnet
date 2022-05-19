@@ -14,11 +14,14 @@
 \item{\code{"all"} - return separate coefficients for each rep/fold.}
 \item{\code{"rep"} - return separate coefficients for each rep
 (mean average over folds).}
-\item{\code{"mean"} - return mean of \code{"rep"}.}
-\item{\code{"median"} - return median of \code{"rep"}.}
+\item{\code{"mean"} - return mean over \code{"rep"}.}
+\item{\code{"median"} - return median over \code{"rep"}.}
 }}
 
 \item{...}{" "}
+}
+\value{
+a data.frame of coefficient values
 }
 \description{
 Coefficients from a dCVnet object.

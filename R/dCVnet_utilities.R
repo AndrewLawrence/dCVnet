@@ -960,7 +960,7 @@ tidy_predict.multialpha.repeated.cv.glmnet <- function(mod,
 #' @export
 tidy_coef.glmnet <- function(mod,
                              s,
-                             label = "coef") {
+                             label = "Coef") {
   # always specify a value for lambda (s)
   # if rownames were used in fitting the model they will be carried through
   p <- predict(object = mod,
@@ -971,31 +971,78 @@ tidy_coef.glmnet <- function(mod,
   nm <- label
 
   if ( is.null(dim(p)) ) {
-    nm <- names(p)
-    p <- mapply(function(x, n) {
-      x <- as.data.frame(as.matrix(x))
-      colnames(x) <- n
-      return(x)
-    },
-    x = p,
-    n = nm,
-    SIMPLIFY = FALSE)
-    p <- data.frame(p, stringsAsFactors = FALSE)
-
-    if ( label != "" ) {
-      nm <- paste(label, nm, sep = "_")
-    }
+    p <- lapply(p, function(x) {
+      as.data.frame(as.matrix(x))
+    })
+    p <- do.call(rbind, p)
   } else {
     p <- as.data.frame(as.matrix(p))
   }
   colnames(p) <- nm
-  p$term <- rownames(p)
-  p <- p[,c("term", nm)]
+  p$Predictor <- rownames(p)
+  p <- p[,c("Predictor", nm)]
   rownames(p) <- NULL
+
   return(p)
 }
 
+#' @describeIn tidy_coef.glmnet return a dataframe of coefficients
+#' @inheritParams tidy_predict.multialpha.repeated.cv.glmnet
+#' @export
+tidy_coef.multialpha.repeated.cv.glmnet <- function(mod,
+                                                    s = NULL,
+                                                    alpha = NULL,
+                                                    label = "Coef") {
+  # multialpha objects have attributes:
+  #   family, type.measure, type.lambda, opt.keep_models
+  if (!is_multialpha.repeated.cv.glmnet(mod)) {
+    stop("Input must be a multialpha.repeated.cv.glmnet model")
+  }
 
+  if (attr(mod, "opt.keep_models") == "none") {
+    stop(
+      paste0(
+        "The object ",
+        deparse(substitute(object)),
+        " does not include the fitted models required for predict.\n",
+        "Rerun multialpha.repeated.cv.glmnet with ",
+        "opt.keep_models = best",
+        "or opt.keep_models = all",
+        "to make predictions"
+      )
+    )
+  }
+  if (!is.null(alpha) && attr(mod, "opt.keep_models") == "best") {
+    stop(
+      paste0(
+        "The object ",
+        deparse(substitute(object)),
+        " does not include all fitted models required for predict.\n",
+        "Rerun multialpha.repeated.cv.glmnet with ",
+        "opt.keep_models = all",
+        "in order to predict at the non-best alpha."
+      )
+    )
+  }
+
+  if (is.null(s))
+    s <- mod$best$lambda
+  if (is.null(alpha)) {
+    # use best alpha:
+    alpha <- mod$best$alpha
+    gmod <- mod$models[[mod$bestmodel]]
+  } else {
+    # look for the specified alpha.
+    sel <- alpha %in% mod$alphas
+    if (!any(sel))
+      stop("Error requested alpha not found in model.")
+    gmod <- mod$models[[which(sel)]]
+  }
+
+  tidy_coef.glmnet(gmod,
+                   s = s,
+                   label = label)
+}
 
 #' tidy_confusionmatrix
 #'
@@ -1018,9 +1065,9 @@ tidy_confusionmatrix <- function(mat) {
                         Value = mat$overall,
                         stringsAsFactors = FALSE)
 
-  byclass <- data.frame(Measure = names(mat$byClass),
-                        Value = mat$byClass,
-                        stringsAsFactors = FALSE)
+    byclass <- data.frame(Measure = names(mat$byClass),
+                          Value = mat$byClass,
+                          stringsAsFactors = FALSE)
 
   tab <- rbind(tab, overall)
   tab <- rbind(tab, byclass)

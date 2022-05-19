@@ -82,7 +82,6 @@ performance <- function(x, ...) {
   UseMethod("performance")
 }
 
-
 #' performance.default
 #'
 #' @rdname performance
@@ -92,7 +91,8 @@ performance <- function(x, ...) {
 performance.default <- function(x, ...) {
   # if we are given a list, lets assume it is a dCVnet style object
   #   such as dCVnet$final
-  # check the structure:
+
+  # Because we're not certain then check the structure:
   if (!"performance" %in% names(x)) {
     stop("not a suitable list for performance (wrong names)")
   }
@@ -103,6 +103,7 @@ performance.default <- function(x, ...) {
   if ( any(!expected %in% names(x$performance)) ) {
     stop("required columns for performance missing.")
   }
+
   performance.dCVnet(x, ...)
 }
 
@@ -372,10 +373,10 @@ summary.performance <- function(object,
       Bs <- ModelMetrics::brier(actual = performance$reference,
                                 predicted = performance$prediction)
     } else {
+      # for factors need conversion:
       Bs <- ModelMetrics::brier(actual = as.numeric(performance$reference) - 1,
                                 predicted = performance$prediction)
     }
-    # following hack removed: B <- pmax(B, 1 - B)
     B <- data.frame(Measure = c("AUROC", "Brier"),
                     Value = c(B, Bs),
                     stringsAsFactors = FALSE)

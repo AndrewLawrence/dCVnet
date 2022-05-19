@@ -2,9 +2,17 @@
 % Please edit documentation in R/dCVnet_utilities.R
 \name{tidy_coef.glmnet}
 \alias{tidy_coef.glmnet}
+\alias{tidy_coef.multialpha.repeated.cv.glmnet}
 \title{tidy_coef.glmnet}
 \usage{
-tidy_coef.glmnet(mod, s, label = "coef")
+tidy_coef.glmnet(mod, s, label = "Coef")
+
+tidy_coef.multialpha.repeated.cv.glmnet(
+  mod,
+  s = NULL,
+  alpha = NULL,
+  label = "Coef"
+)
 }
 \arguments{
 \item{mod}{a fitted glmnet object (alpha is determined by the object)}
@@ -13,7 +21,15 @@ tidy_coef.glmnet(mod, s, label = "coef")
 required.}
 
 \item{label}{an optional label (value is added in column "label")}
+
+\item{alpha}{specify an alpha, or leave NULL to use the optimal alpha
+identified by \code{\link{multialpha.repeated.cv.glmnet}}.}
 }
 \description{
 return a dataframe of glmnet coefficients
 }
+\section{Functions}{
+\itemize{
+\item \code{tidy_coef.multialpha.repeated.cv.glmnet}: return a dataframe of coefficients
+}}
+

@@ -423,10 +423,12 @@ dCVnet <- function(
 #'     \item{\code{"all"} - return separate coefficients for each rep/fold.}
 #'     \item{\code{"rep"} - return separate coefficients for each rep
 #'         (mean average over folds).}
-#'     \item{\code{"mean"} - return mean of \code{"rep"}.}
-#'     \item{\code{"median"} - return median of \code{"rep"}.}
+#'     \item{\code{"mean"} - return mean over \code{"rep"}.}
+#'     \item{\code{"median"} - return median over \code{"rep"}.}
 #'     }
 #' @param ... " "
+#'
+#' @return a data.frame of coefficient values
 #'
 #' @name coef.dCVnet
 #'
@@ -438,6 +440,8 @@ coef.dCVnet <- function(object, type = "all", ...) {
   #   mean - mean of per-rep means.
   #   median = median of per-rep means.
 
+  type <- match.arg(type, choices = c("all", "rep", "mean", "median"))
+
   # next handle dCVnet cases:
 
   # works on the output of the outerloop.
@@ -445,21 +449,17 @@ coef.dCVnet <- function(object, type = "all", ...) {
   #     what were the coefficients in a model selected with the best alpha.
   R <- lapply(seq_along(object$tuning), function(ii) {
     tt <- object$tuning[[ii]]
-    coefs <- as.matrix(predict(tt$model,
-                               type = "coef",
-                               s = tt$tuning$best$lambda))
-    RR <- data.frame(Predictor = rownames(coefs),
-                     Coef = c(coefs),
-                     fold = names(object$folds)[[ii]],
-                     stringsAsFactors = FALSE)
-    return(RR)
+    coefs <- tidy_coef.glmnet(
+      tt$model,
+      s = tt$tuning$best$lambda
+    )
+    coefs$fold <- names(object$folds)[[ii]]
+    return(coefs)
   })
   R <- as.data.frame(data.table::rbindlist(R), stringsAsFactors = FALSE)
 
-  R$Predictor <- factor(R$Predictor,
-                        levels = c("(Intercept)",
-                                   object$tuning[[1]]$model$beta@Dimnames[[1]]))
-  R$fold <- factor(R$fold, levels = unique(R$fold))
+  R$Predictor <- factor(R$Predictor, levels = unique(as.character(R$Predictor)))
+  R$fold <- factor(R$fold, levels = unique(as.character(R$fold)))
 
   R$Rep <- vapply(X = strsplit(as.character(R$fold), split = "\\."),
                   FUN = "[",
@@ -467,7 +467,7 @@ coef.dCVnet <- function(object, type = "all", ...) {
                   2)
 
   if (type == "all") return(R)
-  # Aggregate by Repetition:
+  # Aggregate over Repetitions:
   R <- aggregate(R$Coef,
                  by = list(Predictor = R$Predictor,
                            Rep = R$Rep),
@@ -490,7 +490,6 @@ coef.dCVnet <- function(object, type = "all", ...) {
                            " - should be one of: all, rep, mean, median"))
   ))
 }
-
 
 #' @export
 print.dCVnet <- function(x, ...) {
@@ -662,7 +661,8 @@ coefficients_summary <- function(object, ...) {
                       c("Predictor", "Median Coef"))
 
   Range <- coef(object, type = "all")
-  Range.preds <- setNames(unique(Range$Predictor), unique(Range$Predictor))
+  Range.preds <- setNames(unique(Range$Predictor),
+                          unique(Range$Predictor))
   Range <- lapply(Range.preds, function(i) {
     kk <- Range$Coef[Range$Predictor == i]
     return(data.frame(min = min(kk),
@@ -674,10 +674,11 @@ coefficients_summary <- function(object, ...) {
   Range <- as.data.frame(data.table::rbindlist(Range),
                          stringsAsFactors = FALSE)
 
-  FinalModel <- coef.multialpha.repeated.cv.glmnet(object$final$model)
-  FinalModel <- setNames(as.data.frame(as.matrix(FinalModel),
-                                       stringsAsFactors = FALSE),
-                         "FinalModel")
+  FinalModel <- tidy_coef.multialpha.repeated.cv.glmnet(object$final$model)
+  #FinalModel <- setNames(as.data.frame(as.matrix(FinalModel),
+  #                                     stringsAsFactors = FALSE),
+  #                       "FinalModel")
+  colnames(FinalModel)[2] <- "FinalModel"
 
   return(data.frame(FinalModel,
                     OuterMedian = Medians[, 2],
