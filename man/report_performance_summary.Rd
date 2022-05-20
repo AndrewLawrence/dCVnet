@@ -11,6 +11,8 @@ report_performance_summary(dCVnet_object, pvprevalence = "observed")
 
 \item{pvprevalence}{allows calculation of PPV/NPV at different prevalences.
 set to "observed" to use the prevalence of the data.
+For binomial data use a single value, for multinomial use a
+named vector of prevalences with names as per the levels of y.
 Note: does not affect the presented prevalence value in the table.}
 }
 \value{

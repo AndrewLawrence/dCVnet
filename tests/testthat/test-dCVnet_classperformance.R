@@ -13,7 +13,9 @@ perfect_classification <- structure(
     label = c("example"),
     rowid = paste0("s", 1:4),
     stringsAsFactors = TRUE
-  ), class = c("performance", "data.frame")
+  ),
+  family = "binomial",
+  class = c("performance", "data.frame")
 )
 
 imperfect_classification <- perfect_classification

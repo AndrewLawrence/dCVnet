@@ -4,13 +4,15 @@
 \alias{summary.performance}
 \title{summary.performance}
 \usage{
-\method{summary}{performance}(object, label = NA, pvprevalence = "observed", ...)
+\method{summary}{performance}(object, label = NA, short = FALSE, pvprevalence = "observed", ...)
 }
 \arguments{
 \item{object}{a \code{\link{performance}} object.}
 
 \item{label}{a label can be assigned here.
 (Warning - setting a length 1 vector will concatenate multiple reps.)}
+
+\item{short}{(bool) return a core set of performance measures.}
 
 \item{pvprevalence}{argument for adjustment of PPV/NPV calculation.
 either "observed", or number \code{[0,1]}.}

@@ -292,15 +292,100 @@ print.performance <- function(x, ...) {
   invisible(x)
 }
 
+#' InternalPerformanceSummaryFunctions
+#'
+#' Internal summary functions for performance objects from
+#'     different model families.
+#'
+#' Used for both binomial and multinomial families
+#'
+#' @rdname InternalPerformanceSummaryFunctions
+#'
+#' @inheritParams summary.performance
+#'
+perf_nomial <- function(object,
+                        short = FALSE,
+                        pvprevalence = "observed") {
+  if (identical(pvprevalence, "observed")) {
+    pvprevalence <- NULL
+  }
+
+  # First categorical classification:
+  A <- tidy_confusionmatrix(
+    caret::confusionMatrix(
+      data = object$classification,
+      reference = object$reference,
+      # ~~~~~~~~~~~~~
+      # Factor levels
+      # ~~~~~~~~~~~~~
+      # The ordering of factor levels is important for calculating
+      #   sensitivity, specificity, PPV, NPV etc.
+      # caret by default (and confusion matrices in general) follows the
+      #   convention that the class being predicted (e.g. diseased subjects)
+      #   is stored in the first level of the factor.
+      #   However glm / model.matrix uses treatment-coding: the
+      #   first level of y is the reference class (e.g. control subjects).
+      #   This behaviour is helpful when interpreting model coefficients
+      #   as they represent the deviation from the reference such that
+      #   a positive coefficient indicates an increased probability of
+      #   the 'positive' class.
+      # glmnet: to add to the confusion glmnet will reorder binary factors
+      #   such that levels are alphabetical.
+      # dCVnet coerces input data into an alphabetical factor with the
+      #   reference class as the first level, so when calculating
+      #   classification performance we must force level 2 as the
+      #   'positive' class (where positive is taken in the sense of
+      #   'positive predictive value'). This is done here:
+      positive = levels(object$reference)[[2]],
+      prevalence = pvprevalence
+    )
+  )
+
+  # Next add the AUC:
+  if (length(unique(object$reference)) > 2) {
+    mcols <- colnames(object)[which(grepl("^prediction",
+                                          colnames(object)))]
+    mlvl <- gsub("prediction", "", mcols)
+    B <- ModelMetrics::mauc(actual = object$reference,
+                            predicted = object[, mcols])
+    B <- data.frame(Measure = c("multiclass OvR AUROC",
+                                paste("OvR AUROC", mlvl)),
+                    Value = unlist(B))
+  } else {
+    B <- ModelMetrics::auc(actual = object$reference,
+                           predicted = object$prediction)
+    B <- data.frame(Measure = "AUROC",
+                    Value = B)
+  }
+  # and the Brier Score:
+  if (length(unique(object$reference)) < 3) {
+    if (is.numeric(object$reference)) {
+      Bs <- ModelMetrics::brier(actual = object$reference,
+                                predicted = object$prediction)
+    } else {
+      # for factors need conversion:
+      Bs <-
+        ModelMetrics::brier(actual = as.numeric(object$reference) - 1,
+                            predicted = object$prediction)
+    }
+    Bs <- data.frame(Measure = "Brier", Value = Bs)
+    B <- rbind(B, Bs)
+  }
+
+  B$label <- A$label <- unique(object$label)
+  return(rbind(A, B))
+}
 
 #' summary.performance
 #'
 #' Calculates classification performance table and
 #'     two-class classification metrics for a
 #'     \code{\link{performance}} object.
+#'
 #' @param object a \code{\link{performance}} object.
 #' @param label a label can be assigned here.
 #'      (Warning - setting a length 1 vector will concatenate multiple reps.)
+#' @param short (bool) return a core set of performance measures.
 #' @param pvprevalence argument for adjustment of PPV/NPV calculation.
 #'     either "observed", or number \code{[0,1]}.
 #' @param ... additional arguments (ignored)
@@ -308,6 +393,7 @@ print.performance <- function(x, ...) {
 #' @export
 summary.performance <- function(object,
                                 label = NA,
+                                short = FALSE,
                                 pvprevalence = "observed",
                                 ...) {
   # Function assigns a label if asked to (for multi performance mode.)
@@ -333,80 +419,26 @@ summary.performance <- function(object,
   if ( !is.na(label) ) object$label <- label
 
   # Two methods:
-  .single_cpsummary <- function(performance, pvprevalence = "observed") {
-    if ( identical(pvprevalence, "observed") ) {
-      pvprevalence <- NULL
-    }
-    # First categorical classification:
-    A <- tidy_confusionmatrix(
-      caret::confusionMatrix(
-        data = performance$classification,
-        reference = performance$reference,
-        # ~~~~~~~~~~~~~
-        # Factor levels
-        # ~~~~~~~~~~~~~
-        # The ordering of factor levels is important for calculating
-        #   sensitivity, specificity, PPV, NPV etc.
-        # caret by default (and confusion matrices in general) follows the
-        #   convention that the class being predicted (e.g. diseased subjects)
-        #   is stored in the first level of the factor.
-        #   However glm / model.matrix uses treatment-coding: the
-        #   first level of y is the reference class (e.g. control subjects).
-        #   This behaviour is helpful when interpreting model coefficients
-        #   as they represent the deviation from the reference such that
-        #   a positive coefficient indicates an increased probability of
-        #   the 'positive' class.
-        # glmnet: to add to the confusion glmnet will reorder binary factors
-        #   such that levels are alphabetical.
-        # dCVnet coerces input data into an alphabetical factor with the
-        #   reference class as the first level, so when calculating
-        #   classification perforamnce we must force level 2 as the
-        #   'positive' class (where positive is taken in the sense of
-        #   'positive predictive value'). This is done here:
-        positive = levels(performance$reference)[[2]],
-        prevalence = pvprevalence))
-
-    # Next add the AUC:
-    if (length(unique(performance$reference)) > 2) {
-      mcols <- colnames(performance)[which(grepl("^prediction",
-                                                 colnames(performance)))]
-      mlvl <- gsub("prediction", "", mcols)
-      B <- ModelMetrics::mauc(
-        actual = performance$reference,
-        predicted = performance[, mcols])
-      B <- data.frame(Measure = c("multiclass OvR AUROC",
-                                  paste("OvR AUROC", mlvl)),
-                      Value = unlist(B))
-    } else {
-      B <- ModelMetrics::auc(actual = performance$reference,
-                             predicted = performance$prediction)
-      B <- data.frame(Measure = "AUROC",
-                      Value = B)
-    }
-    # and the Brier Score:
-    if ( length(unique(performance$reference)) < 3 ) {
-      if ( is.numeric(performance$reference) ) {
-        Bs <- ModelMetrics::brier(actual = performance$reference,
-                                  predicted = performance$prediction)
-      } else {
-        # for factors need conversion:
-        Bs <- ModelMetrics::brier(actual = as.numeric(performance$reference) - 1,
-                                  predicted = performance$prediction)
-      }
-      Bs <- data.frame(Measure = "Brier", Value = Bs)
-      B <- rbind(B, Bs)
-    }
-
-    B$label <- A$label <- unique(performance$label)
-    return(rbind(A, B))
+  .single_cpsummary <- function(performance,
+                                short = short,
+                                pvprevalence = "observed") {
+      f <- family(performance)
+      fxn <- switch(f,
+                    binomial = perf_nomial,
+                    multinomial = perf_nomial)
+      return(fxn(performance, short = short, pvprevalence = pvprevalence))
   }
 
-  .multi_cpsummary <- function(performance, pvprevalence) {
+  .multi_cpsummary <- function(performance,
+                               short,
+                               pvprevalence) {
     R <- lapply(seq_along(unique(performance$label)),
                 function(i) {
                   rr <- as.character(unique(performance$label)[i])
                   dd <- performance[performance$label == rr, ]
-                  R <- summary.performance(dd, rr, pvprevalence)
+                  R <- summary.performance(object = dd,
+                                           label = rr,
+                                           pvprevalence = pvprevalence)
                   # Parse back to long.
                   R$label <- NULL # rr
                   names(R)[2] <- rr #"Value"
@@ -454,6 +486,8 @@ family.performance <- function(object, ...) {
 #' @param dCVnet_object result from a call to \code{\link{dCVnet}}
 #' @param pvprevalence allows calculation of PPV/NPV at different prevalences.
 #'      set to "observed" to use the prevalence of the data.
+#'      For binomial data use a single value, for multinomial use a
+#'      named vector of prevalences with names as per the levels of y.
 #'      Note: does not affect the presented prevalence value in the table.
 #'
 #' @return a data.frame of summarised and raw performance statistics.
