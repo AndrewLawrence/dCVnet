@@ -31,8 +31,8 @@ p1.yname <- dCVnet::parse_dCVnet_input(y = y1, data = x1, family = "binomial",
 
 test_that("parsed data equals input for simple calls", {
     # outcome values:
-    expect_equal(y1, p1.basic$y)
-    expect_equal(y1, p1.yname$y)
+    expect_equal(as.factor(y1), p1.basic$y)
+    expect_equal(as.factor(y1), p1.yname$y)
     # data values:
     expect_equivalent(as.matrix(x1), p1.basic$x_mat)
     expect_equivalent(as.matrix(x1), p1.yname$x_mat)
@@ -141,8 +141,8 @@ res <- lapply(ovars, function(y) {
 })
 
 test_that("binomial y is formatted as expected", {
-  expect_identical(res[[1]]$y, ovars[[1]])
-  expect_identical(res[[2]]$y, ovars[[2]])
+  expect_identical(res[[1]]$y, as.factor(ovars[[1]]))
+  expect_identical(res[[2]]$y, as.factor(ovars[[2]]))
   expect_identical(res[[3]]$y, ovars[[3]])
   expect_identical(class(res[[4]]), "try-error")
   expect_identical(as.character(res[[5]]$y), ovars[[5]])
@@ -180,8 +180,8 @@ res <- lapply(ovars, function(y) {
 })
 
 test_that("binomial y is formatted as expected", {
-  expect_identical(res[[1]]$y, ovars[[1]])
-  expect_identical(res[[2]]$y, ovars[[2]])
+  expect_identical(res[[1]]$y, as.factor(ovars[[1]]))
+  expect_identical(res[[2]]$y, as.factor(ovars[[2]]))
   expect_identical(res[[3]]$y, ovars[[3]])
   expect_identical(class(res[[4]]), "try-error")
   expect_identical(as.character(res[[5]]$y), ovars[[5]])

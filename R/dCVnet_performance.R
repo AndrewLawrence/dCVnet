@@ -283,7 +283,8 @@ print.performance <- function(x, ...) {
     stop("object must inherit list or data.frame")
   }
   cat(paste("\nperformance object of type: ", type, "\n"))
-  cat(paste("\tcontains results of", n_models, familyname, "family model(s)\n"))
+  cat(paste("\tcontains results of",
+            n_models, "reps of", familyname, "family model(s)\n"))
   cat(paste("\nOutcomes:\n"))
   print(describe_y_from_performance(x))
   cat(paste("\nModels:\n\t"))
@@ -366,20 +367,35 @@ summary.performance <- function(object,
         prevalence = pvprevalence))
 
     # Next add the AUC:
-    B <- ModelMetrics::auc(actual = performance$reference,
-                           predicted = performance$prediction)
-    # and the Brier Score:
-    if ( is.numeric(performance$reference) ) {
-      Bs <- ModelMetrics::brier(actual = performance$reference,
-                                predicted = performance$prediction)
+    if (length(unique(performance$reference)) > 2) {
+      mcols <- colnames(performance)[which(grepl("^prediction",
+                                                 colnames(performance)))]
+      mlvl <- gsub("prediction", "", mcols)
+      B <- ModelMetrics::mauc(
+        actual = performance$reference,
+        predicted = performance[, mcols])
+      B <- data.frame(Measure = c("multiclass OvR AUROC",
+                                  paste("OvR AUROC", mlvl)),
+                      Value = unlist(B))
     } else {
-      # for factors need conversion:
-      Bs <- ModelMetrics::brier(actual = as.numeric(performance$reference) - 1,
-                                predicted = performance$prediction)
+      B <- ModelMetrics::auc(actual = performance$reference,
+                             predicted = performance$prediction)
+      B <- data.frame(Measure = "AUROC",
+                      Value = B)
     }
-    B <- data.frame(Measure = c("AUROC", "Brier"),
-                    Value = c(B, Bs),
-                    stringsAsFactors = FALSE)
+    # and the Brier Score:
+    if ( length(unique(performance$reference)) < 3 ) {
+      if ( is.numeric(performance$reference) ) {
+        Bs <- ModelMetrics::brier(actual = performance$reference,
+                                  predicted = performance$prediction)
+      } else {
+        # for factors need conversion:
+        Bs <- ModelMetrics::brier(actual = as.numeric(performance$reference) - 1,
+                                  predicted = performance$prediction)
+      }
+      Bs <- data.frame(Measure = "Brier", Value = Bs)
+      B <- rbind(B, Bs)
+    }
 
     B$label <- A$label <- unique(performance$label)
     return(rbind(A, B))

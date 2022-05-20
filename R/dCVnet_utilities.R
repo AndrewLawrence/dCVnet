@@ -8,7 +8,7 @@ check_categorical_outcome <- function(cat) {
     identical(lvl, sort(lvl))
   }
 
-  if ( is.numeric(cat) ) return(cat)
+  if ( is.numeric(cat) ) return(as.factor(cat))
   if ( is.factor(cat) ) {
     if ( ! .is_alphabetical(cat) ) {
       stop("The order of factor levels is not alphabetical.
@@ -874,6 +874,7 @@ tidy_predict.glmnet <- function(mod,
                                   s = s,
                                   exact = FALSE,
                                   newoffset = newoffset))
+    p$classification <- factor(p$classification, levels = mod$classnames)
     if ( !is.null(newy) ) p$reference <- a[[1]]
     p$label <- label
   }

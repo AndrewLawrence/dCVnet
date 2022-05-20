@@ -329,6 +329,7 @@ dCVnet <- function(
       return(list(tuning = drop_models.multialpha.repeated.cv.glmnet(inners),
                   model = inners$models[[inners$bestmodel]],
                   performance = structure(newx_performance,
+                                          family = family,
                                           class = c("performance",
                                                     "data.frame"))))
     }
