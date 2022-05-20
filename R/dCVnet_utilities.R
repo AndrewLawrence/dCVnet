@@ -1052,6 +1052,8 @@ tidy_coef.multialpha.repeated.cv.glmnet <- function(mod,
 #'
 #' @param mat output from \code{confusionMatrix.default}.
 #'
+#' @importFrom utils stack
+#'
 #' @name tidy_confusionmatrix
 #' @return a one column data.frame
 #' @export
@@ -1266,6 +1268,8 @@ glmnet_getmin <- function(lambda, cvm, cvsd) {
 #'
 #' @param y a data.frame of outcome (produced by get_y_from_performance)
 #' @param family a glmnet style length(1) string
+#'
+#' @importFrom stats IQR
 #'
 #' @noRd
 #' @keywords internal
