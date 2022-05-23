@@ -349,6 +349,7 @@ dCVnet <- function(
   )
   rownames(performance) <- NULL
   performance <- structure(performance,
+                           family = family,
                            class = c("performance",
                                      "data.frame"))
   # and remove it in the source:
@@ -722,24 +723,7 @@ summary.dCVnet <- function(object, ...) {
   print(object)
 
   # Outerloop CV results:
-  outcv <- report_performance_summary(object)
-
-  min_vars <- c("Accuracy", "Sensitivity",
-                "Specificity", "Balanced Accuracy",
-                "AUROC")
-
-  outernreps <- length(unique(object$performance$label))
-
-  if ( outernreps == 1 ) {
-    min_outcv <- outcv[outcv$Measure %in% min_vars, "Rep1", drop = FALSE]
-    colnames(min_outcv) <- "Value"
-  } else {
-    min_outcv <- outcv[outcv$Measure %in% min_vars,
-                       c("mean", "sd", "min", "max")]
-  }
-
-  min_outcv <- round(min_outcv, 3)
-  row.names(min_outcv) <- min_vars
+  min_outcv <- report_performance_summary(object, short = TRUE)
 
   # What do the 'best-fitting' results of the inner loops look like:
   R <- lapply(object$tuning, function(x) {
@@ -764,11 +748,8 @@ summary.dCVnet <- function(object, ...) {
   # Summarise inner loop performances (i.e. best cvm)  by rep:
   cvm_repmean <- aggregate(R$cvm, by = list(Rep = R$Rep), FUN = mean)
 
-  # summarise 'final' model performance:
-  fmp <- summary(object$final$performance)
-  min_fmp <- fmp$Value[fmp$Measure %in% min_vars]
-  min_fmp <- round(min_fmp, 3)
-  names(min_fmp) <- min_vars
+  # summarise 'final' model performance
+  min_fmp <- summary(object$final$performance, short = TRUE, label = "None")
 
   # fInal model hyper parameters:
   fmp_hp <- summary(object$final$tuning, print = FALSE)
@@ -781,7 +762,7 @@ summary.dCVnet <- function(object, ...) {
   # Write this out:
   cat("\n")
   .titlecat("Outer Loop CV Performance")
-  print(min_outcv)
+  print(min_outcv, digits = 3)
   cat("\n")
   .titlecat("Inner Loop Model Stability")
   cat(paste0("Tuned alphas (table):"))
@@ -802,7 +783,7 @@ summary.dCVnet <- function(object, ...) {
 
   .titlecat("'Production' Model")
   cat("Production Performance (not cross-validated):\n")
-  print(min_fmp)
+  print(min_fmp, digits = 3)
   cat("Production Hyperparameter Tuning:\n")
   print(fmp_hp_str, quote = FALSE)
 

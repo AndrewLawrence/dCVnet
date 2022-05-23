@@ -820,6 +820,8 @@ tidy_predict.glmnet <- function(mod,
   # remove excess dims, convert to data.frame
   p <- as.data.frame(drop(p), stringAsFactors = FALSE)
 
+  raw_pnames <- colnames(p)
+
   if ( !is.null(newy)) {
     a <- as.data.frame(newy, stringsAsFactors = FALSE)
   }
@@ -827,7 +829,7 @@ tidy_predict.glmnet <- function(mod,
   cn <- "prediction"
   # different rules for column names of p:
   if ( family %in% c("mgaussian", "multinomial") ) {
-    cn <- paste0("prediction", colnames(p))
+    cn <- paste0("prediction", raw_pnames)
   }
 
   colnames(p) <- cn
@@ -861,7 +863,8 @@ tidy_predict.glmnet <- function(mod,
 
   if ( family == "mgaussian" ) {
     if ( !is.null(newy) ) {
-      colnames(a) <- paste0("reference", colnames(a))
+      # name the outcome from p:
+      colnames(a) <- paste0("reference", raw_pnames)
       p <- data.frame(p, a, stringsAsFactors = FALSE)
     }
     p$label <- label
@@ -879,7 +882,6 @@ tidy_predict.glmnet <- function(mod,
     p$label <- label
   }
 
-  # class(p) <- c("dcvntidyperf", "data.frame") # query remove?
   attr(p, "family") <- family
   return(p)
 }
@@ -981,7 +983,7 @@ tidy_coef.glmnet <- function(mod,
   }
   colnames(p) <- nm
   p$Predictor <- rownames(p)
-  p <- p[,c("Predictor", nm)]
+  p <- p[, c("Predictor", nm)]
   rownames(p) <- NULL
 
   return(p)
@@ -1069,12 +1071,12 @@ tidy_confusionmatrix <- function(mat) {
                         stringsAsFactors = FALSE)
 
   if ( inherits(mat$byClass, "numeric")) {
-    # k = 2
+    # for binomial
     byclass <- data.frame(Measure = names(mat$byClass),
                           Value = mat$byClass,
                           stringsAsFactors = FALSE)
   } else {
-    # k > 2
+    # for multinomial
     byclass <- as.data.frame(t(mat$byClass))
     rn <- rep(rownames(byclass), ncol(byclass))
     byclass <- stack(byclass)
@@ -1285,14 +1287,14 @@ describe_outcome <- function(y, family) {
     R <- sapply(nums, function(N) {
       formatC(signif(N, digits = 3),
               digits = 3,
-              format="fg",
-              flag="#")
+              format = "fg",
+              flag = "#")
     })
     c(R, nnz = sprintf("%d", sum(!is.na(x))))
   }
 
   # deal with multivariable families first as these are not safe to tabulate.
-  if( family == "mgaussian" ) {
+  if ( family == "mgaussian" ) {
     return(
       do.call(rbind, lapply(y, .quick_summary))
     )
@@ -1320,15 +1322,18 @@ describe_outcome <- function(y, family) {
 
   nvals <- length(tab)
 
-  if ( (family == "binomial" && nvals < 3) || family == "multinomial" ) {
-    return(otab)
-  }
+  return_otab <- any(
+    c(
+      ( family == "binomial" && nvals < 3 ),
+      family == "multinomial",
+      ( family == "poisson"  && nvals < 8 )
+    )
+  )
 
-  if ( family == "poisson" && nvals < 8) {
+  if ( return_otab ) {
     return(otab)
   }
 
   # default summary:
-  .quick_summary(as.numeric(y[,1]))
+  .quick_summary(as.numeric(y[, 1]))
 }
-

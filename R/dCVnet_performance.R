@@ -271,14 +271,10 @@ print.performance <- function(x, ...) {
     type <- "list"
     n_models <- length(x)
     mod_labs <- names(x)
-    px <- x[[1]]
   } else if (inherits(x, "data.frame")) {
     type <- "data.frame"
     mod_labs <- unique(as.character(x$label))
     n_models <- length(mod_labs)
-    sel <- as.character(x$label)
-    sel <- (sel == sel[1])
-    px <- subset(x, sel)
   } else {
     stop("object must inherit list or data.frame")
   }
@@ -292,17 +288,16 @@ print.performance <- function(x, ...) {
   invisible(x)
 }
 
-#' InternalPerformanceSummaryFunctions
+#' @name InternalPerformanceSummaryFunctions
 #'
-#' Internal summary functions for performance objects from
+#' @title Internal summary functions for performance objects from
 #'     different model families.
 #'
-#' Used for both binomial and multinomial families
-#'
 #' @rdname InternalPerformanceSummaryFunctions
-#'
-#' @inheritParams summary.performance
-#'
+NULL
+
+#' @describeIn InternalPerformanceSummaryFunctions
+#'     Used for binomial and multinomial families
 perf_nomial <- function(object,
                         short = FALSE,
                         pvprevalence = "observed") {
@@ -373,8 +368,102 @@ perf_nomial <- function(object,
   }
 
   B$label <- A$label <- unique(object$label)
-  return(rbind(A, B))
+  R <- rbind(A, B)
+
+  if ( family(object) == "binomial" ) {
+    min_vars <- c("Accuracy", "Sensitivity",
+                  "Specificity", "Balanced Accuracy",
+                  "AUROC")
+  } else {
+    lvls <- levels(object$reference)
+    min_vars <- c("Accuracy",
+                  paste("Class:", lvls, "Balanced Accuracy"),
+                  "multiclass OvR AUROC",
+                  paste("OvR AUROC", lvls))
+  }
+
+  if ( short ) {
+    R <- R[R$Measure %in% min_vars, ]
+  }
+  return(R)
 }
+
+#' @describeIn InternalPerformanceSummaryFunctions
+#'     Used for gaussian and poisson families
+#' @importFrom ModelMetrics rmse mae rmsle
+perf_cont <- function(object,
+                      short = FALSE,
+                      pvprevalence = "observed") {
+
+  f <- family(object)
+
+  cval <- cor(object$reference,
+              object$prediction)
+
+  mod <- coef(lm(reference ~ prediction, data = as.data.frame(object)))
+
+  # Using ModelMetrics:
+  R <- c(
+    RMSE = ModelMetrics::rmse(
+      actual = object$reference,
+      predicted = object$prediction
+    ),
+    MAE = ModelMetrics::mae(
+      actual = object$reference,
+      predicted = object$prediction
+    ),
+    r = cval,
+    r2 = cval ^ 2,
+    cal_Intercept = mod[[1]],
+    cal_Slope = mod[[2]]
+  )
+
+  # Add brier score:
+  R["Brier"] <- R["RMSE"]^2
+
+  if ( f == "poisson" ) {
+    log_dat <- data.frame(reference = log1p(object$reference),
+                          prediction = log1p(object$prediction))
+
+    log_cval <- cor(log_dat$reference, log_dat$prediction)
+    log_mod <- coef(lm(reference ~ prediction, data = log_dat))
+
+    R <- append(R, c(logged_r = log_cval,
+                     logged_r2 = log_cval^2,
+                     RMSLE = ModelMetrics::rmsle(actual = object$reference,
+                                                 predicted = object$prediction),
+                     logged_cal_Intercept = log_mod[[1]],
+                     logged_cal_Slope = log_mod[[2]]))
+  }
+
+  R <- data.frame(Measure = names(R), Value = R, label = object$label[[1]])
+  row.names(R) <- NULL
+
+  R
+}
+
+#' @describeIn InternalPerformanceSummaryFunctions
+#'     Used for cox models
+#' @importFrom Hmisc rcorr.cens
+#' @importFrom survival Surv
+perf_cox <- function(object,
+                     short = FALSE,
+                     pvprevalence = "observed") {
+  R <- Hmisc::rcorr.cens(
+    x = object$prediction,
+    S = survival::Surv(object$reference.Time,
+                       object$reference.Status)
+  )[1:3]
+
+  R <-
+    data.frame(Measure = names(R),
+               Value = R,
+               label = object$label[[1]])
+  row.names(R) <- NULL
+
+  R
+}
+
 
 #' summary.performance
 #'
@@ -386,8 +475,11 @@ perf_nomial <- function(object,
 #' @param label a label can be assigned here.
 #'      (Warning - setting a length 1 vector will concatenate multiple reps.)
 #' @param short (bool) return a core set of performance measures.
-#' @param pvprevalence argument for adjustment of PPV/NPV calculation.
-#'     either "observed", or number \code{[0,1]}.
+#' @param pvprevalence argument for adjustment of PPV/NPV calculation for
+#'     binomial or multinomial families. Either "observed" to use the observed
+#'     prevalence, or a number \code{[0,1]} (for binomial),
+#'     or a vector of length n_categories (for multinomial) containing numerics
+#'     in \code{[0,1]}.
 #' @param ... additional arguments (ignored)
 #'
 #' @export
@@ -407,26 +499,26 @@ summary.performance <- function(object,
                         class = c("performance", "data.frame"))
   }
 
-  # Check structure:
-  test <- names(object)
-  test_cols <- c("reference", "classification", "label")
-  test <- any(!(test_cols %in% test))
-  if ( test ) {
-    cat(names(object))
-    stop("Check input")
-  }
-
   if ( !is.na(label) ) object$label <- label
 
   # Two methods:
   .single_cpsummary <- function(performance,
                                 short = short,
                                 pvprevalence = "observed") {
-      f <- family(performance)
-      fxn <- switch(f,
-                    binomial = perf_nomial,
-                    multinomial = perf_nomial)
-      return(fxn(performance, short = short, pvprevalence = pvprevalence))
+    short
+    f <- family(performance)
+    fxn <- switch(f,
+                  binomial = perf_nomial,
+                  multinomial = perf_nomial,
+                  gaussian = perf_cont,
+                  poisson = perf_cont,
+                  cox = perf_cox,
+                  stop("family not supported"))
+    R <- fxn(performance,
+               short = short,
+               pvprevalence = pvprevalence)
+    rownames(R) <- NULL
+    return(R)
   }
 
   .multi_cpsummary <- function(performance,
@@ -438,6 +530,7 @@ summary.performance <- function(object,
                   dd <- performance[performance$label == rr, ]
                   R <- summary.performance(object = dd,
                                            label = rr,
+                                           short = short,
                                            pvprevalence = pvprevalence)
                   # Parse back to long.
                   R$label <- NULL # rr
@@ -447,16 +540,18 @@ summary.performance <- function(object,
     R <- Reduce(function(x, y) merge(x, y, by = "Measure", sort = FALSE), R)
     return(R)
   }
-  # If we lack a label col assign it and return
-  #   (for multiclassperf functionality)
-  # If there is a single label return single, otherwise return mulit.
+
+  # Processing:
+  #   If we lack a label col assign it and return
+  #     (for multiclassperf functionality)
+  #   If there is a single label return single, otherwise return mulit.
   if ( is.null(object$label) ) {
-    R <- .single_cpsummary(object, pvprevalence = pvprevalence)
+    R <- .single_cpsummary(object, short = short, pvprevalence = pvprevalence)
   } else {
     if ( length(unique(object$label)) == 1 ) {
-      R <- .single_cpsummary(object, pvprevalence = pvprevalence)
+      R <- .single_cpsummary(object, short = short, pvprevalence = pvprevalence)
     } else {
-      R <- .multi_cpsummary(object, pvprevalence = pvprevalence)
+      R <- .multi_cpsummary(object, short = short, pvprevalence = pvprevalence)
     }
   }
   # Option : remove label if it is there.
@@ -484,6 +579,7 @@ family.performance <- function(object, ...) {
 #' @name report_performance_summary
 #'
 #' @param dCVnet_object result from a call to \code{\link{dCVnet}}
+#' @param short (bool) return a core set of performance measures.
 #' @param pvprevalence allows calculation of PPV/NPV at different prevalences.
 #'      set to "observed" to use the prevalence of the data.
 #'      For binomial data use a single value, for multinomial use a
@@ -492,22 +588,43 @@ family.performance <- function(object, ...) {
 #'
 #' @return a data.frame of summarised and raw performance statistics.
 #'
+#' @importFrom psych fisherz fisherz2r
+#'
 #' @export
 report_performance_summary <- function(dCVnet_object,
+                                       short = FALSE,
                                        pvprevalence = "observed") {
 
-  outernreps <- length(unique(dCVnet_object$performance$label))
+  if ( inherits(dCVnet_object, "dCVnet") ) {
+    outernreps <- length(unique(dCVnet_object$performance$label))
+  } else {
+    # assume it's a performance object and try to get label:
+    outernreps <- length(unique(dCVnet_object$label))
+  }
 
   if ( outernreps == 1 ) {
     # Simpler frame can be returned if only one outer loop:
     ols <- summary(performance(dCVnet_object),
                    label = "None",
+                   short = short,
                    pvprevalence = pvprevalence)
     names(ols)[2] <- "Rep1"
     return(ols)
   }
 
-  ols <- summary(performance(dCVnet_object), pvprevalence = pvprevalence)
+  # extract performance measures for each label:
+  ols <- summary(performance(dCVnet_object),
+                 short = short,
+                 pvprevalence = pvprevalence)
+
+  fisher_measures <- c("r", "r2", "logged_r", "logged_r2")
+  doing_fisherr2z <- any(fisher_measures %in% as.character(ols$Measure))
+
+  # Fisher R to z business:
+  if ( doing_fisherr2z ) {
+    fish_sel <- as.character(ols$Measure) %in% fisher_measures
+    ols[fish_sel, -1] <- psych::fisherz(ols[fish_sel, -1])
+  }
 
   summary_measures <- c("mean", "sd", "min", "max")
   names(summary_measures) <- summary_measures
@@ -519,14 +636,29 @@ report_performance_summary <- function(dCVnet_object,
     })
   } )
 
+
   S <- do.call(data.frame, list(Measure = ols[, 1, drop = FALSE],
                                 S,
                                 stringsAsFactors = FALSE))
+
+  # Fisher R to z back transform:
+  if ( doing_fisherr2z ) {
+    # back transform the raw results:
+    ols[fish_sel, -1] <- psych::fisherz2r(ols[fish_sel, -1])
+
+    # and the averaged results:
+    fish_sel <- as.character(S$Measure) %in% fisher_measures
+    S[fish_sel, -1] <- psych::fisherz2r(S[fish_sel, -1])
+  }
 
   S <- data.frame(S,
                   "..." = " - ",
                   ols[, -1, drop = FALSE],
                   stringsAsFactors = FALSE)
+
+  if ( short ) {
+    S <- S[, c("Measure", "mean", "sd", "min", "max")]
+  }
 
   return(S)
 }
@@ -605,7 +737,7 @@ get_y_from_performance <- function(object) {
   # convert to "list" type and take first element:
   indata <- performance(object, as.data.frame = FALSE)[[1]]
   sel <- grepl("^reference", colnames(indata))
-  y <- indata[,sel,drop = FALSE]
+  y <- indata[, sel, drop = FALSE]
   class(y) <- "data.frame"
   return(y)
 }
