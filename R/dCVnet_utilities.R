@@ -193,30 +193,35 @@ parse_dCVnet_input <- function(data,
 parseddata_summary <- function(object) {
   # we want to operate either directly on a 'parsed' input,
   #   or extract one from a dCVnet object.
+
+  # First describe the target:
+  stry <- describe_y_from_performance(object)
+
   if ( inherits(object, "dCVnet") ) {
     object <- parse_dCVnet_input(f = object$input$callenv$f,
                                  y = object$input$callenv$y,
                                  data = object$input$callenv$data,
                                  family = object$input$callenv$family)
   }
-  # First describe the target:
-  if ( object$family %in% c("binomial", "multinomial") ) {
-    ytab <- table(object$y)
-    yptab <- round(prop.table(ytab), 3) * 100
-    stry <- paste0(names(ytab),
-                   ": ",
-                   sprintf(ytab, fmt = "%i"),
-                   " (", yptab, "%)")
-  } else if ( object$family == "cox") {
-    stry <- aggregate(list(Time = object$y[, 1]),
-                      by = list(Outcome = object$y[, 2]),
-                      summary)
-  } else {
-    # should be gaussian (1d mat / vector),
-    #           poisson (1d mat / vector) or
-    #           mgaussian (data.frame)
-    stry <- summary(object$y)
-  }
+
+
+  # if ( object$family %in% c("binomial", "multinomial") ) {
+  #   ytab <- table(object$y)
+  #   yptab <- round(prop.table(ytab), 3) * 100
+  #   stry <- paste0(names(ytab),
+  #                  ": ",
+  #                  sprintf(ytab, fmt = "%i"),
+  #                  " (", yptab, "%)")
+  # } else if ( object$family == "cox") {
+  #   stry <- aggregate(list(Time = object$y[, 1]),
+  #                     by = list(Outcome = object$y[, 2]),
+  #                     summary)
+  # } else {
+  #   # should be gaussian (1d mat / vector),
+  #   #           poisson (1d mat / vector) or
+  #   #           mgaussian (data.frame)
+  #   stry <- summary(object$y)
+  # }
 
   # Next the predictor matrix:
   xdes <- lapply(as.data.frame(object$x_mat),
