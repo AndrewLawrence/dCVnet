@@ -397,6 +397,8 @@ perf_cont <- function(object,
 
   f <- family(object)
 
+  ysd <- sd(object$reference)
+
   cval <- cor(object$reference,
               object$prediction)
 
@@ -420,6 +422,10 @@ perf_cont <- function(object,
 
   # Add brier score:
   R["Brier"] <- R["RMSE"]^2
+
+  # Add scaled versions of RMSE & MAE:
+  R["SDScaledRMSE"] <- R["RMSE"] / ysd
+  R["SDScaledMAE"] <- R["MAE"] / ysd
 
   if ( f == "poisson" ) {
     log_dat <- data.frame(reference = log1p(object$reference),
@@ -462,6 +468,64 @@ perf_cox <- function(object,
   row.names(R) <- NULL
 
   R
+}
+
+
+
+
+#' @describeIn InternalPerformanceSummaryFunctions
+#'     Used for multivariate gaussian models
+#'
+perf_mgaussian <- function(object,
+                           short = FALSE,
+                           pvprevalence = "observed") {
+  # predictions to iterate through:
+  cn <- colnames(object)
+
+  pcols <- cn[which(grepl("prediction", cn))]
+  rcols <- gsub("prediction", "reference", pcols)
+
+  vlabs <- gsub("prediction", "", pcols)
+
+  keep_cols <- cn[!cn %in% c(rcols, pcols)]
+
+  R <- lapply(seq_len(length(pcols)),
+              function(i) {
+                obj <- object[, c(pcols[i], rcols[i], keep_cols)]
+                colnames(obj) <-
+                  c("prediction", "reference", keep_cols)
+                attr(obj, "family") <- "gaussian"
+                VAL <- perf_cont(obj)
+                VAL$label <- pcols[i]
+                VAL
+              })
+
+  RR <- R[[1]]
+  RR$label <- NULL
+  RR$Value <-
+    (Reduce("+", x = lapply(R, function(x)
+      x$Value))) / length(pcols)
+
+  RR$Measure <- paste0("mean ", RR$Measure)
+
+  R <- lapply(seq_len(length(pcols)),
+              function(i) {
+                x <- R[[i]]
+                x$Measure <- paste0(vlabs[[i]], " ", x$Measure)
+                x$label <- NULL
+                return(x)
+              })
+
+  R <- list(RR,
+            do.call("rbind", R))
+
+  R <- do.call("rbind", R)
+
+  if (short) {
+    R <- R[grepl("RMSE", R$Measure), ]
+  }
+
+  return(R)
 }
 
 
@@ -513,6 +577,7 @@ summary.performance <- function(object,
                   gaussian = perf_cont,
                   poisson = perf_cont,
                   cox = perf_cox,
+                  mgaussian = perf_mgaussian,
                   stop("family not supported"))
     R <- fxn(performance,
                short = short,
