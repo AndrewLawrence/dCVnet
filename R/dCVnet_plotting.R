@@ -15,10 +15,14 @@
 #'     proportion of the lambda sequence (for that alpha).
 #' @param errorbars boolean. Add errorbars to the plot?
 #' @param ... NULL
+#'
+#' @inheritParams tuning_plot_dCVnet
+#'
 #' @export
 plot.multialpha.repeated.cv.glmnet <- function(x,
                                                xvar = c("lambda", "s"),
                                                errorbars = FALSE,
+                                               plot = TRUE,
                                                ...) {
   xvar <- match.arg(xvar)
   # store attributes:
@@ -69,7 +73,7 @@ plot.multialpha.repeated.cv.glmnet <- function(x,
     p <- p +
       ggplot2::xlab(paste0("Lambda path fraction\nSelection: ", type.lambda))
   }
-  print(p)
+  if ( plot ) print(p)
 
   invisible(list(plot = p,
                  data = x))
@@ -99,16 +103,13 @@ plot.dCVnet <- function(x, type = "tuning", ...) {
   # options:
   #   "tuning"
   #   "ROC"
-  in_type <- type
-  type_opts <- c("tuning", "roc")
-  type <- pmatch(tolower(type), type_opts)
-  if (any(is.na(type))) {
-    stop(paste("type: ",
-               in_type,
-               "must be one of:",
-               paste0(type_opts, collapse = ", ")))
+  type <- match.arg(type, choices = c("tuning", "roc"), several.ok = FALSE)
+
+  f <- family(x)
+  if ( type == "roc" && !(f %in% c("binomial"))) {
+    stop("roc plots supported for binomial only")
   }
-  type <- type_opts[type]
+
   switch(type,
          tuning = return(tuning_plot_dCVnet(x, ...)),
          roc = return(plot(extract_rocdata(performance(x)), ...))
@@ -266,11 +267,12 @@ plot.rocdata <- function(x,
 #' @param object a \code{\link{dCVnet}} object
 #' @param n.random select a random sample of k-fold reps to display.
 #'      0 = display all.
-#' @return a data.frame containing the full dataset used to plot
-#'     (ignores n.random)
+#' @param plot (bool) produce the plot? or just return the plot and data
+#' @return a list containing the plot and a data.frame used to plot
+#'     (full data.frame is returned, i.e. ignores n.random)
 #'
 #' @export
-tuning_plot_dCVnet <- function(object, n.random = 0) {
+tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
   # Plotting function to show outer fold variability in the tuning curves
   #   at different alphas.
 
@@ -316,7 +318,8 @@ tuning_plot_dCVnet <- function(object, n.random = 0) {
     ggplot2::xlab("lambda path (log10)") +
     ggplot2::facet_wrap(~Rep) +
     ggplot2::theme_light()
-  print(p)
+
+  if ( plot ) print(p)
   invisible(list(plot = p, data = df))
 }
 

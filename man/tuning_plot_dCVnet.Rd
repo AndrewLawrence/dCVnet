@@ -4,17 +4,19 @@
 \alias{tuning_plot_dCVnet}
 \title{tuning_plot_dCVnet}
 \usage{
-tuning_plot_dCVnet(object, n.random = 0)
+tuning_plot_dCVnet(object, n.random = 0, plot = TRUE)
 }
 \arguments{
 \item{object}{a \code{\link{dCVnet}} object}
 
 \item{n.random}{select a random sample of k-fold reps to display.
 0 = display all.}
+
+\item{plot}{(bool) produce the plot? or just return the plot and data}
 }
 \value{
-a data.frame containing the full dataset used to plot
-(ignores n.random)
+a list containing the plot and a data.frame used to plot
+(full data.frame is returned, i.e. ignores n.random)
 }
 \description{
 Display the tuning curves for the repeated k-folds of the outerloop of a

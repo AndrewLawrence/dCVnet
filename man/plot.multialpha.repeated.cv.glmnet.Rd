@@ -4,7 +4,7 @@
 \alias{plot.multialpha.repeated.cv.glmnet}
 \title{plot.multialpha.repeated.cv.glmnet}
 \usage{
-\method{plot}{multialpha.repeated.cv.glmnet}(x, xvar = c("lambda", "s"), errorbars = FALSE, ...)
+\method{plot}{multialpha.repeated.cv.glmnet}(x, xvar = c("lambda", "s"), errorbars = FALSE, plot = TRUE, ...)
 }
 \arguments{
 \item{x}{a \code{\link{multialpha.repeated.cv.glmnet}} object.}
@@ -13,6 +13,8 @@
 proportion of the lambda sequence (for that alpha).}
 
 \item{errorbars}{boolean. Add errorbars to the plot?}
+
+\item{plot}{(bool) produce the plot? or just return the plot and data}
 
 \item{...}{NULL}
 }

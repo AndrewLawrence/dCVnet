@@ -211,25 +211,6 @@ parseddata_summary <- function(object) {
                                  family = object$input$callenv$family)
   }
 
-
-  # if ( object$family %in% c("binomial", "multinomial") ) {
-  #   ytab <- table(object$y)
-  #   yptab <- round(prop.table(ytab), 3) * 100
-  #   stry <- paste0(names(ytab),
-  #                  ": ",
-  #                  sprintf(ytab, fmt = "%i"),
-  #                  " (", yptab, "%)")
-  # } else if ( object$family == "cox") {
-  #   stry <- aggregate(list(Time = object$y[, 1]),
-  #                     by = list(Outcome = object$y[, 2]),
-  #                     summary)
-  # } else {
-  #   # should be gaussian (1d mat / vector),
-  #   #           poisson (1d mat / vector) or
-  #   #           mgaussian (data.frame)
-  #   stry <- summary(object$y)
-  # }
-
   # Next the predictor matrix:
   xdes <- lapply(as.data.frame(object$x_mat),
                  function(x) {

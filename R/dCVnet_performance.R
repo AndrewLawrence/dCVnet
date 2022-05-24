@@ -762,7 +762,7 @@ casesummary.performance <- function(object,
                             as.character(object$reference))
       object$error <- 1 - vapply(seq_along(pred_id_col),
                                  function(i) {
-                                   pred[i,pred_id_col[i]]
+                                   pred[i, pred_id_col[i]]
                                  }, FUN.VALUE = 1.0)
       return(data.frame(object))
     }
@@ -778,12 +778,14 @@ casesummary.performance <- function(object,
                            }))
     }
 
-    R <- switch(f,
-                gaussian = data.frame(error = object$reference - object$prediction),
-                binomial = data.frame(error = (as.numeric(object$reference) - 1) -
-                                        object$prediction),
-                poisson = data.frame(error = object$reference - object$prediction),
-                NULL
+    R <- switch(
+      f,
+      gaussian = data.frame(error = object$reference - object$prediction),
+      binomial = data.frame(error =
+                              (as.numeric(object$reference) - 1) -
+                              object$prediction),
+      poisson = data.frame(error = object$reference - object$prediction),
+      NULL
     )
     if ( is.null(R) ) {
       return(data.frame(object))
@@ -801,15 +803,15 @@ casesummary.performance <- function(object,
   # sort the object by rowid (with numerical order if appropriate):
   if (all(!is.na(suppressWarnings(as.numeric(object$rowid))))) {
     # if we can convert to numeric without any NAs, then force numeric:
-    object <- object[order(as.numeric(object$rowid)),]
+    object <- object[order(as.numeric(object$rowid)), ]
   } else {
     # sort by character:
-    object <- object[order(object$rowid),]
+    object <- object[order(object$rowid), ]
   }
 
   # iterate over the labels (reps) to make a wide dataframe.
   repdata <- lapply(labs, function(rep) {
-    object[object$label == rep,]
+    object[object$label == rep, ]
   })
   names(repdata) <- names(labs)
 
@@ -820,7 +822,7 @@ casesummary.performance <- function(object,
     !colnames(object) %in% c(Rleft_names, "rowid", "label", "classification")
   ]
 
-  Rbits <- lapply(repdata, function(kk) as.matrix(kk[,Rbits_names]))
+  Rbits <- lapply(repdata, function(kk) as.matrix(kk[, Rbits_names]))
 
   Rmean <- Reduce("+", Rbits) / length(Rbits)
   Rstd <- lapply(Rbits, function(x) (x - Rmean)^2 )
