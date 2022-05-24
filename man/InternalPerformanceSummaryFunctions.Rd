@@ -5,6 +5,7 @@
 \alias{perf_nomial}
 \alias{perf_cont}
 \alias{perf_cox}
+\alias{perf_mgaussian}
 \title{Internal summary functions for performance objects from
 different model families.}
 \usage{
@@ -13,6 +14,8 @@ perf_nomial(object, short = FALSE, pvprevalence = "observed")
 perf_cont(object, short = FALSE, pvprevalence = "observed")
 
 perf_cox(object, short = FALSE, pvprevalence = "observed")
+
+perf_mgaussian(object, short = FALSE, pvprevalence = "observed")
 }
 \description{
 Internal summary functions for performance objects from
@@ -25,5 +28,7 @@ different model families.
 \item \code{perf_cont}: Used for gaussian and poisson families
 
 \item \code{perf_cox}: Used for cox models
+
+\item \code{perf_mgaussian}: Used for multivariate gaussian models
 }}
 
