@@ -747,49 +747,119 @@ casesummary.performance <- function(object,
                                              "summary"),
                                     ...) {
   type <- match.arg(type)
+  f <- family(object)
+
+  .augment_object <- function(object, f) {
+
+    if ( "classification" %in% colnames(object) ) {
+      object$correct <- object$classification == object$reference
+    }
+
+    if ( f == "multinomial" ) {
+      pred <- object[, grepl("prediction", names(object))]
+
+      pred_id_col <- paste0("prediction",
+                            as.character(object$reference))
+      object$error <- 1 - vapply(seq_along(pred_id_col),
+                                 function(i) {
+                                   pred[i,pred_id_col[i]]
+                                 }, FUN.VALUE = 1.0)
+      return(data.frame(object))
+    }
+
+    if ( f == "mgaussian" ) {
+      vars <- colnames(object)[grepl("prediction", colnames(object))]
+      vars <- gsub("prediction", "", vars)
+      names(vars) <- paste0("error", vars)
+      object <- data.frame(object,
+                           lapply(vars, function(x) {
+                             object[[paste0("prediction", x)]] -
+                               object[[paste0("reference", x)]]
+                           }))
+    }
+
+    R <- switch(f,
+                gaussian = data.frame(error = object$reference - object$prediction),
+                binomial = data.frame(error = (as.numeric(object$reference) - 1) -
+                                        object$prediction),
+                poisson = data.frame(error = object$reference - object$prediction),
+                NULL
+    )
+    if ( is.null(R) ) {
+      return(data.frame(object))
+    } else {
+      return(data.frame(object, R))
+    }
+  }
 
   object <- as.data.frame(object, stringsAsFactors = FALSE)
   labs <- unique(object$label)
   names(labs) <- make.names(labs, unique = TRUE)
 
+  object <- .augment_object(object, f)
+
   # sort the object by rowid (with numerical order if appropriate):
-  if ( all(!is.na(suppressWarnings(as.numeric(object$rowid)))) ) {
+  if (all(!is.na(suppressWarnings(as.numeric(object$rowid))))) {
     # if we can convert to numeric without any NAs, then force numeric:
-    object <- object[order(as.numeric(object$rowid)), ]
+    object <- object[order(as.numeric(object$rowid)),]
   } else {
     # sort by character:
-    object <- object[order(object$rowid), ]
+    object <- object[order(object$rowid),]
   }
 
   # iterate over the labels (reps) to make a wide dataframe.
   repdata <- lapply(labs, function(rep) {
-    object[object$label == rep, ]
+    object[object$label == rep,]
   })
   names(repdata) <- names(labs)
 
-  Rleft <- repdata[[1]][, c("rowid", "reference")]
-  Rbits <- data.frame(lapply(repdata, function(kk) kk$classification),
-                      stringsAsFactors = FALSE)
-  R.data <- data.frame(lapply(Rbits, function(x) {
-    as.numeric(x == Rleft$reference)
-  } ), stringsAsFactors = FALSE)
+  Rleft_names <- grep("^reference", colnames(object), value = TRUE)
+  Rleft <- repdata[[1]][, c("rowid", Rleft_names)]
 
-  R <- switch(type,
-              data = list(Rleft,
-                          Rbits,
-                          stringsAsFactors = TRUE),
-              summary = list(Rleft,
-                             prop_correct = rowMeans(R.data),
-                             stringsAsFactors = TRUE),
-              both = list(Rleft,
-                          prop_correct = rowMeans(R.data),
-                          `...` = "-",
-                          Rbits,
-                          stringsAsFactors = TRUE)
+  Rbits_names <- colnames(object)[
+    !colnames(object) %in% c(Rleft_names, "rowid", "label", "classification")
+  ]
+
+  Rbits <- lapply(repdata, function(kk) as.matrix(kk[,Rbits_names]))
+
+  Rmean <- Reduce("+", Rbits) / length(Rbits)
+  Rstd <- lapply(Rbits, function(x) (x - Rmean)^2 )
+  Rstd <- sqrt(Reduce("+", Rstd) / (length(Rstd) - 1))
+
+  colnames(Rmean) <- paste("mean", colnames(Rmean))
+  colnames(Rstd ) <- paste("stddev", colnames(Rstd ))
+
+  # Where present the standard deviation of the error
+  #   is the same as the std dev of the
+  #   prediction, so strip out error from Rstd
+  error_filters <- grepl("error", colnames(Rstd))
+  if ( any(error_filters) ) {
+    Rstd <- Rstd[, !error_filters, drop = FALSE]
+  }
+
+  R.data <- cbind(Rmean, Rstd)
+
+  R <- switch(
+    type,
+    data = list(Rleft,
+                Rbits,
+                stringsAsFactors = TRUE),
+    summary = list(
+      Rleft,
+      R.data,
+      stringsAsFactors = TRUE
+    ),
+    both = list(
+      Rleft,
+      R.data,
+      `...` = "-",
+      Rbits,
+      stringsAsFactors = TRUE
+    )
   )
-
   return(do.call(data.frame, R))
 }
+
 
 #' get_y_from_performance
 #'
