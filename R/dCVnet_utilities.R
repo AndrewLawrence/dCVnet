@@ -164,6 +164,13 @@ parse_dCVnet_input <- function(data,
   # check nothing was mangled:
   if ( NROW(y) != NROW(x_mat) ) stop("Error x & y lengths do not match.")
 
+  # for cox check input is a valid Surv object:
+  if ( (family %in% "cox") ) {
+    if ( !survival::is.Surv(y) ) {
+      stop("Cox requires y be a survival::Surv object")
+    }
+  }
+
   # return the outcome, predictor matrix and flattened formula.
   return(list(y = y,
               x_mat = x_mat,
@@ -195,7 +202,7 @@ parseddata_summary <- function(object) {
   #   or extract one from a dCVnet object.
 
   # First describe the target:
-  stry <- describe_y_from_performance(object)
+  stry <- describe_y_from_performance(performance(object))
 
   if ( inherits(object, "dCVnet") ) {
     object <- parse_dCVnet_input(f = object$input$callenv$f,
@@ -847,8 +854,11 @@ tidy_predict.glmnet <- function(mod,
   }
 
   if ( family == "cox" ) {
-    if ( !is.null(newy) ) p$reference.Time <- a[, 1]
-    if ( !is.null(newy) ) p$reference.Status <- a[, 2]
+    a <- as.data.frame(as.matrix(newy), stringsAsFactors = FALSE)
+    if ( !is.null(newy) ) {
+      p$reference.Time <- a[, 1]
+      p$reference.Status <- a[, 2]
+    }
     p$label <- label
   }
 
@@ -1301,18 +1311,18 @@ describe_outcome <- function(y, family) {
   # deal with multivariable families first as these are not safe to tabulate.
   if ( family == "mgaussian" ) {
     return(
-      do.call(rbind, lapply(y, .quick_summary))
+      do.call(rbind, lapply(as.data.frame(y), .quick_summary))
     )
   }
 
   if ( family == "cox" ) {
+    y <- as.data.frame(as.matrix(y))
     return(aggregate(
-      x = y[, 1, drop = FALSE],
-      by = list(Status = y[[2]]),
+      x = y$time,
+      by = list(Status = y$status),
       FUN = .quick_summary
     ))
   }
-
 
   tab <- table(y)
   ptab <- prop.table(tab)
@@ -1340,5 +1350,5 @@ describe_outcome <- function(y, family) {
   }
 
   # default summary:
-  .quick_summary(as.numeric(y[, 1]))
+  .quick_summary(as.numeric(as.data.frame(y)[, 1]))
 }

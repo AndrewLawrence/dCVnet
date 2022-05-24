@@ -539,16 +539,10 @@ print.dCVnet <- function(x, ...) {
 
   cat("Observations:\n")
   cat(paste0("\t", nrow(parsed$x_mat), " subjects\n"))
+
   cat("Outcome:\n")
-  if ( callenv$family %in% c("binomial", "multinomial")) {
-    stab <- table(parsed$y)
-    for ( i in seq_along(stab) ) {
-      cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
-    }
-  } else {
-    print(describe_outcome(as.data.frame(parsed$y), family = family(x)))
-    cat("\n")
-  }
+  print(describe_outcome(parsed$y, family = family(x)))
+  cat("\n")
 
   cat("Hyperparameter Tuning:\n")
   cat(paste("\tOptimising: ", callenv$type.measure, "\n"))

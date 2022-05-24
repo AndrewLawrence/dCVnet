@@ -451,7 +451,7 @@ perf_cont <- function(object,
 #' @describeIn InternalPerformanceSummaryFunctions
 #'     Used for cox models
 #' @importFrom Hmisc rcorr.cens
-#' @importFrom survival Surv
+#' @importFrom survival Surv is.Surv
 perf_cox <- function(object,
                      short = FALSE,
                      pvprevalence = "observed") {
@@ -799,6 +799,12 @@ casesummary.performance <- function(object,
 #' @keywords internal
 #' @noRd
 get_y_from_performance <- function(object) {
+  if ( family(object) == "cox"  ) {
+    return(survival::Surv(
+      time = object$reference.Time,
+      event = object$reference.Status
+    ))
+  }
   # convert to "list" type and take first element:
   indata <- performance(object, as.data.frame = FALSE)[[1]]
   sel <- grepl("^reference", colnames(indata))
