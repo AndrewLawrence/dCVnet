@@ -4,7 +4,7 @@
 \alias{log_results_to_excel}
 \title{log_results_to_excel}
 \usage{
-log_results_to_excel(object, file, referencemodel = TRUE)
+log_results_to_excel(object, file, referencemodel = FALSE)
 }
 \arguments{
 \item{object}{a \code{\link{dCVnet}} object.}

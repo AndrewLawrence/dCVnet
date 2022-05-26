@@ -49,9 +49,9 @@ log_results_to_excel <- function(object,
   }
 
   pds <- parseddata_summary(object)
-  ydesc <- if(inherits(pds[[1]], "character")) {
-    { data.frame(summary_measure = names(pds[[1]]),
-                 outcome = pds[[1]]) }
+  ydesc <- if ( inherits(pds[[1]], "character") ) {
+    data.frame(summary_measure = names(pds[[1]]),
+               outcome = pds[[1]])
   } else {
     as.data.frame(pds[[1]])
   }
