@@ -375,6 +375,14 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
 #'      coef(object$final$model))
 #' @param final_col colour for final model coefficients
 #' @param final_shape shape for final model coefficients
+#' @param panel_scaling for mutli-outcome coefficients (mgaussian, multinomial).
+#'     Should y-axes be independent, or same over all panels.
+#' @param plot (bool) should the plot also be rendered (\code{TRUE})?,
+#'     or just returned as a R object (\code{FALSE}).
+#'
+#' @return a list containing the plot and a data.frame used to plot
+#'     (full data.frame is returned, i.e. ignores n.random)
+#'
 #' @export
 plot_outerloop_coefs <- function(object,
                                  type = "rep",
@@ -383,11 +391,17 @@ plot_outerloop_coefs <- function(object,
                                  intercept = FALSE,
                                  final = TRUE,
                                  final_col = "red",
-                                 final_shape = 24) {
+                                 final_shape = 24,
+                                 panel_scaling = c("free", "fixed"),
+                                 plot = TRUE) {
+
+  panel_scaling <- match.arg(panel_scaling, choices = c("free", "fixed"))
+
   df <- coef.dCVnet(object, type = type)
+  df$Outcome <- rep("y", nrow(df))
 
   if ( ! intercept ) {
-    df <- df[df$Predictor != "(Intercept)", ]
+    df <- df[!grepl("(Intercept)", df$Predictor), ]
   }
 
   if ( abs ) {
@@ -397,9 +411,14 @@ plot_outerloop_coefs <- function(object,
     df$stdbeta <- df$Coef
     ylabel <- "Standardised Beta"
   }
-
   if ( ordered ) {
     df$Predictor <- forcats::fct_reorder(df$Predictor, df$stdbeta)
+  }
+
+  if ( family(object) %in% c("mgaussian", "multinomial") ) {
+    pred_bits <- strsplit(as.character(df$Predictor), split = "\\.")
+    df$Predictor <- vapply(pred_bits, `[[`, 2, FUN.VALUE = "c")
+    df$Outcome <- vapply(pred_bits, `[[`, 1, FUN.VALUE = "c")
   }
 
   p <-  ggplot2::ggplot(df,
@@ -419,29 +438,34 @@ plot_outerloop_coefs <- function(object,
   }
 
   if ( final ) {
-    fcoef <- coef(object$final$model)
+    fcoef.df <- tidy_coef.multialpha.repeated.cv.glmnet(object$final$model)
     if ( abs ) {
-      fcoef <- abs(fcoef)
+      fcoef.df$Coef <- abs(fcoef.df$Coef)
     }
-    fcoef.df <- data.frame(Predictor = factor(rownames(fcoef),
-                                              levels = levels(df$Predictor)),
-                           stdbeta = as.vector(fcoef),
-                           fold = "Final",
-                           rep = "Final",
-                           stringsAsFactors = FALSE)
+    fcoef.df$fold <- "Final"
+    fcoef.df$rep <- "Final"
+    colnames(fcoef.df)[colnames(fcoef.df) == "Coef"] <- "stdbeta"
+
     if ( ! intercept ) {
-      fcoef.df <- fcoef.df[fcoef.df$Predictor != "(Intercept)", ]
+      fcoef.df <- fcoef.df[!grepl("(Intercept)", fcoef.df$Predictor), ]
     }
+
+    if ( family(object) %in% c("mgaussian", "multinomial") ) {
+      fpred_bits <- strsplit(as.character(fcoef.df$Predictor), split = "\\.")
+      fcoef.df$Predictor <- vapply(fpred_bits, `[[`, 2, FUN.VALUE = "c")
+      fcoef.df$Outcome <- vapply(fpred_bits, `[[`, 1, FUN.VALUE = "c")
+    }
+
 
     p <- p + ggplot2::geom_point(data = fcoef.df,
                                  colour = final_col,
                                  shape = final_shape)
   }
 
-  print(p)
+  p <- p + ggplot2::facet_wrap(~Outcome, scales = panel_scaling)
 
-  invisible(list(plot = p,
-                 data = df))
+  if ( plot ) print(p)
+  invisible(list(plot = p, data = df))
 }
 
 #' prediction_error_plot

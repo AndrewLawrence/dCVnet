@@ -12,7 +12,9 @@ plot_outerloop_coefs(
   intercept = FALSE,
   final = TRUE,
   final_col = "red",
-  final_shape = 24
+  final_shape = 24,
+  panel_scaling = c("free", "fixed"),
+  plot = TRUE
 )
 }
 \arguments{
@@ -41,6 +43,16 @@ coef(object$final$model))}
 \item{final_col}{colour for final model coefficients}
 
 \item{final_shape}{shape for final model coefficients}
+
+\item{panel_scaling}{for mutli-outcome coefficients (mgaussian, multinomial).
+Should y-axes be independent, or same over all panels.}
+
+\item{plot}{(bool) should the plot also be rendered (\code{TRUE})?,
+or just returned as a R object (\code{FALSE}).}
+}
+\value{
+a list containing the plot and a data.frame used to plot
+(full data.frame is returned, i.e. ignores n.random)
 }
 \description{
 Plot showing standardised betas for outer-loop model coefficients.
