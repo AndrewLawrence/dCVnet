@@ -1,12 +1,12 @@
 Package: dCVnet
 Type: Package
 Title: doubly cross-validated elastic-net regularised generalised linear models
-Version: 1.0.8
+Version: 1.2.0
 Authors@R: c(person("Andrew J.", "Lawrence", 
                     email = "lawrenceajl@gmail.com",
                     role = c("aut", "cre")))
 Description: 
-    Fit and evaluate elastic-net regularised two-class logistic regressions
+    Fit and evaluate elastic-net regularised generalised linear models 
     with double cross validation.
 URL: https://github.com/AndrewLawrence/dCVnet
 BugReports: https://github.com/AndrewLawrence/dCVnet/issues
