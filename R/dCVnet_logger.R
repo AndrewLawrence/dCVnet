@@ -21,7 +21,7 @@
 #' @export
 log_results_to_excel <- function(object,
                                  file,
-                                 referencemodel = TRUE) {
+                                 referencemodel = FALSE) {
   if (!requireNamespace("openxlsx", quietly = TRUE)) {
     stop("Package \"openxlsx\" needed for this function to work.
           Please install it.",
@@ -49,11 +49,17 @@ log_results_to_excel <- function(object,
   }
 
   pds <- parseddata_summary(object)
+  ydesc <- if(inherits(pds[[1]], "character")) {
+    { data.frame(summary_measure = names(pds[[1]]),
+                 outcome = pds[[1]]) }
+  } else {
+    as.data.frame(pds[[1]])
+  }
   hps <- selected_hyperparameters(object)
   ces <- coefficients_summary(object)
 
   # final classification + hyperparameters:
-  final <- summary(performance(object$final))[, -3]
+  final <- summary(object$final$performance)[, -3]
   final.hps <- data.frame(Measure = c("...",
                                       "Final Model Hyperparameters",
                                       "lambda",
@@ -80,7 +86,7 @@ log_results_to_excel <- function(object,
       utils::capture.output(summary(object)),
       stringsAsFactors = FALSE
     ), ""),
-    dqs.1 = setNames(as.data.frame(pds[[1]], stringsAsFactors = FALSE), ""),
+    dqs.1 = ydesc,
     dqs.2 = as.data.frame(pds[[2]], stringsAsFactors = FALSE),
     classif = report_performance_summary(object),
     subclass = casesummary.performance(object$performance),
@@ -98,9 +104,9 @@ log_results_to_excel <- function(object,
         c("Summary", NA),
         c("OutcomeDesc", "Descriptives for Outcome Variable"),
         c("PredictorDesc", "Descriptives for Matrix of Predictors"),
-        c("CV-Classification",
-          "Outer loop cross-validated classification performance"),
-        c("SubjectClass", "Subject classification over outer loops"),
+        c("CV-Performance",
+          "Outer loop cross-validated performance"),
+        c("SubjectClass", "Subject performance over outer loops"),
         c("Hyperparameters",
           "Hyperparameters chosen for outer loop folds/reps"),
         c("Coefficients", "Descriptives of Model coefficients"),
