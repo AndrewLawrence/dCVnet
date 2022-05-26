@@ -92,7 +92,7 @@ m1 <- glm(y ~ ., data = data.frame(y = blrsim$y, blrsim$x), family = "binomial")
 head(coef(summary(m1)))
 
 # we are interested in classification accuracy, dCVnet has a function to
-#   extract these sorts of measures from a glmnet
+#   extract these sorts of measures from a glm
 m1.train <- summary(dCVnet::performance(m1))
 
 #   the accuracy of this model in the data it was fit is:
@@ -146,16 +146,15 @@ round(m1.cv$cv.performance[5, 2, drop = F],3)
 ```
 
 The cross-validated accuracy (`r round(m1.cv$cv.performance[5, 2], 2)`) is even
-worse than the results in the hold-out (`r round(m1.test[5, 2], 2)`).
-This is a known bias expected to occur (at least on average) because
-each model is fit to a fold of the CV which has 1/kth less data to work with than the full model. The extent of the downward bias depends on the steepness of the learning curve for the problem at that sample size, and the selected value of k in k-fold CV (see Chapter 7 of Elements of Statistical Learning).
+worse than the results in the hold-out data (`r round(m1.test[5, 2], 2)`).
+Some downward bias expected to occur because each model is fit exactly 1 fold less data when doing k-fold CV than with an independent hold-out. With less data to work with the model is worse. The extent of the downward bias depends on the steepness of the learning curve for the problem at that sample size, and the selected value of k in k-fold CV (see Chapter 7 of Elements of Statistical Learning).
 
 ## Regularised Binary Logistic Regression
 
-So, the *standard* model described above overfits, what can be done?
-Previously, a researcher might either apply for more funding to collect more data, or more commonly try to simplify the model "by hand" considering which
-predictors to remove. Regularised models can do variable selection 
-in a continuous and data-driven manner (removing a variable from a model is equivalent to infinite regularisation of that term).
+So, the *standard* model described above overfits the data, what can be done?
+Without regularisation, a researcher might either apply for more funding to collect more data, or try to simplify the model "by hand" considering which
+predictors to remove (ideally on the basis of prior information so as not to bias results). In contrast regularised models do variable selection 
+in a continuous and data-driven manner (because removing a variable from a model is the same as regularisation the associated term to zero).
 
 In this example we will use elastic-net regularisation with a single, mostly
 ridge-like, alpha (0.1). In real data we might consider multiple alphas and 
@@ -169,23 +168,22 @@ set.seed(47)
 m2 <- dCVnet::dCVnet(y = blrsim$y,
                      data = blrsim$x,
                      k_outer = 5,
-                     k_inner = 10,
-                     nrep_outer = 2,
-                     nrep_inner = 2,
-                     alphalist = 0.1,
-                     type.measure = "class")
+                     k_inner = 5,
+                     nrep_outer = 10,
+                     nrep_inner = 5,
+                     alphalist = 0.1)
 
 # What was the performance of this model in the data it was fit to?
-m2.train <- summary(performance(m2$final))
+m2.train <- summary(performance(m2$final$performance))
 
 # specifically the accuracy?:
 print(m2.train[5,2])
 
 ```
 
-So a regularised model will still overfit the data (the accuracy in the training
+So a regularised model will still overfit the data used to train the model (the accuracy in the training
 set is `r m2.train[5,2]` which is greater than the bayes rate of
-`r round(blrsim$bayes.rate, 2)`), however the key test is whether
+`r round(blrsim$bayes.rate, 2)`), however the key test comes next: whether
 regularisation helps the model predict unseen data,
 either in the test-set or through cross-validation.
 
@@ -200,6 +198,7 @@ m2.test <- summary(
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
       stringsAsFactors = FALSE),
+    family = "binomial",
     class = c("performance", "data.frame")
   )
 )
@@ -211,7 +210,7 @@ print(m2.test[5,2])
 m2.cv <- report_performance_summary(m2)
 
 # print the accuracy:
-print(m2.cv[5,2])
+print(m2.cv[m2.cv$Measure == "Accuracy", 2])
 
 ```
 
@@ -248,13 +247,12 @@ indicative of overfitting, so by this measure there is less overfitting for
 elastic-net than glm.
 
 * Although there is less overfitting, elastic-net performance in the training
-data can still be optimistic (i.e. greater than a perfect model: 
-enet.cv > bayes.rate,
+data can still be optimistic without cross-validation (i.e. greater than a perfect model: enet.cv > bayes.rate,
 `r round(m2.train[5,2],2)` > `r round(blrsim$bayes.rate,2)`). So an estimate of generalisation error in data not used for training is still required.
 
 * Cross-validated estimates of generalisation error are pessimistically biased
 relative to the performance in a hold-out/test set (cv accuracy < test accuracy)
-so in general it would be better have enough data to keep a holdout,
+so in general it would be better to have enough data to keep a holdout,
 however repeated cross-validation will not be liberal when this is not possible.
 
 ## Random Labels
@@ -286,19 +284,19 @@ rm1.cv <- dCVnet::cv_performance_glm(y = ry,
 
 rm1.test <- summary(
   dCVnet::performance(rm1,
-                           newdata = data.frame(y = blrsim$y.test,
-                                                blrsim$x.test)))
+                      newdata = data.frame(y = blrsim$y.test,
+                                           blrsim$x.test)))
 # dCVnet with shuffled labels:
 rm2 <- dCVnet::dCVnet(y = ry,
                      data = blrsim$x,
                      k_outer = 5,
-                     k_inner = 10,
-                     nrep_outer = 2,
-                     nrep_inner = 2,
+                     k_inner = 5,
+                     nrep_outer = 10,
+                     nrep_inner = 5,
                      alphalist = 0.1,
                      type.measure = "class")
 
-rm2.train <- summary(performance(rm2$final))
+rm2.train <- summary(performance(rm2$final$performance))
 
 rm2.test <- summary(
   structure(
@@ -308,6 +306,7 @@ rm2.test <- summary(
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
       stringsAsFactors = FALSE),
+    family = "binomial",
     class = c("performance", "data.frame")
   )
 )
@@ -339,8 +338,12 @@ print(r_results - 0.5, digits = 2)
 
 ```
 
-A binary classification model trained on random labels should have (on average) a chance level (majority class frequency) accuracy in test data. 
+A binary classification model trained on random labels should have (on average) a chance level (majority class frequency) accuracy in test data.
 Above we show that this is the case for glmnet (in this simulated data).
 
 This suggests that the nested model construction and cross-validation are 
 working as expected.
+
+---
+Note that the cross-validated estimates from the dCVnet elastic-net model were 
+actually *slightly lower than chance level* (`r signif(r_results[["enet.cv"]], 2)``). This is because a model where full regularisation is selected by the hyperparameter tuning will be dominated by the intercept (as the intercept is not penalised). As internally all predictors are centered and scaled the intercept will be the prevalence in the training data. For the binomial family an intercept-only model will predict the majority class. When cross-validation is done at on a binomial model where the prevalence is 0.5 (as is the case here), then the majority class will vary from fold to fold, and whichever class is in the majority in the data used for training will necessarily be in the minority of the held-out fold. Thus predictions will artefactually be lower accuracy. A similar effect is seen for AUC.

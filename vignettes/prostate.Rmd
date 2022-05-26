@@ -37,14 +37,17 @@ For consistency with examples in ESL we wish to standardise the data:
 sprostate <- data.frame(scale(prostate[,-10]), train = prostate[,10])
 ```
 
-Before cross-validating our estimates of prediction models, first lets build 
-some prediction models
+Note that we will ignore the train-test split as this vignette will demonstrate cross-validation.
+
+Before cross-validating our estimates of prediction model performance, first lets build some prediction models without cross-validation:
 
 ```{r predict_lm, echo=TRUE}
+# A ordinary linear regression
 m1 <- lm(lpsa ~ ., data = sprostate[,-10], y = TRUE, x = TRUE)
 ```
 
 ```{r predict_cv.glmnet}
+# a LASSO regularised regression
 m2 <- glmnet::cv.glmnet(y = sprostate$lpsa, x = as.matrix(sprostate[,-9:-10]))
 ```
 
@@ -59,7 +62,7 @@ data.frame(broom::tidy(m1)[,1:2] %>% setNames(c("Term", "lm")),
 ```
 
 
-The MSE (in the test data) is:
+The performance of these models (in the data used to train them) is:
 
 ```{r accuracy}
 
@@ -113,24 +116,41 @@ if ( require(lmvar) ) {
       select(-contains(".sd")) %>% 
       knitr::kable(digits = 3)
   
-  perf.train <- mean(abs(m1$fitted.values - m1$y)) %>% round(3)
-  perf.test <- m1.cv$MAE$mean %>% round(3)
+  perf.train <- mean(abs(m1$fitted.values - m1$y))
+  perf.test <- m1.cv$MAE$mean
   
 } else {
   print("install.packages('lmvar') to run this chunk.")
-  perf.train <- mean(abs(m1$fitted.values - m1$y)) %>% round(3)
+  perf.train <- mean(abs(m1$fitted.values - m1$y))
   perf.test <- "LMVAR missing"
 }
 
 ```
 
-So there is a performance gap for the simple linear model (e.g. MAE) such
+So there is a performance gap for the simple linear model (e.g. in MAE) such
 that the complete data performance
-(`r perf.train`)
+(`r signif(perf.train,3)`)
 is better than the cross-validated performance
- (`r perf.test`).
+ (`r signif(perf.test,3)`).
 
+We can run the equivalent model in dCVnet:
 
+```{r dCVnet, echo=FALSE}
+m3 <- dCVnet(y = sprostate$lpsa,
+             data = sprostate[,-9:-10],
+             f = "~.",
+             family = "gaussian",
+             alphalist = 1.0,
+             k_inner = 10,
+             k_outer = 10,
+             nrep_inner = 3,
+             nrep_outer = 3)
+```
 
+```{r dCVnet_summary }
+report_performance_summary(m3)[1:2,]
+```
 
+Taken together we can see that the cross-validated MAE of the LASSO (`r signif(report_performance_summary(m3)[2,2],3)`) is slightly lower/better than the cross-validated MAE of the un-regularised model (`r signif(perf.test,3)`). A comparison between the prediction performances without cross-validation would have concluded that LASSO was less performant (MAE = `r signif(caret::postResample(predictdf$glmnet.lambda.min, predictdf$observed)[["MAE"]],3)`) than an unregularised model (MAE = `r signif(caret::postResample(predictdf$lm, predictdf$observed)[["MAE"]],3)`)
 
+In this test dataset the difference is not dramatic, but the principle that tuned regularisation can produce better generalisation error has been demonstrated.

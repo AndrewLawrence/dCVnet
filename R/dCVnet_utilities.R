@@ -1174,7 +1174,6 @@ cv_performance_glm <- function(y,
   m0 <- glm(y ~ .,
             data = data.frame(y = y, x, stringsAsFactors = FALSE),
             family = family)
-
   # prediction performance:
   p0 <- summary(performance(m0), label = "observed")
 
@@ -1218,6 +1217,7 @@ cv_performance_glm <- function(y,
     # merge the folds:
     ppp <- structure(as.data.frame(data.table::rbindlist(ppp),
                                    stringsAsFactors = FALSE),
+                     family = family,
                      class = c("performance", "data.frame"))
     ppp$label <- paste("rep", as.character(i))
     return(ppp)
@@ -1227,6 +1227,7 @@ cv_performance_glm <- function(y,
 
   pp <- structure(as.data.frame(data.table::rbindlist(pp),
                                 stringsAsFactors = FALSE),
+                  family = family,
                   class = c("performance", "data.frame"))
 
 
