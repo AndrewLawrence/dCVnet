@@ -64,7 +64,7 @@ Under the hood this function is composing three steps:
  3. running the plot method for rocdata objects (`plot.rocdata`).
 
 ```{r default plot, echo=TRUE, fig.height=7, fig.width=7}
-p1 <- plot(mod1, type = "ROC")
+p1 <- plot(mod1, type = "roc")
 
 # Note this is the same as:
 # p1 <- plot(extract_rocdata(dCVnet::performance(mod1)))
@@ -120,7 +120,7 @@ an upper bound on cross-validated performance. *However, care must always be *
 
 To plot the uncrossvalidated performance of a final model:
 ```{r final model, echo=TRUE, fig.height=7, fig.width=7}
-plot(extract_rocdata(performance(mod1$final)))
+plot(extract_rocdata(mod1$final$performance))
 ```
 
 
@@ -133,26 +133,24 @@ However, we first need to give informative names in the run column:
 d1 <- mod1 %>% 
   performance() %>% 
   extract_rocdata() %>% 
-  average_rocdata() %>% 
-  mutate(run = "Model 1") # labels the data from this model.
+  average_rocdata()
+d1$run <- "Model 1" # labels the data from this model.
 
 d2 <- mod2 %>% 
   performance() %>% 
   extract_rocdata() %>% 
-  average_rocdata() %>% 
-  mutate(run = "Model 2") # labels the data from this model
+  average_rocdata()
+d2$run <- "Model 2" # labels the data from this model
 
-d3 <- mod1$final %>% 
-  performance() %>% 
+d3 <- mod1$final$performance %>% 
   extract_rocdata() %>% 
-  average_rocdata() %>% 
-  mutate(run = "Model 1 (train)") # labels the data from this model.
+  average_rocdata()
+d3$run <- "Model 1 (train)" # labels the data from this model.
 
-d4 <- mod2$final %>% 
-  performance() %>% 
+d4 <- mod2$final$performance %>% 
   extract_rocdata() %>% 
-  average_rocdata() %>% 
-  mutate(run = "Model 2 (train)") # labels the data from this model.
+  average_rocdata()
+d4$run <- "Model 2 (train)" # labels the data from this model.
 
 p4 <- plot(rbind(d1, d2, d3, d4))
 

@@ -49,7 +49,9 @@ completely different amounts and types of regularisation
 this should be interpreted with caution.
 }
 \details{
-It is circular to use these plots to select a subset of variables.
-Because these coefficients are based on the complete dataset,
-this can produce optimism.
+Warning: do not use these plots to select a subset of variables and
+re-run dCVnet.
+These coefficients are based on the complete dataset
+and using the output of dCVnet to select variables will produce
+optimism in cross-validated estimates of performance.
 }

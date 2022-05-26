@@ -25,6 +25,9 @@ Imports:
     parallel,
     data.table,
     ROCR,
+    survival,
+    psych,
+    Hmisc,
     scales,
     methods,
     stats
@@ -36,7 +39,6 @@ Suggests:
     openxlsx,
     car,
     dplyr,
-    psych,
     boot,
     tidyverse,
     broom,

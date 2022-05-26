@@ -32,7 +32,7 @@
 #'
 #' @export
 reflogreg <- function(object, ...) {
-  UseMethod("reflogreg")
+  UseMethod("reflogreg", object)
 }
 
 #' reflogreg.default

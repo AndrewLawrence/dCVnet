@@ -3,11 +3,17 @@
 \name{calibration}
 \alias{calibration}
 \alias{calibration.default}
+\alias{calibration.performance}
+\alias{calibration.dCVnet}
 \title{calibration}
 \usage{
 calibration(x, ...)
 
 \method{calibration}{default}(x, ppid = "prediction", ooid = "reference", gid = "label", ...)
+
+\method{calibration}{performance}(x, ...)
+
+\method{calibration}{dCVnet}(x, ...)
 }
 \arguments{
 \item{x}{an object containing predicted probabilities and observed outcomes,
@@ -28,14 +34,24 @@ from which calibration can be extracted.}
 calibration intercept and calibration slope
 }
 \description{
-calculates 'weak' (i.e. intercept + slope) calibration equivalent to the
-values returned by the val.prob function in the rms package
+calculates 'weak' (i.e. intercept + slope) calibration for binomial family
+outcome. This is equivalent to the values returned by the val.prob
+function in the \code{rms} package
 (which accompanies Frank Harrell's Regression Modelling Strategies book).
 
 Default function behaviour assumes input is a
 list/data.frame with required vectors as elements.
 }
 \details{
-Calibration is not returned via \code{\link{performance}} because of the
-computational overhead of model fitting.
+Binomial calibration is not returned via \code{\link{performance}} because
+of the computational overhead of model fitting.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{performance}: binomial calibration for
+\code{\link{performance}} objects
+
+\item \code{dCVnet}: binomial calibration for
+\code{\link{dCVnet}} performance
+}}
+

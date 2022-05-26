@@ -1,17 +1,18 @@
 
 # calibration S3 generic ---------------------------------------------
 
-# implements 'weak' (i.e. linear) calibration.
+# implements 'weak' (i.e. linear) calibration for binomial outcome.
 
 
 #' calibration
 #'
-#' calculates 'weak' (i.e. intercept + slope) calibration equivalent to the
-#'     values returned by the val.prob function in the rms package
+#' calculates 'weak' (i.e. intercept + slope) calibration for binomial family
+#'     outcome. This is equivalent to the values returned by the val.prob
+#'     function in the \code{rms} package
 #'     (which accompanies Frank Harrell's Regression Modelling Strategies book).
 #'
-#' Calibration is not returned via \code{\link{performance}} because of the
-#'     computational overhead of model fitting.
+#' Binomial calibration is not returned via \code{\link{performance}} because
+#'     of the computational overhead of model fitting.
 #'
 #' @name calibration
 #'
@@ -25,7 +26,7 @@
 #'
 #' @export
 calibration <- function(x, ...) {
-  UseMethod("calibration")
+  UseMethod("calibration", x)
 }
 
 # Internal function to run the actual calculation:
@@ -103,6 +104,31 @@ calibration.default <- function(x,
 
   class(result) <- c("calcoefs")
   result
+}
+
+#' @describeIn calibration binomial calibration for
+#'     \code{\link{performance}} objects
+#' @export
+calibration.performance <- function(x, ...) {
+  f <- family(x)
+  if ( f == "binomial" ) {
+    NextMethod()
+  } else {
+    stop("binomial calibration only available
+         for binomial family model performance")
+  }
+}
+
+#' @describeIn calibration binomial calibration for
+#'     \code{\link{dCVnet}} performance
+#' @export
+calibration.dCVnet <- function(x, ...) {
+  if ( family(x) == "binomial") {
+    calibration.default(performance(x))
+  } else {
+    stop("binomial calibration only available
+         for binomial family model performance")
+  }
 }
 
 # Simple print function for calibration result

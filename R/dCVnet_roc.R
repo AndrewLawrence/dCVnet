@@ -37,22 +37,10 @@
 extract_rocdata <- function(performance,
                             invertprob = FALSE) {
   # First ensure it is in list format, not dataframe:
-  if ( "data.frame" %in% class(performance) ) {
-    lvls <- as.character(unique(performance$label))
-
-    performance <- lapply(
-      lvls,
-      function(lab) {
-        performance[performance$label == lab, ]
-      })
-    names(performance) <- lvls
-
-    performance <- structure(performance,
-                                  class = c("performance", "list"))
-  }
+  performance <- performance(performance, as.data.frame = FALSE)
 
   # Utility subfunction convert a ROC performance object to a dataframe.
-  .performance_to_data_frame <- function(perf, names) {
+  .rocperformance_to_data_frame <- function(perf, names) {
     ns <- vapply(perf@y.values, length, c(1.0))
     runs <- rep(names, ns)
     # convert to dataframe for ggplot:
@@ -81,7 +69,7 @@ extract_rocdata <- function(performance,
     label.ordering = levels(performance[[1]]$reference))
   outer.perf <- ROCR::performance(outer.pred, "tpr", "fpr")
 
-  R <- .performance_to_data_frame(outer.perf, names(performance))
+  R <- .rocperformance_to_data_frame(outer.perf, names(performance))
   return(structure(R, class = c("rocdata", "data.frame")))
 }
 

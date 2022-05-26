@@ -79,7 +79,7 @@
 #'
 #' @export
 performance <- function(x, ...) {
-  UseMethod("performance")
+  UseMethod("performance", x)
 }
 
 #' performance.default
@@ -298,6 +298,7 @@ NULL
 
 #' @describeIn InternalPerformanceSummaryFunctions
 #'     Used for binomial and multinomial families
+#' @inheritParams summary.performance
 perf_nomial <- function(object,
                         short = FALSE,
                         pvprevalence = "observed") {
@@ -391,18 +392,20 @@ perf_nomial <- function(object,
 #' @describeIn InternalPerformanceSummaryFunctions
 #'     Used for gaussian and poisson families
 #' @importFrom ModelMetrics rmse mae rmsle
+#' @importFrom stats lm cor
 perf_cont <- function(object,
                       short = FALSE,
                       pvprevalence = "observed") {
 
   f <- family(object)
 
-  ysd <- sd(object$reference)
+  ysd <- stats::sd(object$reference)
 
-  cval <- cor(object$reference,
-              object$prediction)
+  cval <- stats::cor(object$reference,
+                     object$prediction)
 
-  mod <- coef(lm(reference ~ prediction, data = as.data.frame(object)))
+  mod <- stats::coef(stats::lm(reference ~ prediction,
+                               data = as.data.frame(object)))
 
   # Using ModelMetrics:
   R <- c(
@@ -431,8 +434,10 @@ perf_cont <- function(object,
     log_dat <- data.frame(reference = log1p(object$reference),
                           prediction = log1p(object$prediction))
 
-    log_cval <- cor(log_dat$reference, log_dat$prediction)
-    log_mod <- coef(lm(reference ~ prediction, data = log_dat))
+    log_cval <- stats::cor(log_dat$reference,
+                           log_dat$prediction)
+    log_mod <- stats::coef(stats::lm(reference ~ prediction,
+                                     data = log_dat))
 
     R <- append(R, c(logged_r = log_cval,
                      logged_r2 = log_cval^2,
@@ -580,8 +585,8 @@ summary.performance <- function(object,
                   mgaussian = perf_mgaussian,
                   stop("family not supported"))
     R <- fxn(performance,
-               short = short,
-               pvprevalence = pvprevalence)
+             short = short,
+             pvprevalence = pvprevalence)
     rownames(R) <- NULL
     return(R)
   }

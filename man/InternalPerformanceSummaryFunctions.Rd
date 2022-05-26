@@ -17,6 +17,17 @@ perf_cox(object, short = FALSE, pvprevalence = "observed")
 
 perf_mgaussian(object, short = FALSE, pvprevalence = "observed")
 }
+\arguments{
+\item{object}{a \code{\link{performance}} object.}
+
+\item{short}{(bool) return a core set of performance measures.}
+
+\item{pvprevalence}{argument for adjustment of PPV/NPV calculation for
+binomial or multinomial families. Either "observed" to use the observed
+prevalence, or a number \code{[0,1]} (for binomial),
+or a vector of length n_categories (for multinomial) containing numerics
+in \code{[0,1]}.}
+}
 \description{
 Internal summary functions for performance objects from
 different model families.

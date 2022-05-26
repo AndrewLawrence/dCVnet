@@ -135,10 +135,10 @@ set.seed(47)
 # Run a 10x-repeated 5-fold cross-validation:
 # (technically we are refitting m1 from scratch here)
 m1.cv <- dCVnet::cv_performance_glm(y = blrsim$y,
-                                         data = blrsim$x,
-                                         f = "~.",
-                                         k = 5,
-                                         nrep = 10)
+                                    data = blrsim$x,
+                                    f = "~.",
+                                    k = 5,
+                                    nrep = 10)
 
 # print the mean accuracy over the 10 repetitions:
 round(m1.cv$cv.performance[5, 2, drop = F],3)

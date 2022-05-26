@@ -103,17 +103,37 @@ plot.dCVnet <- function(x, type = "tuning", ...) {
   # options:
   #   "tuning"
   #   "ROC"
-  type <- match.arg(type, choices = c("tuning", "roc"), several.ok = FALSE)
+  type <- match.arg(type,
+                    choices = c("tuning", "roc", "predictions"),
+                    several.ok = FALSE)
 
   f <- family(x)
   if ( type == "roc" && !(f %in% c("binomial"))) {
     stop("roc plots supported for binomial only")
   }
+  if ( type == "predictions" && (f %in% c("cox", "binomial", "multinomial"))) {
+    stop("prediction plot not supported for this model family")
+  }
 
   switch(type,
          tuning = return(tuning_plot_dCVnet(x, ...)),
-         roc = return(plot(extract_rocdata(performance(x)), ...))
-  )
+         roc = return(plot(extract_rocdata(performance(
+           x
+         )), ...)),
+         predictions = {
+           pargs <- list(
+             x = performance(x),
+             bylabel = FALSE,
+             log = ifelse(f == "poisson", TRUE, FALSE),
+             jitter = 0,
+             plot = TRUE
+           )
+           wh <- which(...names() %in% names(pargs))
+           for ( i in wh ) {
+             pargs[[...names()[[i]]]] <- ...elt(i)
+           }
+           return(do.call("prediction_error_plot", pargs))
+         })
 }
 
 #' plot.rocdata
@@ -331,9 +351,11 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
 #'      completely different amounts and types of regularisation
 #'      this should be interpreted with caution.
 #'
-#' It is circular to use these plots to select a subset of variables.
-#'      Because these coefficients are based on the complete dataset,
-#'      this can produce optimism.
+#' Warning: do not use these plots to select a subset of variables and
+#'      re-run dCVnet.
+#'      These coefficients are based on the complete dataset
+#'      and using the output of dCVnet to select variables will produce
+#'      optimism in cross-validated estimates of performance.
 #'
 #' @param object a \code{\link{dCVnet}} object
 #' @param type How to display coefficients.
@@ -353,7 +375,6 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
 #'      coef(object$final$model))
 #' @param final_col colour for final model coefficients
 #' @param final_shape shape for final model coefficients
-#' @importFrom scales muted
 #' @export
 plot_outerloop_coefs <- function(object,
                                  type = "rep",
@@ -385,11 +406,6 @@ plot_outerloop_coefs <- function(object,
                         ggplot2::aes_string(y = "stdbeta",
                                             x = "Predictor")) +
     ggplot2::geom_hline(yintercept = 0.0) +
-    # ggplot2::scale_fill_gradient2(low = scales::muted("blue"),
-    #                                 mid = "grey",
-    #                                 high = scales::muted("red"),
-    #                                 midpoint = 0) +
-    #ggplot2::stat_summary(fun.data = "mean_se") +
     ggplot2::ylab(ylabel) +
     ggplot2::theme_light() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90,
@@ -426,4 +442,120 @@ plot_outerloop_coefs <- function(object,
 
   invisible(list(plot = p,
                  data = df))
+}
+
+#' prediction_error_plot
+#'
+#' Plot the prediction error of a dCVnet performance object.
+#'
+#' @param x a \code{\link{performance}} object
+#' @param bylabel (bool) should a different facet be plotted for each
+#'     level of \code{x$label}? (typically this is CV repetitions)
+#' @param log (bool) should x and y axes be log(1 + x) transformed
+#'     (useful for poisson)
+#' @param jitter (numeric) if nonzero then the requested amount of
+#'     jitter will be applied to x and y values.
+#' @param plot (bool) produce the plot? or just return the plot and data.
+#'
+#' @return a list containing the plot and source data.
+#'
+#' @export
+prediction_error_plot <- function(x,
+                                  bylabel = FALSE,
+                                  log = FALSE,
+                                  jitter = 0,
+                                  plot = TRUE) {
+
+  .longify_mgaussian_performance <- function(x) {
+    x <- as.data.frame(performance(x, as.data.frame = TRUE))
+
+    prednames <- grep("^prediction", colnames(x), value = TRUE)
+    varnames <- gsub("prediction", "", prednames)
+    refnames <- gsub("prediction", "reference", prednames)
+    others <- colnames(x)[!colnames(x) %in% c(prednames, refnames)]
+
+    do.call(rbind,
+            lapply(seq_along(varnames),
+                   function(i) {
+                     R <- x[, others]
+                     R$prediction <- x[[prednames[[i]]]]
+                     R$reference <- x[[refnames[[i]]]]
+                     R$Outcome <- varnames[[i]]
+                     R
+                   } ))
+  }
+
+
+  if ( ! inherits(x, "performance") ) {
+    x <- performance(x)
+  }
+  f <- family(x)
+  if ( f %in% c("binomial", "multinomial") ) {
+    stop(paste0("family: ", f, " is not supported."))
+  }
+
+  if ( f %in% c("mgaussian") ) {
+    x <- .longify_mgaussian_performance(x)
+    # adds a "outcome column
+  }
+
+  lims <- range(x$prediction, x$reference)
+
+  if ( jitter ) {
+    pos <- ggplot2::position_jitter(width = jitter, height = jitter, seed = 123)
+  } else {
+    pos <- ggplot2::position_identity()
+  }
+
+  if ( bylabel ) {
+    p <- ggplot2::ggplot(x,
+                         ggplot2::aes_string(y = "prediction",
+                                             x = "reference",
+                                             colour = "label",
+                                             group = "rowid")) +
+      ggplot2::geom_abline(intercept = 0,
+                           slope = 1,
+                           colour = "black",
+                           linetype = "dotted") +
+      ggplot2::geom_point(alpha = 0.5)
+
+    if ( f == "mgaussian" ) {
+      p <- p + ggplot2::facet_grid(Outcome ~ label)
+    } else {
+      p <- p + ggplot2::facet_wrap(~label)
+    }
+
+
+  } else {
+
+    p <- ggplot2::ggplot(x,
+                         ggplot2::aes_string(y = "prediction",
+                                             x = "reference",
+                                             group = "rowid")) +
+      ggplot2::geom_abline(intercept = 0,
+                           slope = 1,
+                           colour = "red") +
+      ggplot2::stat_summary(geom = "errorbar",
+                            fun.data = ggplot2::median_hilow,
+                            position = pos,
+                            alpha = 0.5) +
+      ggplot2::stat_summary(geom = "point",
+                            fun = mean,
+                            position = pos,
+                            alpha = 0.5)
+    if ( f == "mgaussian" ) {
+      p <- p + ggplot2::facet_wrap(~Outcome)
+    }
+  }
+
+  if ( log ) {
+    p <- p +
+      ggplot2::scale_x_continuous(trans = "log1p") +
+      ggplot2::scale_y_continuous(trans = "log1p")
+  }
+  p <- p + ggplot2::coord_equal(xlim = lims, ylim = lims)
+
+
+  if ( plot ) print(p)
+  invisible(list(plot = p, data = x))
 }
