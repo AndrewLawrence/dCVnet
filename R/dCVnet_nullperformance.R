@@ -12,7 +12,8 @@
 #'
 #' Further, in most cases evaluating permuted performance is not necessary.
 #' Assessing performance with permuted labels is only intended to confirm
-#' that the implementation of cross-validation in dCVnet is not leaky.
+#' that the implementation of cross-validation in dCVnet does not leak
+#' information.
 #'
 #' @name performance_with_permuted_labels
 #'
@@ -51,16 +52,11 @@
 #' @export
 performance_with_permuted_labels <- function(x, n_times = 5) {
 
-  if ( ! x$input$callenv$family %in% c("binomial") ) {
-    # currently the function works only with vector y.
-    stop("family not supported")
-  }
-
   # function to re-run a dCVnet object with the original data and arguments:
   .rerun_dCVnet <- function(x, shuffley = TRUE) {
     bits <- x$input$callenv
     if ( shuffley ) {
-      bits$y <- sample(bits$y)
+      bits$y <- sample(bits$y, replace = FALSE)
     }
     do.call("dCVnet", args = bits[-1])
   }
@@ -69,12 +65,19 @@ performance_with_permuted_labels <- function(x, n_times = 5) {
   .get_performance <- function(x) {
     p <- performance(x)
     # fix for models estimated in older versions of dCVnet:
-    if ( ! "performance" %in% p ) class(p) <- c("performance", "data.frame")
+    if ( ! "performance" %in% p ) {
+      class(p) <- c("performance", "data.frame")
+      attr(p, "family") <- family(x)
+    }
     s <- summary(p)
     s <- setNames(rowMeans(s[, -1]), s[, 1])
-    cal <- suppressWarnings(calibration(p))
-    cal <- setNames(rowMeans(cal), rownames(cal))
-    return(c(s, cal))
+    if ( family(x) == "binomial") {
+      cal <- suppressWarnings(calibration(p))
+      cal <- setNames(rowMeans(cal), rownames(cal))
+      return(c(s, cal))
+    } else {
+      return(s)
+    }
   }
   val_labs <- paste0("null", seq_len(n_times))
 

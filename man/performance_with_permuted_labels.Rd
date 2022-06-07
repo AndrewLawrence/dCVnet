@@ -30,7 +30,8 @@ It should be expected to be \emph{extremely} time-consuming.
 
 Further, in most cases evaluating permuted performance is not necessary.
 Assessing performance with permuted labels is only intended to confirm
-that the implementation of cross-validation in dCVnet is not leaky.
+that the implementation of cross-validation in dCVnet does not leak
+information.
 }
 
 \examples{
