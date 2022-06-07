@@ -28,7 +28,6 @@ Imports:
     survival,
     psych,
     Hmisc,
-    scales,
     methods,
     stats
 Roxygen: list(markdown = TRUE)
