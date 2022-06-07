@@ -14,8 +14,6 @@ knitr::opts_chunk$set(
 )
 ```
 
-***THIS VIGNETTE IS CURRENTLY WORK IN PROGRESS***
-
 In this example we will explore an application of dCVnet in a tutorial dataset
 provided with the Elements of Statistical Learning (ESL) textbook.
 
@@ -34,21 +32,35 @@ For consistency with examples in ESL we wish to standardise the data:
 
 ```{r standardise}
 # see ?prostate for more details:
-sprostate <- data.frame(scale(prostate[,-10]), train = prostate[,10])
+sprostate <- data.frame(scale(prostate[,-10]))
 ```
 
 Note that we will ignore the train-test split as this vignette will demonstrate cross-validation.
+
+Next noting that the base unregularised model is not very overfit, we can make the problem harder
+by adding noise predictors unrelated to the outcome:
+
+```{r add noise}
+set.seed(1)
+noise <- matrix(rnorm(nrow(sprostate) * 10), nrow = nrow(sprostate))
+colnames(noise) <- paste0("noise", 1:10)
+sprostate <- cbind(sprostate,
+                   noise)
+
+cor(cbind(sprostate$lpsa, noise))[-1,1]
+
+```
 
 Before cross-validating our estimates of prediction model performance, first lets build some prediction models without cross-validation:
 
 ```{r predict_lm, echo=TRUE}
 # A ordinary linear regression
-m1 <- lm(lpsa ~ ., data = sprostate[,-10], y = TRUE, x = TRUE)
+m1 <- lm(lpsa ~ ., data = sprostate, y = TRUE, x = TRUE)
 ```
 
 ```{r predict_cv.glmnet}
 # a LASSO regularised regression
-m2 <- glmnet::cv.glmnet(y = sprostate$lpsa, x = as.matrix(sprostate[,-9:-10]))
+m2 <- glmnet::cv.glmnet(y = sprostate$lpsa, x = as.matrix(sprostate[,-9]))
 ```
 
 
@@ -56,8 +68,8 @@ The resulting coefficients look like this:
 
 ```{r coefficients, echo=FALSE}
 data.frame(broom::tidy(m1)[,1:2] %>% setNames(c("Term", "lm")),
-           `glmnet\nlambda.min` = c(tidy_coef.glmnet(m2, s = "lambda.min")),
-           `glmnet\nlambda.1se` = c(tidy_coef.glmnet(m2, s = "lambda.1se"))) %>% 
+           `glmnet\nlambda.min` = c(tidy_coef.glmnet(m2, s = "lambda.min")$Coef),
+           `glmnet\nlambda.1se` = c(tidy_coef.glmnet(m2, s = "lambda.1se")$Coef)) %>% 
   knitr::kable(digits = 3)
 ```
 
@@ -70,10 +82,10 @@ predictdf <- data.frame(observed = sprostate$lpsa,
                         lm = predict(m1),
                         glmnet.lambda.min = c(predict(m2,
                                                       s = "lambda.min",
-                                                      newx = as.matrix(sprostate[,-9:-10]))),
+                                                      newx = as.matrix(sprostate[,-9]))),
                         glmnet.lambda.1se = c(predict(m2,
                                                       s = "lambda.1se",
-                                                      newx = as.matrix(sprostate[,-9:-10])))
+                                                      newx = as.matrix(sprostate[,-9])))
 )
 
 sapply(predictdf[,-1], caret::postResample, predictdf[,1]) %>% 
@@ -93,7 +105,8 @@ predictdf %>%
   ggplot(aes(y = observed, x = Prediction)) +
   geom_point() +
   geom_abline(slope = 1, intercept = 0) +
-  facet_grid(rows = vars(Model), as.table = FALSE)
+  coord_equal() +
+  facet_grid(cols = vars(Model), as.table = FALSE)
 
 ```
 
@@ -106,7 +119,7 @@ cross-validated performance results and improve the tuning of the glmnet models 
  
 First though, we shall produce cross-validated estimates of the lm performance:
 ```{r cv_lm}
-if ( require(lmvar) ) {
+if ( require(lmvar, quietly = TRUE) ) {
   set.seed(42)
   m1.cv <- lmvar::cv.lm(m1, k = 10, max_cores = 1)
   m1.cv.repeat <- lmvar::cv.lm(m1, k = 10, max_cores = 1)
@@ -116,12 +129,12 @@ if ( require(lmvar) ) {
       select(-contains(".sd")) %>% 
       knitr::kable(digits = 3)
   
-  perf.train <- mean(abs(m1$fitted.values - m1$y))
-  perf.test <- m1.cv$MAE$mean
+  perf.train <- signif(mean(abs(m1$fitted.values - m1$y)),3)
+  perf.test <- signif(m1.cv$MAE$mean,3)
   
 } else {
   print("install.packages('lmvar') to run this chunk.")
-  perf.train <- mean(abs(m1$fitted.values - m1$y))
+  perf.train <- signif(mean(abs(m1$fitted.values - m1$y)),3)
   perf.test <- "LMVAR missing"
 }
 
@@ -148,9 +161,12 @@ m3 <- dCVnet(y = sprostate$lpsa,
 ```
 
 ```{r dCVnet_summary }
-report_performance_summary(m3)[1:2,]
+report_performance_summary(m3)[1:2,] %>% 
+  knitr::kable(digits = 3)
 ```
 
-Taken together we can see that the cross-validated MAE of the LASSO (`r signif(report_performance_summary(m3)[2,2],3)`) is slightly lower/better than the cross-validated MAE of the un-regularised model (`r signif(perf.test,3)`). A comparison between the prediction performances without cross-validation would have concluded that LASSO was less performant (MAE = `r signif(caret::postResample(predictdf$glmnet.lambda.min, predictdf$observed)[["MAE"]],3)`) than an unregularised model (MAE = `r signif(caret::postResample(predictdf$lm, predictdf$observed)[["MAE"]],3)`)
+Taken together we can see that the cross-validated MAE of the LASSO (`r signif(report_performance_summary(m3)[2,2],3)`) is lower/better than the cross-validated MAE of the un-regularised model (`r perf.test`). A comparison between the prediction performances without cross-validation would have concluded that LASSO was less performant (MAE = `r signif(caret::postResample(predictdf$glmnet.lambda.min, predictdf$observed)[["MAE"]],3)`) than an unregularised model (MAE = `r signif(caret::postResample(predictdf$lm, predictdf$observed)[["MAE"]],3)`)
 
-In this test dataset the difference is not dramatic, but the principle that tuned regularisation can produce better generalisation error has been demonstrated.
+In this example the difference is not dramatic without adding the noise predictors (without noise there's not a lot of overfitting in the unregularised model). So albeit slightly artificially, the principle that tuned regularisation can produce better generalisation error has been demonstrated.
+
+
