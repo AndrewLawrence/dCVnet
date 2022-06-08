@@ -1281,12 +1281,12 @@ describe_outcome <- function(y, family) {
               IQR = IQR(x, na.rm = TRUE),
               min = min(x, na.rm = TRUE),
               max = max(x, na.rm = TRUE))
-    R <- sapply(nums, function(N) {
+    R <- vapply(nums, function(N) {
       formatC(signif(N, digits = 3),
               digits = 3,
               format = "fg",
               flag = "#")
-    })
+    }, FUN.VALUE = "chr")
     c(R, nnz = sprintf("%d", sum(!is.na(x))))
   }
 
