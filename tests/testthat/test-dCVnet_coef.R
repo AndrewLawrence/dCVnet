@@ -28,7 +28,9 @@ expected_nrow <- 31L * c(1L, 20L, 1L, 1L, 2L, 1L, 1L)
 expected_ncol <- c(2L, 4L, 2L, 2L, 3L, 2L, 2L)
 names(expected_ncol) <- names(expected_nrow) <- types_of_coefs
 
-# Use a precalculated model (see above):
+# Use a precalculated model (see above).
+
+# check dims:
 test_that(
   "Coef produces the expected dimensions", {
   # check rows:
@@ -38,7 +40,18 @@ test_that(
   }
 )
 
+# Check non-sensible type:
 test_that(
   "nonsensical coef types produce errors",
   expect_error(coef(m, type = "hafdsa"))
+)
+
+# Check coefficients are numeric:
+coef_classes <- vapply(coef_list, function(x) { class(x[["Coef"]]) }, "chr")
+
+test_that(
+  "coefficients are numeric", {
+    expect_equal(coef_classes[[1]], "numeric")
+    expect_equal(length(unique(coef_classes)), 1L)
+  }
 )

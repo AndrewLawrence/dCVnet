@@ -493,12 +493,12 @@ coef.dCVnet <- function(object, type = "all", ...) {
   if (type == "all") return(R)
   if (type == "mean") {
     R <- aggregate(R$Coef, by = list(Predictor = R$Predictor), mean)
-    R[, 2] <- "Coef"
+    colnames(R)[2] <- "Coef"
     return(R)
   }
   if (type == "median") {
-    R <- aggregate(R$Coef, by = list(Predictor = R$Predictor), median)
-    R[, 2] <- "Coef"
+    R <- aggregate(R$Coef, by = list(Predictor = R$Predictor), stats::median)
+    colnames(R)[2] <- "Coef"
     return(R)
   }
   # Remaining cases are byrep:
@@ -709,10 +709,7 @@ coefficients_summary <- function(object, ...) {
   Range <- as.data.frame(data.table::rbindlist(Range),
                          stringsAsFactors = FALSE)
 
-  ProductionModel <- coef(object$prod$model, type = "production")
-  #ProductionModel <- setNames(as.data.frame(as.matrix(ProductionModel),
-  #                                     stringsAsFactors = FALSE),
-  #                       "ProductionModel")
+  ProductionModel <- coef(object, type = "production")
   colnames(ProductionModel)[2] <- "ProductionModel"
 
   return(data.frame(ProductionModel,
