@@ -12,7 +12,13 @@ coefficients_summary(object, ...)
 \item{...}{" "}
 }
 \value{
-a data.frame containing
+a data.frame with Predictors in rows containing model coefficients
+and descriptives. Key columns: ProductionModel = the coefficients from the production
+model fit to the entire data. OuterMedian = the median over folds and
+repetitions of cross-validation. min, max = the smallest, largest values
+held by that coefficient over the cross-validation. propnz = the
+proportion of cross-validation folds for which the variable was non-zero
+(Note: this will be close to 1 for low alpha = ridge penalty)
 }
 \description{
 Extract the coefficients in the production model (fit to complete data)
