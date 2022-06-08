@@ -174,7 +174,7 @@ m2 <- dCVnet::dCVnet(y = blrsim$y,
                      alphalist = 0.1)
 
 # What was the performance of this model in the data it was fit to?
-m2.train <- summary(performance(m2$final$performance))
+m2.train <- summary(performance(m2$prod$performance))
 
 # specifically the accuracy?:
 print(m2.train[5,2])
@@ -296,7 +296,7 @@ rm2 <- dCVnet::dCVnet(y = ry,
                      alphalist = 0.1,
                      type.measure = "class")
 
-rm2.train <- summary(performance(rm2$final$performance))
+rm2.train <- summary(performance(rm2$prod$performance))
 
 rm2.test <- summary(
   structure(

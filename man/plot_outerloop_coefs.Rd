@@ -10,9 +10,9 @@ plot_outerloop_coefs(
   ordered = FALSE,
   abs = FALSE,
   intercept = FALSE,
-  final = TRUE,
-  final_col = "red",
-  final_shape = 24,
+  prod = TRUE,
+  prod_col = "red",
+  prod_shape = 24,
   panel_scaling = c("free", "fixed"),
   plot = TRUE
 )
@@ -36,13 +36,13 @@ passed to \code{\link{coef.dCVnet}} .
 
 \item{intercept}{include the value of the intercept coefficient in the plot?}
 
-\item{final}{add the final model coefficients as an overlay?
-(note: this is not in the return data, but can be accessed with
-coef(object$final$model))}
+\item{prod}{add the production model coefficients as an overlay?
+(note: this is not in the data returned by this function,
+but can be accessed with \code{coef(object, type = "production")})}
 
-\item{final_col}{colour for final model coefficients}
+\item{prod_col}{colour for production model coefficients}
 
-\item{final_shape}{shape for final model coefficients}
+\item{prod_shape}{shape for production model coefficients}
 
 \item{panel_scaling}{for mutli-outcome coefficients (mgaussian, multinomial).
 Should y-axes be independent, or same over all panels.}

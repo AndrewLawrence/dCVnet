@@ -58,17 +58,17 @@ log_results_to_excel <- function(object,
   hps <- selected_hyperparameters(object)
   ces <- coefficients_summary(object)
 
-  # final classification + hyperparameters:
-  final <- summary(object$final$performance)[, -3]
-  final.hps <- data.frame(Measure = c("...",
-                                      "Final Model Hyperparameters",
+  # production classification + hyperparameters:
+  prod <- summary(object$prod$performance)[, -3]
+  prod.hps <- data.frame(Measure = c("...",
+                                      "Production Model Hyperparameters",
                                       "lambda",
                                       "alpha"),
                           Value = NA,
                           stringsAsFactors = FALSE)
-  final.hps[3, 2] <- object$final$tuning$best$lambda
-  final.hps[4, 2] <- as.numeric(object$final$tuning$best$alpha)
-  final <- as.data.frame(data.table::rbindlist(list(final, final.hps)))
+  prod.hps[3, 2] <- object$prod$tuning$best$lambda
+  prod.hps[4, 2] <- as.numeric(object$prod$tuning$best$alpha)
+  prod <- as.data.frame(data.table::rbindlist(list(prod, prod.hps)))
 
   # do we need to calculate the reference models?:
   if ( identical(referencemodel, TRUE) ) {
@@ -92,7 +92,7 @@ log_results_to_excel <- function(object,
     subclass = casesummary.performance(object$performance),
     hyperparameters = hps$joint,
     coefficients = ces,
-    final = final
+    production = prod
   )
 
   cNames <- c(FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE)
@@ -110,7 +110,7 @@ log_results_to_excel <- function(object,
         c("Hyperparameters",
           "Hyperparameters chosen for outer loop folds/reps"),
         c("Coefficients", "Descriptives of Model coefficients"),
-        c("Final Model", "Performance of Final Model (not cross-validated)")
+        c("Production Model", "Performance of Model (not cross-validated)")
       ), stringsAsFactors = FALSE),
     c("sheetname", "name")
   )

@@ -20,6 +20,6 @@ proportion of the lambda sequence (for that alpha).}
 }
 \description{
 Plot averaged and best innerloop model performance highlighting
-the final selected alpha for a
+the selected alpha for a
 \code{\link{multialpha.repeated.cv.glmnet}}
 }

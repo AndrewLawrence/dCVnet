@@ -359,35 +359,36 @@ dCVnet <- function(
 
 
   # Production (Final) Model ------------------------------------------------
-  final_PPx <- caret::preProcess(x, method = c("center", "scale"))
-  xs <- predict(final_PPx, x)
+  prod_PPx <- caret::preProcess(x, method = c("center", "scale"))
+  xs <- predict(prod_PPx, x)
 
-  # Run the inner loop for the final model:
-  cat("\n\nFinal Model\n")
+  # Run the inner loop for the production model:
+  cat("\n\nProduction Model\n")
 
   cl.marcvglm$y <- y
   cl.marcvglm$x <- xs
-  final_tuning <- do.call("multialpha.repeated.cv.glmnet", cl.marcvglm)
+  prod_tuning <- do.call("multialpha.repeated.cv.glmnet", cl.marcvglm)
 
-  final_performance <- tidy_predict.glmnet(
-    mod = final_tuning$models[[final_tuning$bestmodel]],
+  prod_performance <- tidy_predict.glmnet(
+    mod = prod_tuning$models[[prod_tuning$bestmodel]],
     newx = xs,
     family = family,
     newy = y,
     binomial_thresh = cutoff,
     offset = offset,
-    label = "Final",
-    s = final_tuning$best$lambda)
+    label = "Production",
+    s = prod_tuning$best$lambda)
 
-  final_performance <- structure(final_performance,
+  prod_performance <- structure(prod_performance,
+                                family = family,
                                  class = c("performance",
                                            "data.frame"))
 
-  final <- list(
-    tuning = drop_models.multialpha.repeated.cv.glmnet(final_tuning),
-    performance = final_performance,
-    model = final_tuning,
-    preprocess = final_PPx) # include the preprocessing for predict method.
+  prod <- list(
+    tuning = drop_models.multialpha.repeated.cv.glmnet(prod_tuning),
+    performance = prod_performance,
+    model = prod_tuning,
+    preprocess = prod_PPx) # include the preprocessing for predict method.
 
   time_stop <- Sys.time()
   run_time <- difftime(time_stop, time_start, units = "hours")
@@ -396,7 +397,7 @@ dCVnet <- function(
   obj <- structure(list(tuning = outers,
                         performance = performance,
                         folds = outfolds,
-                        final = final,
+                        prod = prod,
                         input = list(callenv = callenv,
                                      runtime = run_time,
                                      lambdas = lambdas)),
@@ -414,37 +415,58 @@ dCVnet <- function(
 }
 
 
-# Extract logreg coefficients from the outerloop best models:
+# Extract coefficients from a dCVnet object:
 #' coef.dCVnet
 #'
-#' Coefficients from a dCVnet object.
+#' Coefficients from a dCVnet object. If type is "production" this gives the
+#' coefficients from the production model fit to all data. Otherwise
+#' coefficients are returned from the outerloop of the cross-validation.
 #'
 #' @param object a dCVnet object
 #' @param type how to return coefficients.
 #'     \itemize{
-#'     \item{\code{"all"} - return separate coefficients for each rep/fold.}
-#'     \item{\code{"rep"} - return separate coefficients for each rep
-#'         (mean average over folds).}
-#'     \item{\code{"mean"} - return mean over \code{"rep"}.}
-#'     \item{\code{"median"} - return median over \code{"rep"}.}
+#'     \item{\code{"production"} - the "production" model coefficients}
+#'     \item{\code{"all"} - return separate coefficients
+#'         for each fold & rep of CV}
+#'     \item{\code{"mean"} - return mean over \code{"all"}.}
+#'     \item{\code{"median"} - return median over \code{"all"}.}
+#'     \item{\code{"byrep"} - return separate coefficients for each rep of CV
+#'         (take mean average over folds).}
+#'     \item{\code{byrep_mean} - mean over \code{"byrep"}}
+#'     \item{\code{byrep_mean} - median over \code{"byrep"}}
 #'     }
 #' @param ... " "
 #'
-#' @return a data.frame of coefficient values
+#' @return a data.frame of coefficient values (see type argument) containing
+#'    columns: Predictor and Coef (as well as Rep and fold if applicable)
 #'
 #' @name coef.dCVnet
+#'
+#' @seealso coefficients_summary
 #'
 #' @export
 coef.dCVnet <- function(object, type = "all", ...) {
   # Type can be:
+  #   production - a.k.a. final model coefficients
   #   all - coefficients for each rep/fold.
   #   rep - mean average per rep.
   #   mean - mean of per-rep means.
   #   median = median of per-rep means.
 
-  type <- match.arg(type, choices = c("all", "rep", "mean", "median"))
+  type <- match.arg(type, choices = c("all",
+                                      "production",
+                                      "mean",
+                                      "median",
+                                      "byrep",
+                                      "byrep_mean",
+                                      "byrep_median"))
 
-  # next handle dCVnet cases:
+  # first handle production:
+  if ( type == "production" ) {
+    return(tidy_coef.multialpha.repeated.cv.glmnet(object$prod$model))
+  }
+
+  # next handle outerloop coefficients:
 
   # works on the output of the outerloop.
   #   Given the 'best' alpha/lambda from the inner loop,
@@ -469,27 +491,40 @@ coef.dCVnet <- function(object, type = "all", ...) {
                   2)
 
   if (type == "all") return(R)
+  if (type == "mean") {
+    R <- aggregate(R$Coef, by = list(Predictor = R$Predictor), mean)
+    R[, 2] <- "Coef"
+    return(R)
+  }
+  if (type == "median") {
+    R <- aggregate(R$Coef, by = list(Predictor = R$Predictor), median)
+    R[, 2] <- "Coef"
+    return(R)
+  }
+  # Remaining cases are byrep:
+
   # Aggregate over Repetitions:
   R <- aggregate(R$Coef,
                  by = list(Predictor = R$Predictor,
                            Rep = R$Rep),
                  mean)
   names(R)[3] <- "Coef"
+  R <- R[, c(1, 3, 2)] # reorder columns
   return(switch(type,
-                rep = R,
-                mean = stats::setNames(
+                byrep = R,
+                byrep_mean = stats::setNames(
                   aggregate(R$Coef,
                             by = list(Predictor = R$Predictor),
                             mean),
                   c("Predictor", "Coef")),
-                median = stats::setNames(
+                byrep_median = stats::setNames(
                   aggregate(R$Coef,
                             by = list(Predictor = R$Predictor),
                             stats::median),
                   c("Predictor", "Coef")),
                 stop(paste("type:",
                            type,
-                           " - should be one of: all, rep, mean, median"))
+                           " - is non-sensical"))
   ))
 }
 
@@ -593,8 +628,8 @@ selected_hyperparameters <- function(object,
                                      ...) {
   what <- match.arg(what)
 
-  # what were the final hyperparams:
-  FF <- as.data.frame(object$final$tuning$best, stringsAsFactors = FALSE)
+  # what were the production hyperparams:
+  FF <- as.data.frame(object$prod$tuning$best, stringsAsFactors = FALSE)
   FF.summary <- FF[, c("alpha", "lambda")]
 
   # What do the 'best-fitting' results of the inner loops look like:
@@ -610,7 +645,7 @@ selected_hyperparameters <- function(object,
                   FUN.VALUE = c(""),
                   2)
 
-  if ( what == "data") return(list(CVfolds = R, FinalModel = FF))
+  if ( what == "data") return(list(CVfolds = R, ProductionModel = FF))
 
   alphas <- setNames(sort(unique(R$alpha)),
                      paste0("Alpha:", sort(unique(R$alpha))))
@@ -630,25 +665,29 @@ selected_hyperparameters <- function(object,
   J <- as.data.frame(data.table::rbindlist(J), stringsAsFactors = FALSE)
 
   if ( what == "summary" ) {
-    return(list(alpha = A, lambda = L, joint = J, FinalModel = FF.summary))
+    return(list(alpha = A, lambda = L, joint = J, ProductionModel = FF.summary))
   } else {
     return(list(data = list(CVfolds = R,
-                            FinalModel = FF),
+                            ProductionModel = FF),
                 summary = list(alpha = A, lambda = L, joint = J,
-                               FinalModel = FF.summary)))
+                               ProductionModel = FF.summary)))
   }
 }
 
 
 #' coefficients_summary
 #'
-#' Describe the coefficients in the outer loop/final production model
-#'     of a dCVnet object.
+#' Extract the coefficients in the production model (fit to complete data)
+#'     and provide descriptives for the coefficients in the outerloop
+#'     cross-validation
 #'
 #' @param object a dCVnet object
 #' @param ... " "
 #'
 #' @name coefficients_summary
+#'
+#' @return a data.frame containing
+#' @seealso coef.dCVnet
 #'
 #' @export
 coefficients_summary <- function(object, ...) {
@@ -670,13 +709,13 @@ coefficients_summary <- function(object, ...) {
   Range <- as.data.frame(data.table::rbindlist(Range),
                          stringsAsFactors = FALSE)
 
-  FinalModel <- tidy_coef.multialpha.repeated.cv.glmnet(object$final$model)
-  #FinalModel <- setNames(as.data.frame(as.matrix(FinalModel),
+  ProductionModel <- coef(object$prod$model, type = "production")
+  #ProductionModel <- setNames(as.data.frame(as.matrix(ProductionModel),
   #                                     stringsAsFactors = FALSE),
-  #                       "FinalModel")
-  colnames(FinalModel)[2] <- "FinalModel"
+  #                       "ProductionModel")
+  colnames(ProductionModel)[2] <- "ProductionModel"
 
-  return(data.frame(FinalModel,
+  return(data.frame(ProductionModel,
                     OuterMedian = Medians[, 2],
                     Range,
                     stringsAsFactors = FALSE))
@@ -742,16 +781,16 @@ summary.dCVnet <- function(object, ...) {
   # Summarise inner loop performances (i.e. best cvm)  by rep:
   cvm_repmean <- aggregate(R$cvm, by = list(Rep = R$Rep), FUN = mean)
 
-  # summarise 'final' model performance
-  min_fmp <- summary(object$final$performance, short = TRUE, label = "None")
+  # summarise 'production' model performance
+  min_pmp <- summary(object$prod$performance, short = TRUE, label = "None")
 
-  # fInal model hyper parameters:
-  fmp_hp <- summary(object$final$tuning, print = FALSE)
-  fmp_hp <- fmp_hp[fmp_hp$best, ]
+  # final model hyper parameters:
+  pmp_hp <- summary(object$prod$tuning, print = FALSE)
+  pmp_hp <- pmp_hp[pmp_hp$best, ]
 
-  fmp_hp_str <- c(alpha = fmp_hp$alpha,
-                  lambda = formatC(fmp_hp$lambda),
-                  cvm = formatC(fmp_hp$cvm))
+  pmp_hp_str <- c(alpha = pmp_hp$alpha,
+                  lambda = formatC(pmp_hp$lambda),
+                  cvm = formatC(pmp_hp$cvm))
 
   # Write this out:
   cat("\n")
@@ -768,7 +807,7 @@ summary.dCVnet <- function(object, ...) {
   .titlecat("Inner Loop Model Performance")
   cat("[Note: inner-loop performance is not independently cross-validated]\n\n")
   cat(paste0("metric (cvm): ",
-             attr(object$final$tuning$best, "type.measure"), "\n\n"))
+             attr(object$prod$tuning$best, "type.measure"), "\n\n"))
   cat("cvm summary (per-rep, averaged over folds):\n")
   print(summary(cvm_repmean$x))
   cat("cvm summary (over folds):\n")
@@ -777,9 +816,9 @@ summary.dCVnet <- function(object, ...) {
 
   .titlecat("'Production' Model")
   cat("Production Performance (not cross-validated):\n")
-  print(min_fmp, digits = 3)
+  print(min_pmp, digits = 3)
   cat("Production Hyperparameter Tuning:\n")
-  print(fmp_hp_str, quote = FALSE)
+  print(pmp_hp_str, quote = FALSE)
 
   invisible(R)
 }
@@ -787,7 +826,7 @@ summary.dCVnet <- function(object, ...) {
 #' predict.dCVnet
 #'
 #' predict method for a \code{\link{dCVnet}} object.
-#'     predictions come from the "final" model fitted to the full data.
+#'     predictions come from the "production" model fitted to the full data.
 #'     As a result they do not reflect cross-validated/out-of-sample
 #'     performance.
 #'
@@ -805,14 +844,14 @@ summary.dCVnet <- function(object, ...) {
 predict.dCVnet <- function(object,
                            newx,
                            ...) {
-  # apply the preprocessing from the final model:
+  # apply the preprocessing from the production model:
 
   preProcessPredict <- utils::getFromNamespace(x = "predict.preProcess",
                                                ns = "caret")
   newx <- as.matrix(newx) # coerce to matrix (this fixed a random bug...)
-  newx <- preProcessPredict(object$final$preprocessing, newx)
+  newx <- preProcessPredict(object$prod$preprocessing, newx)
   # run the prediction:
-  predict.multialpha.repeated.cv.glmnet(object$final$model,
+  predict.multialpha.repeated.cv.glmnet(object$prod$model,
                                         newx = newx,
                                         ...)
 }

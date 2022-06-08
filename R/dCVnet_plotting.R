@@ -7,7 +7,7 @@
 #' plot.multialpha.repeated.cv.glmnet
 #'
 #' Plot averaged and best innerloop model performance highlighting
-#'     the final selected alpha for a
+#'     the selected alpha for a
 #'     \code{\link{multialpha.repeated.cv.glmnet}}
 #'
 #' @param x a \code{\link{multialpha.repeated.cv.glmnet}} object.
@@ -370,11 +370,11 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
 #' @param ordered sort predictors by size?
 #' @param abs plot absolute values?
 #' @param intercept include the value of the intercept coefficient in the plot?
-#' @param final add the final model coefficients as an overlay?
-#'     (note: this is not in the return data, but can be accessed with
-#'      coef(object$final$model))
-#' @param final_col colour for final model coefficients
-#' @param final_shape shape for final model coefficients
+#' @param prod add the production model coefficients as an overlay?
+#'     (note: this is not in the data returned by this function,
+#'     but can be accessed with \code{coef(object, type = "production")})
+#' @param prod_col colour for production model coefficients
+#' @param prod_shape shape for production model coefficients
 #' @param panel_scaling for mutli-outcome coefficients (mgaussian, multinomial).
 #'     Should y-axes be independent, or same over all panels.
 #' @param plot (bool) should the plot also be rendered (\code{TRUE})?,
@@ -389,9 +389,9 @@ plot_outerloop_coefs <- function(object,
                                  ordered = FALSE,
                                  abs = FALSE,
                                  intercept = FALSE,
-                                 final = TRUE,
-                                 final_col = "red",
-                                 final_shape = 24,
+                                 prod = TRUE,
+                                 prod_col = "red",
+                                 prod_shape = 24,
                                  panel_scaling = c("free", "fixed"),
                                  plot = TRUE) {
 
@@ -437,13 +437,13 @@ plot_outerloop_coefs <- function(object,
     p <- p + ggplot2::geom_point()
   }
 
-  if ( final ) {
-    fcoef.df <- tidy_coef.multialpha.repeated.cv.glmnet(object$final$model)
+  if ( prod ) {
+    fcoef.df <- tidy_coef.multialpha.repeated.cv.glmnet(object$prod$model)
     if ( abs ) {
       fcoef.df$Coef <- abs(fcoef.df$Coef)
     }
-    fcoef.df$fold <- "Final"
-    fcoef.df$rep <- "Final"
+    fcoef.df$fold <- "Production"
+    fcoef.df$rep <- "Production"
     colnames(fcoef.df)[colnames(fcoef.df) == "Coef"] <- "stdbeta"
 
     if ( ! intercept ) {
@@ -458,8 +458,8 @@ plot_outerloop_coefs <- function(object,
 
 
     p <- p + ggplot2::geom_point(data = fcoef.df,
-                                 colour = final_col,
-                                 shape = final_shape)
+                                 colour = prod_col,
+                                 shape = prod_shape)
   }
 
   p <- p + ggplot2::facet_wrap(~Outcome, scales = panel_scaling)

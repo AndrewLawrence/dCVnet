@@ -11,7 +11,14 @@ coefficients_summary(object, ...)
 
 \item{...}{" "}
 }
+\value{
+a data.frame containing
+}
 \description{
-Describe the coefficients in the outer loop/final production model
-of a dCVnet object.
+Extract the coefficients in the production model (fit to complete data)
+and provide descriptives for the coefficients in the outerloop
+cross-validation
+}
+\seealso{
+coef.dCVnet
 }

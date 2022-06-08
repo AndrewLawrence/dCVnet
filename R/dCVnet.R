@@ -11,17 +11,19 @@
 #'
 #' The \code{lambda} and \code{alpha} hyperparameters of the elastic-net
 #' allow models to freely
-#' range from effectively unregularised, to heavily-regularised. Further a
-#' mixture of two types of regularisation: L2 (ridge) and L1 (LASSO) are
-#' possible. This regularisation produces dimensionality reduction and
+#' range from effectively unregularised, to heavily-regularised (via lambda).
+#' With a balance of two types of regularisation: L2 (ridge) and L1 (LASSO)
+#' (alpha). This regularisation produces dimensionality reduction and
 #' variable selection in the predictors.
 #'
-#' The values of the hyperparameters (and so the amount and type of
-#' regularisation) are selected on the basis of cross-validated model
-#' performance - i.e. data-driven.
+#' The values of the lambda and alpha hyperparameters (and so the amount
+#' and type of regularisation) are selected on the basis of cross-validated
+#' model performance - i.e. a data-driven approach.
 #'
-#' The fully nested cross-validation keeps the final performance estimates
-#' 'honest' by reducing optimism bias.
+#' Using a fully nested cross-validation (instead of reporting the CV
+#' performance of the selected hyperparameters) keeps the cross-validated
+#' performance estimates 'honest' by reducing optimism bias related to
+#' hyperparameter tuning.
 #'
 #' @importFrom glmnet glmnet cv.glmnet
 #' @importFrom stats aggregate as.formula coef glm
@@ -39,7 +41,9 @@ NULL
 
 # model families are being added gradually to this package.
 #   supported model families and methods for checking are set here
-supported_model_families <- function() c("binomial")
+supported_model_families <- function() {
+  c("binomial", "multinomial", "gaussian", "poisson", "mgaussian", "cox")
+}
 
 check_model_family <- function(family) {
   if ( ! family %in% supported_model_families() ) {

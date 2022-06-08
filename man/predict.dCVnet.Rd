@@ -20,7 +20,7 @@ predictions of the requested type.
 }
 \description{
 predict method for a \code{\link{dCVnet}} object.
-predictions come from the "final" model fitted to the full data.
+predictions come from the "production" model fitted to the full data.
 As a result they do not reflect cross-validated/out-of-sample
 performance.
 }

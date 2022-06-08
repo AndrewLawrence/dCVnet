@@ -11,18 +11,28 @@
 
 \item{type}{how to return coefficients.
 \itemize{
-\item{\code{"all"} - return separate coefficients for each rep/fold.}
-\item{\code{"rep"} - return separate coefficients for each rep
-(mean average over folds).}
-\item{\code{"mean"} - return mean over \code{"rep"}.}
-\item{\code{"median"} - return median over \code{"rep"}.}
+\item{\code{"production"} - the "production" model coefficients}
+\item{\code{"all"} - return separate coefficients
+for each fold & rep of CV}
+\item{\code{"mean"} - return mean over \code{"all"}.}
+\item{\code{"median"} - return median over \code{"all"}.}
+\item{\code{"byrep"} - return separate coefficients for each rep of CV
+(take mean average over folds).}
+\item{\code{byrep_mean} - mean over \code{"byrep"}}
+\item{\code{byrep_mean} - median over \code{"byrep"}}
 }}
 
 \item{...}{" "}
 }
 \value{
-a data.frame of coefficient values
+a data.frame of coefficient values (see type argument) containing
+columns: Predictor and Coef (as well as Rep and fold if applicable)
 }
 \description{
-Coefficients from a dCVnet object.
+Coefficients from a dCVnet object. If type is "production" this gives the
+coefficients from the production model fit to all data. Otherwise
+coefficients are returned from the outerloop of the cross-validation.
+}
+\seealso{
+coefficients_summary
 }

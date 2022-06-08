@@ -110,7 +110,7 @@ p3 <- plot(combined_roc_data)
 ```
 
 # Plotting uncrossvalidated ROC
-The 'final model' of dCVnet is the model we cross-validated, it would be used 
+The 'production model' of dCVnet is the model we cross-validated, it would be used 
 to make a prediction for new data. However its performance in the training data 
 not crossvalidated, and so is typically an overestimate.
 
@@ -118,9 +118,9 @@ Sometimes we want to see this training set performance all the same - it forms
 an upper bound on cross-validated performance. *However, care must always be *
 *taken not to interpret this as a cross-validated estimate.*
 
-To plot the uncrossvalidated performance of a final model:
-```{r final model, echo=TRUE, fig.height=7, fig.width=7}
-plot(extract_rocdata(mod1$final$performance))
+To plot the uncrossvalidated performance of a production model:
+```{r production model, echo=TRUE, fig.height=7, fig.width=7}
+plot(extract_rocdata(mod1$prod$performance))
 ```
 
 
@@ -142,12 +142,12 @@ d2 <- mod2 %>%
   average_rocdata()
 d2$run <- "Model 2" # labels the data from this model
 
-d3 <- mod1$final$performance %>% 
+d3 <- mod1$prod$performance %>% 
   extract_rocdata() %>% 
   average_rocdata()
 d3$run <- "Model 1 (train)" # labels the data from this model.
 
-d4 <- mod2$final$performance %>% 
+d4 <- mod2$prod$performance %>% 
   extract_rocdata() %>% 
   average_rocdata()
 d4$run <- "Model 2 (train)" # labels the data from this model.

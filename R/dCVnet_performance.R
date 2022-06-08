@@ -90,7 +90,7 @@ performance <- function(x, ...) {
 #' @export
 performance.default <- function(x, ...) {
   # if we are given a list, lets assume it is a dCVnet style object
-  #   such as dCVnet$final
+  #   such as dCVnet$prod
 
   # Because we're not certain then check the structure:
   if (!"performance" %in% names(x)) {
