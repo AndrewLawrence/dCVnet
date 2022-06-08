@@ -34,7 +34,7 @@
 #' @examples
 #' \dontrun{
 #' data("CoxExample", package = "glmnet") # x and y
-#' mod <- repeated.cv.glmnet(x = x, y = y, family = "cox")
+#' mod <- repeated.cv.glmnet(x = CoxExample$x, y = CoxExample$y, family = "cox")
 #' }
 #' @export
 repeated.cv.glmnet <- function(x, y,

@@ -633,13 +633,15 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #' data("CoxExample", package = "glmnet") # x and y
 #' # folds for unstratified 10x-repeated 5-fold cv:
 #' foldlist <- replicate(10,
-#' sample(1:5, size = NROW(x), replace = TRUE),
+#' sample(1:5, size = NROW(CoxExample$x), replace = TRUE),
 #' simplify = FALSE)
 #' names(foldlist) <- paste0("Rep", 1:10) # label the replications.
-#' lambdaseq <- glmnet::cv.glmnet(x=x, y=y, family = "cox")$lambda
+#' lambdaseq <- glmnet::cv.glmnet(x=CoxExample$x,
+#'     y=CoxExample$y, family = "cox")$lambda
 #' # create a list of models:
 #' modellist <- lapply(foldlist, function(ff) {
-#' glmnet::cv.glmnet(x = x, y = y, family = "cox", foldid = ff,
+#' glmnet::cv.glmnet(x = CoxExample$x, y = CoxExample$y,
+#' family = "cox", foldid = ff,
 #'     lambda = lambdaseq) } )
 #'
 #' # use amalgamate to average results:
@@ -647,12 +649,12 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #'
 #' # compare rep-rep performance variability with the average performance:
 #' # rep1:
-#' glmnet::plot.cv.glmnet(modellist[[1]], main = "rep1")
+#' plot(modellist[[1]], main = "rep1")
 #' # rep2:
-#' glmnet::plot.cv.glmnet(modellist[[2]], main = "rep2")
+#' plot(modellist[[2]], main = "rep2")
 #' # etc...
 #' # mean:
-#' glmnet::plot.cv.glmnet(mod, main = "averaged")
+#' plot(mod, main = "averaged")
 #' }
 #' @seealso \code{\link[glmnet]{cv.glmnet}}
 #' @export
