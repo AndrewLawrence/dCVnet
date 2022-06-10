@@ -301,6 +301,7 @@ NULL
 #' @inheritParams summary.performance
 perf_nomial <- function(object,
                         short = FALSE,
+                        somersD = FALSE,
                         pvprevalence = "observed") {
   if (identical(pvprevalence, "observed")) {
     pvprevalence <- NULL
@@ -393,8 +394,10 @@ perf_nomial <- function(object,
 #'     Used for gaussian and poisson families
 #' @importFrom ModelMetrics rmse mae rmsle
 #' @importFrom stats lm cor
+#' @importFrom DescTools SomersDelta
 perf_cont <- function(object,
                       short = FALSE,
+                      somersD = FALSE,
                       pvprevalence = "observed") {
 
   f <- family(object)
@@ -404,7 +407,11 @@ perf_cont <- function(object,
   cval <- stats::cor(object$reference,
                      object$prediction)
 
-  mod <- stats::coef(stats::lm(reference ~ prediction,
+  # used for centering:
+  ref_mean <- mean(object$reference) #nolint
+
+  mod <- stats::coef(stats::lm(I(reference - ref_mean) ~
+                               I(prediction - ref_mean),
                                data = as.data.frame(object)))
 
   # Using ModelMetrics:
@@ -429,6 +436,13 @@ perf_cont <- function(object,
   # Add scaled versions of RMSE & MAE:
   R["SDScaledRMSE"] <- R["RMSE"] / ysd
   R["SDScaledMAE"] <- R["MAE"] / ysd
+
+
+  # Optionally add Somers' D:
+  if (somersD) {
+    R["SomersDxy"] <- DescTools::SomersDelta(x = object$prediction,
+                                             y = object$reference)
+  }
 
   if ( f == "poisson" ) {
     log_dat <- data.frame(reference = log1p(object$reference),
@@ -459,6 +473,7 @@ perf_cont <- function(object,
 #' @importFrom survival Surv is.Surv
 perf_cox <- function(object,
                      short = FALSE,
+                     somersD = FALSE,
                      pvprevalence = "observed") {
   R <- Hmisc::rcorr.cens(
     x = object$prediction,
@@ -483,6 +498,7 @@ perf_cox <- function(object,
 #'
 perf_mgaussian <- function(object,
                            short = FALSE,
+                           somersD = FALSE,
                            pvprevalence = "observed") {
   # predictions to iterate through:
   cn <- colnames(object)
@@ -544,6 +560,8 @@ perf_mgaussian <- function(object,
 #' @param label a label can be assigned here.
 #'      (Warning - setting a length 1 vector will concatenate multiple reps.)
 #' @param short (bool) return a core set of performance measures.
+#' @param somersD (bool) calculate the computationally expensive Somers' D for
+#'     certain families (gaussian, poisson)
 #' @param pvprevalence argument for adjustment of PPV/NPV calculation for
 #'     binomial or multinomial families. Either "observed" to use the observed
 #'     prevalence, or a number \code{[0,1]} (for binomial),
@@ -556,6 +574,7 @@ summary.performance <- function(object,
                                 label = NA,
                                 short = FALSE,
                                 pvprevalence = "observed",
+                                somersD = FALSE,
                                 ...) {
   # Function assigns a label if asked to (for multi performance mode.)
   #   In multiperformance mode it uses label to produce columns of data.
@@ -573,6 +592,7 @@ summary.performance <- function(object,
   # Two methods:
   .single_cpsummary <- function(performance,
                                 short = short,
+                                somersD = somersD,
                                 pvprevalence = "observed") {
     short
     f <- family(performance)
@@ -586,6 +606,7 @@ summary.performance <- function(object,
                   stop("family not supported"))
     R <- fxn(performance,
              short = short,
+             somersD = somersD,
              pvprevalence = pvprevalence)
     rownames(R) <- NULL
     return(R)
@@ -593,6 +614,7 @@ summary.performance <- function(object,
 
   .multi_cpsummary <- function(performance,
                                short,
+                               somersD,
                                pvprevalence) {
     R <- lapply(seq_along(unique(performance$label)),
                 function(i) {
@@ -601,6 +623,7 @@ summary.performance <- function(object,
                   R <- summary.performance(object = dd,
                                            label = rr,
                                            short = short,
+                                           somersD = somersD,
                                            pvprevalence = pvprevalence)
                   # Parse back to long.
                   R$label <- NULL # rr
@@ -618,10 +641,18 @@ summary.performance <- function(object,
   if ( is.null(object$label) ) {
     R <- .single_cpsummary(object, short = short, pvprevalence = pvprevalence)
   } else {
-    if ( length(unique(object$label)) == 1 ) {
-      R <- .single_cpsummary(object, short = short, pvprevalence = pvprevalence)
+    if (length(unique(object$label)) == 1) {
+      R <-
+        .single_cpsummary(object,
+                          short = short,
+                          somersD = somersD,
+                          pvprevalence = pvprevalence)
     } else {
-      R <- .multi_cpsummary(object, short = short, pvprevalence = pvprevalence)
+      R <-
+        .multi_cpsummary(object,
+                         short = short,
+                         somersD = somersD,
+                         pvprevalence = pvprevalence)
     }
   }
   # Option : remove label if it is there.
@@ -650,6 +681,8 @@ family.performance <- function(object, ...) {
 #'
 #' @param dCVnet_object result from a call to \code{\link{dCVnet}}
 #' @param short (bool) return a core set of performance measures.
+#' @param somersD (bool) calculate the computationally expensive Somers' D for
+#'     certain families (gaussian, poisson)
 #' @param pvprevalence allows calculation of PPV/NPV at different prevalences.
 #'      set to "observed" to use the prevalence of the data.
 #'      For binomial data use a single value, for multinomial use a
@@ -663,6 +696,7 @@ family.performance <- function(object, ...) {
 #' @export
 report_performance_summary <- function(dCVnet_object,
                                        short = FALSE,
+                                       somersD = FALSE,
                                        pvprevalence = "observed") {
 
   if ( inherits(dCVnet_object, "dCVnet") ) {
@@ -677,6 +711,7 @@ report_performance_summary <- function(dCVnet_object,
     ols <- summary(performance(dCVnet_object),
                    label = "None",
                    short = short,
+                   somersD = somersD,
                    pvprevalence = pvprevalence)
     names(ols)[2] <- "Rep1"
     return(ols)
@@ -685,6 +720,7 @@ report_performance_summary <- function(dCVnet_object,
   # extract performance measures for each label:
   ols <- summary(performance(dCVnet_object),
                  short = short,
+                 somersD = somersD,
                  pvprevalence = pvprevalence)
 
   fisher_measures <- c("r", "r2", "logged_r", "logged_r2")

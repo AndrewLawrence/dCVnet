@@ -7,6 +7,7 @@
 report_performance_summary(
   dCVnet_object,
   short = FALSE,
+  somersD = FALSE,
   pvprevalence = "observed"
 )
 }
@@ -14,6 +15,9 @@ report_performance_summary(
 \item{dCVnet_object}{result from a call to \code{\link{dCVnet}}}
 
 \item{short}{(bool) return a core set of performance measures.}
+
+\item{somersD}{(bool) calculate the computationally expensive Somers' D for
+certain families (gaussian, poisson)}
 
 \item{pvprevalence}{allows calculation of PPV/NPV at different prevalences.
 set to "observed" to use the prevalence of the data.

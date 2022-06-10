@@ -47,7 +47,7 @@ test_that(
 )
 
 # Check coefficients are numeric:
-coef_classes <- vapply(coef_list, function(x) { class(x[["Coef"]]) }, "chr")
+coef_classes <- vapply(coef_list, function(x) class(x[["Coef"]]), "chr")
 
 test_that(
   "coefficients are numeric", {

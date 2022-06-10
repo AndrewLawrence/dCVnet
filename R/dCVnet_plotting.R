@@ -375,7 +375,7 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
 #'     but can be accessed with \code{coef(object, type = "production")})
 #' @param prod_col colour for production model coefficients
 #' @param prod_shape shape for production model coefficients
-#' @param panel_scaling for mutli-outcome coefficients (mgaussian, multinomial).
+#' @param panel_scaling for multi-outcome coefficients (mgaussian, multinomial).
 #'     Should y-axes be independent, or same over all panels.
 #' @param plot (bool) should the plot also be rendered (\code{TRUE})?,
 #'     or just returned as a R object (\code{FALSE}).

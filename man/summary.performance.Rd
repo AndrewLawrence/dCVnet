@@ -4,7 +4,14 @@
 \alias{summary.performance}
 \title{summary.performance}
 \usage{
-\method{summary}{performance}(object, label = NA, short = FALSE, pvprevalence = "observed", ...)
+\method{summary}{performance}(
+  object,
+  label = NA,
+  short = FALSE,
+  pvprevalence = "observed",
+  somersD = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{a \code{\link{performance}} object.}
@@ -19,6 +26,9 @@ binomial or multinomial families. Either "observed" to use the observed
 prevalence, or a number \code{[0,1]} (for binomial),
 or a vector of length n_categories (for multinomial) containing numerics
 in \code{[0,1]}.}
+
+\item{somersD}{(bool) calculate the computationally expensive Somers' D for
+certain families (gaussian, poisson)}
 
 \item{...}{additional arguments (ignored)}
 }

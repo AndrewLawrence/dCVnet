@@ -28,6 +28,7 @@ Imports:
     survival,
     psych,
     Hmisc,
+    DescTools,
     methods,
     stats
 Roxygen: list(markdown = TRUE)

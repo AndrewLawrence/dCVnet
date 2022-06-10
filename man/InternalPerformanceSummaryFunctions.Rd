@@ -9,18 +9,26 @@
 \title{Internal summary functions for performance objects from
 different model families.}
 \usage{
-perf_nomial(object, short = FALSE, pvprevalence = "observed")
+perf_nomial(object, short = FALSE, somersD = FALSE, pvprevalence = "observed")
 
-perf_cont(object, short = FALSE, pvprevalence = "observed")
+perf_cont(object, short = FALSE, somersD = FALSE, pvprevalence = "observed")
 
-perf_cox(object, short = FALSE, pvprevalence = "observed")
+perf_cox(object, short = FALSE, somersD = FALSE, pvprevalence = "observed")
 
-perf_mgaussian(object, short = FALSE, pvprevalence = "observed")
+perf_mgaussian(
+  object,
+  short = FALSE,
+  somersD = FALSE,
+  pvprevalence = "observed"
+)
 }
 \arguments{
 \item{object}{a \code{\link{performance}} object.}
 
 \item{short}{(bool) return a core set of performance measures.}
+
+\item{somersD}{(bool) calculate the computationally expensive Somers' D for
+certain families (gaussian, poisson)}
 
 \item{pvprevalence}{argument for adjustment of PPV/NPV calculation for
 binomial or multinomial families. Either "observed" to use the observed

@@ -44,7 +44,7 @@ but can be accessed with \code{coef(object, type = "production")})}
 
 \item{prod_shape}{shape for production model coefficients}
 
-\item{panel_scaling}{for mutli-outcome coefficients (mgaussian, multinomial).
+\item{panel_scaling}{for multi-outcome coefficients (mgaussian, multinomial).
 Should y-axes be independent, or same over all panels.}
 
 \item{plot}{(bool) should the plot also be rendered (\code{TRUE})?,

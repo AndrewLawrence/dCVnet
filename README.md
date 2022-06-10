@@ -205,7 +205,7 @@ cross-validation loop is not as important for inference.
 
 <a name="fn2"><sup>2</sup></a> Where *p*/*n* > 1, the standard least-squares regression 
 solutions are not defined and generalised models will have convergence problems.
-In both cases predictors will have perfect mutlicollinearity. Where *p*/*n* > 0.1,
+In both cases predictors will have perfect multicollinearity. Where *p*/*n* > 0.1,
 common [rules of thumb](https://en.wikipedia.org/wiki/One_in_ten_rule) 
 for sample size are violated.
 
