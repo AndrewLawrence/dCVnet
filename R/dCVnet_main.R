@@ -176,7 +176,7 @@ dCVnet <- function(
   # Note: this is by default stratified by y, we obtain unstratified sampling
   #         by giving caret::createMultiFolds a single-level factor/char.
   ystrat <- y
-  if ( identical(opt.ystratify, FALSE) | family %in% c("cox", "mgaussian") ) {
+  if ( identical(opt.ystratify, FALSE) || family %in% c("cox", "mgaussian") ) {
     ystrat <- rep("x", length(y))
   }
   outfolds <- caret::createMultiFolds(y = ystrat,
@@ -280,7 +280,7 @@ dCVnet <- function(
 
       of <- outfolds[[i]]
 
-      sel_train <- seq(nrow(x)) %in% of
+      sel_train <- seq_len(nrow(x)) %in% of
       sel_test <- !sel_train
 
       trainx <- subset(x, sel_train)

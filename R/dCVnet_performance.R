@@ -524,8 +524,7 @@ perf_mgaussian <- function(object,
   RR <- R[[1]]
   RR$label <- NULL
   RR$Value <-
-    (Reduce("+", x = lapply(R, function(x)
-      x$Value))) / length(pcols)
+    (Reduce("+", x = lapply(R, function(x) x$Value))) / length(pcols)
 
   RR$Measure <- paste0("mean ", RR$Measure)
 

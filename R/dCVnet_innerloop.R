@@ -190,7 +190,7 @@ multialpha.repeated.cv.glmnet <- function(
 
   # Fold generation:
   ystrat <- y
-  if ( identical(opt.ystratify, FALSE) | family %in% c("cox", "mgaussian") ) {
+  if ( identical(opt.ystratify, FALSE) || family %in% c("cox", "mgaussian") ) {
     # caret stratification isn't sensible for cox / mgauss:
     ystrat <- rep("x", NROW(y))
   }

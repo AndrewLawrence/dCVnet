@@ -469,7 +469,8 @@ startup_message <- function(k_inner, nrep_inner,
       cat(paste0("\t", stab[i], " of outcome: ", names(stab)[i], "\n"))
     }
   } else {
-    print(summary(parsed$y)); cat("\n")
+    print(summary(parsed$y))
+    cat("\n")
   }
 
   cat("Tuning:\n")
@@ -497,8 +498,8 @@ startup_message <- function(k_inner, nrep_inner,
 #'
 #' @export
 cv.glmnet.modelsummary <- function(mod,
-                                   alpha=NA,
-                                   rep=NA) {
+                                   alpha = NA,
+                                   rep = NA) {
   return(data.frame(s = names(mod$nzero),
                     lambda = mod$lambda,
                     cvm = mod$cvm,

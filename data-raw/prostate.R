@@ -32,8 +32,9 @@
 # Prof. Stephen W. Link for alerting us to this error.
 #
 # The features must first be scaled to have mean zero and  variance 96 (=n)
-# before the analyses in Tables 3.1 and beyond.  That is, if x is the  96 by 8 matrix
-# of features, we compute xp <- scale(x,TRUE,TRUE)
+# before the analyses in Tables 3.1 and beyond.
+# That is, if x is the  96 by 8 matrix of features, then
+#   we compute: xp <- scale(x,TRUE,TRUE)
 
 
 # ~ -----------------------------------------------------------------------
@@ -41,7 +42,7 @@
 # import the data
 # (original source:
 #     https://web.stanford.edu/~hastie/ElemStatLearn/datasets/prostate.data)
-prostate <- read.table('data-raw/prostate.data')
+prostate <- read.table("data-raw/prostate.data")
 
 # write it out:
 usethis::use_data(prostate, overwrite = TRUE)
