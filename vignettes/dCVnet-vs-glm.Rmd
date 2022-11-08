@@ -65,9 +65,11 @@ data("blrsim")
 # View the help file for more information:
 # ?blrsim
 
-sapply(blrsim, function(x) list(class = class(x),
-                                nvars = NCOL(x),
-                                nobs = NROW(x)))
+sapply(blrsim, function(x) {
+  list(class = class(x),
+       nvars = NCOL(x),
+       nobs = NROW(x))
+})
 
 # we have training datasets: x and y, test datasets: x.test and y.test,
 #   and the recorded classification accuracy of an ideal classifier (bayes.rate)
@@ -96,7 +98,7 @@ head(coef(summary(m1)))
 m1.train <- summary(dCVnet::performance(m1))
 
 #   the accuracy of this model in the data it was fit is:
-print(m1.train[5,2])
+print(m1.train[5, 2])
 
 ```
 
@@ -110,7 +112,7 @@ m1.test <- summary(dCVnet::performance(m1,
                                  newdata = data.frame(y = blrsim$y.test,
                                                       blrsim$x.test)))
 # Accuracy:
-print(m1.test[5,2])
+print(m1.test[5, 2])
 
 ```
 
@@ -141,7 +143,7 @@ m1.cv <- dCVnet::cv_performance_glm(y = blrsim$y,
                                     nrep = 10)
 
 # print the mean accuracy over the 10 repetitions:
-round(m1.cv$cv.performance[5, 2, drop = F],3)
+round(m1.cv$cv.performance[5, 2, drop = FALSE], 3)
 
 ```
 
@@ -177,7 +179,7 @@ m2 <- dCVnet::dCVnet(y = blrsim$y,
 m2.train <- summary(performance(m2$prod$performance))
 
 # specifically the accuracy?:
-print(m2.train[5,2])
+print(m2.train[5, 2])
 
 ```
 
@@ -193,8 +195,10 @@ either in the test-set or through cross-validation.
 m2.test <- summary(
   structure(
     data.frame(
-      prediction = predict(m2, newx = blrsim$x.test, type = "response")[,1],
-      classification = as.factor(predict(m2, newx = blrsim$x.test, type = "class")[,1]),
+      prediction = predict(m2, newx = blrsim$x.test, type = "response")[, 1],
+      classification = as.factor(predict(m2,
+                                         newx = blrsim$x.test,
+                                         type = "class")[, 1]),
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
       stringsAsFactors = FALSE),
@@ -204,7 +208,7 @@ m2.test <- summary(
 )
 
 # print the test set accuracy:
-print(m2.test[5,2])
+print(m2.test[5, 2])
 
 # We cross-validated the results when we produced m2:
 m2.cv <- report_performance_summary(m2)
@@ -220,13 +224,14 @@ To get an overview, we can bring all the performance numbers together:
 # merge together results:
 results <- c(
   bayes.rate = blrsim$bayes.rate,
-  glm.train = m1.train[5,2],
-  glm.test = m1.test[5,2],
-  glm.cv = m1.cv$cv.performance[5,2],
-  
-  enet.train = m2.train[5,2],
-  enet.test = m2.test[5,2],
-  enet.cv = m2.cv[5,2]
+  #
+  glm.train = m1.train[5, 2],
+  glm.test = m1.test[5, 2],
+  glm.cv = m1.cv$cv.performance[5, 2],
+  #
+  enet.train = m2.train[5, 2],
+  enet.test = m2.test[5, 2],
+  enet.cv = m2.cv[5, 2]
 )
 
 # print accuracy:
@@ -302,8 +307,10 @@ rm2.train <- summary(performance(rm2$prod$performance))
 rm2.test <- summary(
   structure(
     data.frame(
-      prediction = predict(rm2, newx = blrsim$x.test, type = "response")[,1],
-      classification = as.factor(predict(rm2, newx = blrsim$x.test, type = "class")[,1]),
+      prediction = predict(rm2, newx = blrsim$x.test, type = "response")[, 1],
+      classification = as.factor(predict(rm2,
+                                         newx = blrsim$x.test,
+                                         type = "class")[, 1]),
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
       stringsAsFactors = FALSE),
@@ -316,14 +323,14 @@ rm2.cv <- report_performance_summary(rm2)
 
 r_results <- c(
   bayes.rate = 0.5,
-  
-  glm.train = rm1.train[5,2],
-  glm.test = rm1.test[5,2],
-  glm.cv = rm1.cv$cv.performance[5,2],
-  
-  enet.train = rm2.train[5,2],
-  enet.test = rm2.test[5,2],
-  enet.cv = rm2.cv[5,2]
+  #
+  glm.train = rm1.train[5, 2],
+  glm.test = rm1.test[5, 2],
+  glm.cv = rm1.cv$cv.performance[5, 2],
+  #
+  enet.train = rm2.train[5, 2],
+  enet.test = rm2.test[5, 2],
+  enet.cv = rm2.cv[5, 2]
 )
 
 ```
@@ -336,7 +343,6 @@ print(r_results, digits = 2)
 
 # subtract the bayes rate accuracy:
 print(r_results - r_results[["bayes.rate"]], digits = 2)
-
 ```
 
 A binary classification model trained on random labels should have (on average) a chance level (majority class frequency) accuracy in test data.
