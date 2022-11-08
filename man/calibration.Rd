@@ -48,10 +48,10 @@ of the computational overhead of model fitting.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{performance}: binomial calibration for
+\item \code{calibration(performance)}: binomial calibration for
 \code{\link{performance}} objects
 
-\item \code{dCVnet}: binomial calibration for
+\item \code{calibration(dCVnet)}: binomial calibration for
 \code{\link{dCVnet}} performance
-}}
 
+}}

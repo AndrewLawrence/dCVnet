@@ -26,8 +26,8 @@ Extracts the model family from a dCVnet object as a string
 }
 \section{Functions}{
 \itemize{
-\item \code{family.multialpha.repeated.cv.glmnet}: family for multialpha objects
+\item \code{family(multialpha.repeated.cv.glmnet)}: family for multialpha objects
 
-\item \code{family.performance}: family for model performance objects
+\item \code{family(performance)}: family for model performance objects
+
 }}
-

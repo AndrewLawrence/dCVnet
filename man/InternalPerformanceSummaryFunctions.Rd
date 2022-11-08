@@ -42,12 +42,12 @@ different model families.
 }
 \section{Functions}{
 \itemize{
-\item \code{perf_nomial}: Used for binomial and multinomial families
+\item \code{perf_nomial()}: Used for binomial and multinomial families
 
-\item \code{perf_cont}: Used for gaussian and poisson families
+\item \code{perf_cont()}: Used for gaussian and poisson families
 
-\item \code{perf_cox}: Used for cox models
+\item \code{perf_cox()}: Used for cox models
 
-\item \code{perf_mgaussian}: Used for multivariate gaussian models
+\item \code{perf_mgaussian()}: Used for multivariate gaussian models
+
 }}
-

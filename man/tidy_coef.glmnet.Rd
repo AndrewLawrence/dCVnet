@@ -30,6 +30,6 @@ return a dataframe of glmnet coefficients
 }
 \section{Functions}{
 \itemize{
-\item \code{tidy_coef.multialpha.repeated.cv.glmnet}: return a dataframe of coefficients
-}}
+\item \code{tidy_coef.multialpha.repeated.cv.glmnet()}: return a dataframe of coefficients
 
+}}

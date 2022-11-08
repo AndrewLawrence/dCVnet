@@ -55,8 +55,8 @@ functions. This is not currently correctly implemented.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{default}: reflogreg for \code{\link{dCVnet}} object
+\item \code{reflogreg(default)}: reflogreg for \code{\link{dCVnet}} object
 
-\item \code{dCVnet}: reflogreg for \code{\link{dCVnet}} object
+\item \code{reflogreg(dCVnet)}: reflogreg for \code{\link{dCVnet}} object
+
 }}
-
