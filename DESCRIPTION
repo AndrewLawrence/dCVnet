@@ -43,5 +43,6 @@ Suggests:
     tidyverse,
     broom,
     lmvar,
-    testthat
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Config/testthat/edition: 3

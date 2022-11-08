@@ -1,6 +1,4 @@
 
-context("tests of data parsing")
-
 nested_anyna <- function(x) {
   any(vapply(x, function(k) any(is.na(k)), FUN.VALUE = FALSE))
 }
@@ -34,8 +32,8 @@ test_that("parsed data equals input for simple calls", {
     expect_equal(as.factor(y1), p1.basic$y)
     expect_equal(as.factor(y1), p1.yname$y)
     # data values:
-    expect_equivalent(as.matrix(x1), p1.basic$x_mat)
-    expect_equivalent(as.matrix(x1), p1.yname$x_mat)
+    expect_equal(as.matrix(x1), p1.basic$x_mat, ignore_attr = TRUE)
+    expect_equal(as.matrix(x1), p1.yname$x_mat, ignore_attr = TRUE)
     # data colnames:
     expect_equal(colnames(p1.basic$x_mat), colnames(x1))
     expect_equal(colnames(p1.yname$x_mat), colnames(x1))
@@ -100,10 +98,15 @@ test_that("missing x can be passed (but not y)", {
   expect_equal(nested_anyna(p3.x), TRUE)
 
   # Third x&y missing:
-  expect_warning((p3.xy <- dCVnet::parse_dCVnet_input(y = y2,
-                                                      data = x2,
-                                                      family = "binomial",
-                                                      passNA = TRUE)))
+
+  suppressWarnings(expect_warning((
+    p3.xy <- dCVnet::parse_dCVnet_input(
+      y = y2,
+      data = x2,
+      family = "binomial",
+      passNA = TRUE
+    )
+  )))
   expect_equal(NROW(p3.xy$y), NROW(p3.xy$x_mat))
   expect_gt(NROW(p3.xy$y), sum(complete.cases(x2) & complete.cases(y2)))
   expect_equal(nested_anyna(p3.xy), TRUE)

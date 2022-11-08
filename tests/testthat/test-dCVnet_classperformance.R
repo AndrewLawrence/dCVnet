@@ -1,7 +1,4 @@
 
-
-context("tests of model performance objects")
-
 # class performance object (from scratch)
 
 # Setup
