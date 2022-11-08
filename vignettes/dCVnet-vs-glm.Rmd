@@ -263,9 +263,10 @@ when it is asked to predict noise/nonsense?
 
 In the next section (note: output suppressed for brevity) the class labels of 
 the training data will be shuffled to break the relationship with the 
-predictors. It should not longer be possible to learn to predict the outcome,
-the bayes rate of this shuffled problem is that of a trivial majority class 
-classifier (i.e. 0.5 in this balanced prediction problem).
+predictors. Ideally it should no longer be possible to predict the outcome at 
+greater than chance accuracy. The bayes rate of this shuffled problem is that 
+of a trivial majority class classifier 
+(i.e. 0.5 in this balanced prediction problem).
 
 ```{r null model, echo=T, warning=FALSE, results="hide"}
 # shuffle group membership:
@@ -334,16 +335,15 @@ Now we will inspect the results:
 print(r_results, digits = 2)
 
 # subtract the bayes rate accuracy:
-print(r_results - 0.5, digits = 2)
+print(r_results - r_results[["bayes.rate"]], digits = 2)
 
 ```
 
 A binary classification model trained on random labels should have (on average) a chance level (majority class frequency) accuracy in test data.
-Above we show that this is the case for glmnet (in this simulated data).
+Above we verify that this is the case for glmnet in this simulated data.
 
-This suggests that the nested model construction and cross-validation are 
-working as expected.
+So the nesting of the cross-validation is working as expected.
 
 ---
 Note that the cross-validated estimates from the dCVnet elastic-net model were 
-actually *lower than chance level* (`r signif(r_results[["enet.cv"]], 2)``). This is because a model where full regularisation is selected by the hyperparameter tuning will be dominated by the intercept (as the intercept is not penalised). As internally all predictors are centered and scaled the intercept will be the prevalence in the training data. For the binomial family an intercept-only model will predict the majority class. When cross-validation is done at on a binomial model where the prevalence is 0.5 (as is the case here), then the majority class will vary from fold to fold, and whichever class is in the majority in the data used for training will necessarily be in the minority of the held-out fold. As an artefact of this predictions will be at worse than chance accuracy. A similar effect is seen for AUC.
+actually *lower than chance level* (`r signif(r_results[["enet.cv"]], 2)``). This is because a model where full regularisation is selected by the hyperparameter tuning will be dominated by the intercept (as the intercept is not penalised). As internally all predictors are centered and scaled the intercept will be the prevalence in the training data. For the binomial family an intercept-only model will predict the majority class. When cross-validation is done at on a binomial model where the prevalence is 0.5 (as is the case here), then the majority class will vary from fold to fold, and whichever class is in the majority in the data used for training will necessarily be in the minority of the held-out fold. If the prevalence is higher in the training set then it is lower in the testing set and so predictions will be slightly worse than chance accuracy. A similar effect is seen for AUC.
