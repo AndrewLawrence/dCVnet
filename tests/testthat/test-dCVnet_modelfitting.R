@@ -32,7 +32,7 @@ examples$cox$y <- survival::Surv(time = examples$cox$y[, 1],
                                  type = "right")
 
 
-
+# Run dCVnet parsing for examples:
 parsed <- mapply(function(x, y) {
   parse_dCVnet_input(data = x$x,
                      y = x$y,
@@ -42,6 +42,7 @@ examples,
 names(examples),
 SIMPLIFY = FALSE)
 
+# Run multi-alpha.repeated.cv.glmnets for the examples:
 capture.output(
   ma.glmnets <- lapply(parsed, function(xxx) {
     suppressWarnings(do.call(multialpha.repeated.cv.glmnet,
@@ -54,6 +55,8 @@ capture.output(
                                          alphalist = c(0.2, 0.4, 0.6))))
   } )
 )
+
+# Tests:
 
 test_that(
   "multialpha objects pass test", {
