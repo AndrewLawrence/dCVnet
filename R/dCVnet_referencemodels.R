@@ -18,8 +18,8 @@
 #'     }
 #'
 #' Dev Note: the mass-univariate component has a class ('glmlist')
-#'     used in some summary functions.
-#'     This is not currently correctly implemented.
+#'     used in some summary functions, but this is not currently
+#'     fully implemented with methods etc.
 #'
 #' @name refunreg
 #'
@@ -58,7 +58,7 @@ refunreg.default <- function(object, ...) {
 #'                  \item{\code{TRUE|FALSE} forces pca/no-pca.}
 #'                  }
 #' @param ncomp specify how many components for pca (integer).
-#'                  \code{"auto"}
+#'                  \code{"auto"} (use n / 10)
 #'
 #' @export
 refunreg.dCVnet <- function(object,
@@ -66,20 +66,55 @@ refunreg.dCVnet <- function(object,
                              doPCA = "auto",
                              ncomp = "auto",
                              ...) {
+  cl <- as.list(match.call(expand.dots = TRUE))[-1]
+
+  f <- family(object)
+
+  switch(f,
+         binomial = do.call("refunreg_glm", args = cl),
+         gaussian = do.call("refunreg_glm", args = cl),
+         poisson = do.call("refunreg_glm", args = cl),
+         stop(paste0("family ",
+                      f,
+                      " is currently unsupported for refunreg"))
+         )
+}
+
+.estimate_ncomp <- function(y,
+                            xmat,
+                            familystring,
+                            cases_per_predictor = 10) {
+  if ( familystring %in% c("binomial", "multinomial")) {
+    n <- min(table(y))
+  } else {
+    n <- NROW(y)
+  }
+  k <- NCOL(xmat)
+
+  return(list(k = k, estncomp = base::floor(n / cases_per_predictor)))
+}
+
+# Use 1 function for all model families handled by glm:
+refunreg_glm <- function(object,
+                           univariate = TRUE,
+                           doPCA = "auto",
+                           ncomp = "auto",
+                           ...) {
   # extract parsed input
   parsed <- parse_dCVnet_input(f = object$input$callenv$f,
                                y = object$input$callenv$y,
                                data = object$input$callenv$data,
                                family = object$input$callenv$family)
 
-  n <- min(table(parsed$y))
-  # above we assume effective N for a logistic regression is n minority cases.
-  k <- ncol(parsed$x_mat)
-  estncomp <- round(n / 5) # rule of thumb: 5 cases per predictor.
+  # estimate reasonable dimensionality:
+  estncomp <- .estimate_ncomp(y = parsed$y,
+                              xmat = parsed$x_mat,
+                              familystring = parsed$family)
 
   # Settings:
-  doPCA <- ( ( (doPCA == "auto") && (k > estncomp) ) || identical(doPCA, TRUE) )
-  if ( identical(ncomp, "auto") ) ncomp <- estncomp
+  doPCA <- ( ( (doPCA == "auto") && (estncomp$k > estncomp$estncomp) ) ||
+               identical(doPCA, TRUE) )
+  if ( identical(ncomp, "auto") ) ncomp <- estncomp$estncomp
 
   # Is PCA required?:
   if ( identical(doPCA, TRUE) ) {
@@ -91,24 +126,28 @@ refunreg.dCVnet <- function(object,
                             as.data.frame.matrix(x_pca$x),
                             stringsAsFactors = FALSE)
 
-    pglm <- glm(y ~ ., data = pglm.data, family = "binomial")
+    pglm <- glm(y ~ .,
+                data = pglm.data,
+                family = parsed$family)
   } else {
     pglm.data <- data.frame(y = parsed$y,
                             parsed$x_mat,
                             stringsAsFactors = FALSE)
-    pglm <- glm(y ~ ., data = pglm.data, family = "binomial")
+    pglm <- glm(y ~ .,
+                data = pglm.data,
+                family = parsed$family)
   }
 
   # univariate models:
   if ( !univariate ) {
     punivariate <- NA
   } else {
-    punivariate <- lapply(1:k, function(i) {
+    punivariate <- lapply(seq.int(estncomp$k), function(i) {
       f <- as.formula(paste0("y ~ ", colnames(parsed$x_mat)[i]))
       glm(f, data = data.frame(y = parsed$y,
                                parsed$x_mat,
                                stringsAsFactors = FALSE),
-          family = "binomial")
+          family = parsed$family)
     } )
     names(punivariate) <- colnames(parsed$x_mat)
     punivariate <- structure(punivariate,
@@ -118,7 +157,7 @@ refunreg.dCVnet <- function(object,
   # Merge:
   rlr <- structure(list(glm = pglm,
                         univariate = punivariate,
-                        object = substitute(object),
+                        object = deparse(substitute(object)),
                         options = list(doPCA = doPCA,
                                        ncomp = ncomp,
                                        univariate = univariate)
@@ -135,6 +174,7 @@ print.refunreg <- function(x, ...) {
   cat(paste("\tnpreds:", length(x$glm$coefficients) - 1, "\n\n"))
   cat(paste("options:\n"))
   print(x$options)
+  cat("\n")
 }
 
 

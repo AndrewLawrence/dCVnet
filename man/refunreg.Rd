@@ -27,7 +27,7 @@ observations to predictors}
 }}
 
 \item{ncomp}{specify how many components for pca (integer).
-\code{"auto"}}
+\code{"auto"} (use n / 10)}
 }
 \value{
 a list containing: \itemize{
@@ -52,8 +52,8 @@ design matrix - i.e. a mass-univariate approach}
 }
 
 Dev Note: the mass-univariate component has a class ('glmlist')
-used in some summary functions.
-This is not currently correctly implemented.
+used in some summary functions, but this is not currently
+fully implemented with methods etc.
 }
 \section{Methods (by class)}{
 \itemize{
