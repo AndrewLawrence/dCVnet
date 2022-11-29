@@ -257,10 +257,6 @@ performance.glmlist <- function(x, as.data.frame = TRUE, ...) {
 }
 
 
-# WIP: write a performance.glm_net_ that calls to tidy_predict.glmnet.
-#
-#
-
 #  ~ utilising class performance ----------------------------------------------
 
 # Simple print function for class performance objects.
