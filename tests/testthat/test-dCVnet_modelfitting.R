@@ -6,7 +6,6 @@
 #   containing x and y.
 
 # identify available glmnet examples:
-require(glmnet)
 exlist <- data(package = "glmnet")$results[, "Item"]
 exlist <- exlist[grepl("Example", exlist)]
 
@@ -57,7 +56,6 @@ capture.output(
 )
 
 # Tests:
-
 test_that(
   "multialpha objects pass test", {
   for ( i in seq_along(ma.glmnets) ) {

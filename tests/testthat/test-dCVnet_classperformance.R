@@ -1,5 +1,5 @@
 
-# class performance object (from scratch)
+# class performance object (from scratch) -------------------------------------
 
 # Setup
 perfect_classification <- structure(
@@ -63,3 +63,20 @@ test_that("binomial calibration is as expected", {
   # imperfect:
   expect_equal(as.vector(imperfect_classification.c), known_cal * -1)
 })
+
+# a constructed class performance ------------------------------------------
+
+
+test_that("constructed performance works",
+          {
+
+            m <- stats::glm(as.factor(am) ~ mpg + hp,
+                            data = datasets::mtcars,
+                            family = "binomial")
+
+            p <- performance(m)
+
+            expect_s3_class(p, "performance")
+            expect_equal(attr(p, "family"),
+                         "binomial")
+          })
