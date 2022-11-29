@@ -2,24 +2,26 @@
 # Reference Models --------------------------------------------------------
 
 
-#' reflogreg
+#' refunreg
 #'
-#' Unregularised logistic regression models for comparison
+#' Unregularised prediction models for comparison
 #'
-#' Calculate reference logistic regressions to help interpret performance.
-#'     models for \eqn{n} observations of \eqn{p} predictors calculated are:
+#' Calculate reference unregularised regressions to help interpret performance.
+#'     given \eqn{n} observations of \eqn{p} predictors, the models calculated
+#'     are:
 #'     \itemize{
-#'     \item{a logistic regression using all variables (if \eqn{n > 5 * p}),
-#'         otherwise a logistic regression on the first \eqn{round(n / 5)}
+#'     \item{a regression using all variables (if \eqn{n > 5 * p}),
+#'         otherwise one using the first \eqn{round(n / 5)}
 #'         principal components}
-#'     \item{a series of logistic regressions, one for each column in the
-#'         design matrix - a mass univariate approach}
+#'     \item{a series of models, one for each column in the
+#'         design matrix - i.e. a mass-univariate approach}
 #'     }
 #'
-#' The univariate component has a class ('glmlist') used in some summary
-#'     functions. This is not currently correctly implemented.
+#' Dev Note: the mass-univariate component has a class ('glmlist')
+#'     used in some summary functions.
+#'     This is not currently correctly implemented.
 #'
-#' @name reflogreg
+#' @name refunreg
 #'
 #' @param object an object to calculate reference logistic regressions for
 #' @param ... arguments to pass on
@@ -31,22 +33,22 @@
 #' }
 #'
 #' @export
-reflogreg <- function(object, ...) {
-  UseMethod("reflogreg", object)
+refunreg <- function(object, ...) {
+  UseMethod("refunreg", object)
 }
 
-#' reflogreg.default
+#' refunreg.default
 #'
-#' @describeIn reflogreg reflogreg for \code{\link{dCVnet}} object
+#' @describeIn refunreg refunreg for \code{\link{dCVnet}} object
 #' @export
-reflogreg.default <- function(object, ...) {
+refunreg.default <- function(object, ...) {
   stop("This function is only implemented for dCVnet class")
 }
 
 
-#' reflogreg.dCVnet
+#' refunreg.dCVnet
 #'
-#' @describeIn reflogreg reflogreg for \code{\link{dCVnet}} object
+#' @describeIn refunreg refunreg for \code{\link{dCVnet}} object
 #'
 #' @param univariate calculate per-variable logistic-regression models.
 #' @param doPCA first run PCA on the features can be "auto" or a boolean.
@@ -59,7 +61,7 @@ reflogreg.default <- function(object, ...) {
 #'                  \code{"auto"}
 #'
 #' @export
-reflogreg.dCVnet <- function(object,
+refunreg.dCVnet <- function(object,
                              univariate = TRUE,
                              doPCA = "auto",
                              ncomp = "auto",
@@ -121,13 +123,13 @@ reflogreg.dCVnet <- function(object,
                                        ncomp = ncomp,
                                        univariate = univariate)
   ),
-  class = c("reflogreg", "list"))
+  class = c("refunreg", "list"))
   return(rlr)
 }
 
-# Simple print function for \code{\link{reflogreg}} objects.
+# Simple print function for \code{\link{refunreg}} objects.
 #' @export
-print.reflogreg <- function(x, ...) {
+print.refunreg <- function(x, ...) {
   cat(paste("\nReference models fit to", x$object, "\n\n"))
   cat(paste("\tncases:", length(x$glm$y), "\n"))
   cat(paste("\tnpreds:", length(x$glm$coefficients) - 1, "\n\n"))
@@ -142,7 +144,7 @@ print.reflogreg <- function(x, ...) {
 #'     reference models.
 #'
 #' @param refobj a set of reference models provided by
-#'     \code{\link{reflogreg.dCVnet}}
+#'     \code{\link{refunreg.dCVnet}}
 #'
 #' @name report_reference_performance_summary
 #' @inherit report_performance_summary return
@@ -166,21 +168,21 @@ report_reference_performance_summary <- function(refobj) {
 }
 
 
-#' coef_reflogreg
+#' coef_refunreg
 #'
 #' Returns model coefficients (betas) for glm/univariate reference models.
 #'
 #' @param refobj a set of reference models provided by
-#'     \code{\link{reflogreg}}
+#'     \code{\link{refunreg}}
 #'
 #' @return a data.frame with columns for:
 #'     \itemize{
 #'     \item{\code{glm} - unless PCA was performed}
 #'     \item{\code{univariate} - unless univariate was not requested}
 #'     }
-#' @name coef_reflogreg
+#' @name coef_refunreg
 #' @export
-coef_reflogreg <- function(refobj) {
+coef_refunreg <- function(refobj) {
   a <- !refobj$options$doPCA
   b <- refobj$options$univariate
 

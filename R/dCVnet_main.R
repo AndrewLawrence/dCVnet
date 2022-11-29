@@ -90,7 +90,7 @@
 #' dCVnet::selected_hyperparameters(model, what = "data")
 #'
 #' # Reference logistic regressions (unregularised & univariate):
-#' ref_model <- dCVnet::reflogreg(model)
+#' ref_model <- dCVnet::refunreg(model)
 #'
 #' dCVnet::report_reference_performance_summary(ref_model)
 #'

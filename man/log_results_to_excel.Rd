@@ -12,7 +12,7 @@ log_results_to_excel(object, file, referencemodel = FALSE)
 \item{file}{path to a writable excel file (i.e. must not be open/locked).}
 
 \item{referencemodel}{either set to \code{TRUE} to calculate
-reference models, or pass a pre-calculated \code{\link{reflogreg}}
+reference models, or pass a pre-calculated \code{\link{refunreg}}
 object.
 Any other values (e.g. \code{FALSE}) suppress the
 reference model calculations.}

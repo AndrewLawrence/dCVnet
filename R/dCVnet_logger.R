@@ -11,7 +11,7 @@
 #' @param object a \code{\link{dCVnet}} object.
 #' @param file path to a writable excel file (i.e. must not be open/locked).
 #' @param referencemodel either set to \code{TRUE} to calculate
-#'      reference models, or pass a pre-calculated \code{\link{reflogreg}}
+#'      reference models, or pass a pre-calculated \code{\link{refunreg}}
 #'      object.
 #'      Any other values (e.g. \code{FALSE}) suppress the
 #'      reference model calculations.
@@ -72,11 +72,11 @@ log_results_to_excel <- function(object,
 
   # do we need to calculate the reference models?:
   if ( identical(referencemodel, TRUE) ) {
-    referencemodel <- reflogreg(object)
+    referencemodel <- refunreg(object)
   }
 
-  if ( "reflogreg" %in% class(referencemodel) ) {
-    ces <- data.frame(ces, `...` = "-", coef_reflogreg(referencemodel),
+  if ( "refunreg" %in% class(referencemodel) ) {
+    ces <- data.frame(ces, `...` = "-", coef_refunreg(referencemodel),
                       stringsAsFactors = FALSE)
   }
 

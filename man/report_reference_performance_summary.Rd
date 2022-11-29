@@ -8,7 +8,7 @@ report_reference_performance_summary(refobj)
 }
 \arguments{
 \item{refobj}{a set of reference models provided by
-\code{\link{reflogreg.dCVnet}}}
+\code{\link{refunreg.dCVnet}}}
 }
 \value{
 a data.frame of summarised and raw performance statistics.
