@@ -653,7 +653,7 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #' plot(modellist[[1]], main = "rep1")
 #' # rep2:
 #' plot(modellist[[2]], main = "rep2")
-#' # etc...
+#' # etc.
 #' # mean:
 #' plot(mod, main = "averaged")
 #' }
