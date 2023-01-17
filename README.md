@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Dev version
 
 This is the dev version of dCVnet. Currently being updated to support
