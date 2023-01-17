@@ -11,7 +11,7 @@ functionality only partly supported.
 regularised generalised linear models (glm) with an approachable interface.
 dCVnet adds nested repeated k-fold cross-validation, and convenience functions, to the regularised glm fit by the [glmnet package](https://cran.r-project.org/web/packages/glmnet/index.html).
 
-If you use dCVnet in your research please cite our preprint paper [Lawrence et al (2021)](https://www.medrxiv.org/content/early/2021/01/15/2021.01.13.21249739)
+If you use dCVnet in your research please cite our paper [Lawrence et al (2021)](https://pubmed.ncbi.nlm.nih.gov/34175478/)
 
 ## Getting Started
 
