@@ -220,10 +220,10 @@ ongoing.
 
 ### Footnotes
 
-<a name="fn1"><sup>1</sup></a> regularised-models/dCVnet can be useful
-for inference, but this is not really their main purpose, and the
+<a name="fn1"><sup>1</sup></a> dCVnet can be useful
+for inference, but this is not its main purpose. The
 time-consuming outer cross-validation loop is not as important for
-inference.
+inference, other software can be used directly.
 
 <a name="fn2"><sup>2</sup></a> Where *p*/*n* \> 1, the standard
 least-squares regression solutions are not defined and generalised
@@ -235,9 +235,9 @@ are violated.
 <a name="fn3"><sup>3</sup></a> Double cross-validation is also called
 *nested* or *nested-loop* cross-validation.
 
-With stable models with enough data the optimism which nested-CV
+With less flexible models, and enough data the optimism which nested-CV
 addresses can be negligible. However, nested cross-validation is
-particularly important with smaller datasets and demonstrating internal
+particularly important with smaller datasets. Demonstrating internal
 validity without validation leakage is important for [reproducible
 research](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5238707/).
 
@@ -246,3 +246,4 @@ research](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5238707/).
 [TANDEM](https://www.rdocumentation.org/packages/TANDEM/versions/1.0.2/topics/nested.cv),
 [nlcv](https://cran.r-project.org/web/packages/nlcv/vignettes/nlcv.pdf),
 [caret/rsample](http://appliedpredictivemodeling.com/blog/2017/9/2/njdc83d01pzysvvlgik02t5qnaljnd)
+[nestedcv](https://github.com/myles-lewis/nestedcv)
