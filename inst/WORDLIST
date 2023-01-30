@@ -59,6 +59,7 @@ lty
 mgaussian
 modelsummary
 multialpha
+nestedcv
 newdata
 newx
 newy

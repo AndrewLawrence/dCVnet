@@ -97,7 +97,7 @@ mod <- amalgamate_cv.glmnet(modellist)
 plot(modellist[[1]], main = "rep1")
 # rep2:
 plot(modellist[[2]], main = "rep2")
-# etc...
+# etc.
 # mean:
 plot(mod, main = "averaged")
 }
