@@ -1,8 +1,3 @@
-# Dev version
-
-This is the dev version of dCVnet. Currently being updated to support
-other model families than binomial. Documentation may be out of date and
-functionality only partly supported.
 
 # dCVnet
 
