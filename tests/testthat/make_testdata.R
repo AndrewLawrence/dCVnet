@@ -2,8 +2,8 @@
 library(dCVnet)
 make_dCVnet <- function() {
   data(BinomialExample, package = "glmnet")
-  dCVnet(y = BinomialExample$y,
-         data = BinomialExample$x,
+  dCVnet(y = BinomialExample$y,    #nolint
+         data = BinomialExample$x, #nolint
          family = "binomial",
          alphalist = 0.5,
          nrep_inner = 1)

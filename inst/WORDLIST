@@ -1,12 +1,14 @@
 AUROC
 AndrewLawrence
 Coef
+Dxy
 EDA
 ESL
 Elasticnet
 ElemStatLearn
 Harrell's
 Hastie
+InternalPerformanceSummaryFunctions
 JMLR
 MLR
 Maudsley
@@ -15,8 +17,13 @@ NPV
 PPV
 PSA
 PlayingFair
+Poisson
 ROCs
 RStudio
+SDScaledMAE
+SDScaledRMSE
+Somer's
+SomersDxy
 Stamey
 Tibshirani
 Tibshirani's
@@ -56,6 +63,7 @@ linetype
 lm
 lpsa
 lty
+mAUC
 mgaussian
 modelsummary
 multialpha

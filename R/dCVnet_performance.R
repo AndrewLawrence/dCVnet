@@ -55,8 +55,13 @@
 
 #' performance
 #'
-#' extracts a standardised classification performance table for a model
-#'     or list of models.
+#' Extracts the elements needed to calculate prediction performance
+#'    for an object. These elements are returned with a standardised
+#'    format, and the prediction performance measures can be calculated
+#'    by calling the generic `summary()` function on the result.
+#'
+#'    Prediction performance measures differ for each model family.
+#'    See [InternalPerformanceSummaryFunctions].
 #'
 #' @name performance
 #'
@@ -77,6 +82,24 @@
 #'        one source, e.g. multiple reps}
 #'    }
 #'
+#' @examples
+#' \dontrun{
+#'
+#' data(QuickStartExample, package = "glmnet")
+#' m <- dCVnet(QuickStartExample$y,
+#'             QuickStartExample$x, family = "gaussian")
+#'
+#' # a performance 'object'
+#' performance(m)
+#'
+#' # Performance for each repeat of the outer-loop repeated k-fold:
+#' summary(performance(m))
+#'
+#' # The cross-validated performance measures:
+#' p <- report_performance_summary(m)
+#' subset(p, select = c("Measure", "mean"))
+#'
+#' }
 #' @export
 performance <- function(x, ...) {
   UseMethod("performance", x)
@@ -112,6 +135,8 @@ performance.default <- function(x, ...) {
 #' performance.dCVnet
 #'
 #' @rdname performance
+#' @description For a dCVnet object the outer-loop cross-validated performance
+#'              is returned.
 #' @param as.data.frame return a data.frame instead of a list of
 #'     \code{\link{performance}} objects.
 #' @export
@@ -131,7 +156,7 @@ performance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
 #'
 #' @rdname performance
 #' @description Applying performance to a performance object
-#'     allows conversion between list/dataframe format.
+#'     allows conversion between list and dataframe format.
 #' @export
 performance.performance <- function(x, as.data.frame = TRUE, ...) {
   R <- x # fall-back
@@ -151,7 +176,7 @@ performance.performance <- function(x, as.data.frame = TRUE, ...) {
 
 #' performance.glm
 #'
-#' For glm objects wraps \link{predict.glm} if newdata is specified.
+#' For glm objects performance wraps \link{predict.glm} if newdata is specified.
 #'
 #' @rdname performance
 #' @param label specify a label for the output
@@ -295,6 +320,10 @@ NULL
 #' @describeIn InternalPerformanceSummaryFunctions
 #'     Used for binomial and multinomial families
 #' @inheritParams summary.performance
+#' @description For **binomial and multinomial** family models:
+#'    Various performance metrics from \code{\link[caret]{confusionMatrix}};
+#'    AUC (or mAUC) (\code{\link[ModelMetrics]{auc}});
+#'    Brier Score (\code{\link[ModelMetrics]{brier}})
 perf_nomial <- function(object,
                         short = FALSE,
                         somersD = FALSE,
@@ -391,6 +420,18 @@ perf_nomial <- function(object,
 #' @importFrom ModelMetrics rmse mae rmsle
 #' @importFrom stats lm cor
 #' @importFrom DescTools SomersDelta
+#' @description For **Gaussian/Poisson** family models:
+#'    Root Mean Square Error (RMSE; \code{\link[ModelMetrics]{rmse}});
+#'    Mean Absolute Error (MAE; \code{\link[ModelMetrics]{mae}});
+#'    Pearson's correlation r and r^2 between observed and predicted (R, R2);
+#'    simple linear calibration intercept and slope (cal_Intercept, cal_Slope).
+#'    Brier score, which in this context is the Mean Square Error == RMSE^2;
+#'    RMSE and MSE scaled by the S.D. of y (SDScaledRMSE, SDScaledMAE);
+#'    Optionally Somer's Dxy can be returned (SomersDxy;
+#'    \code{\link[DescTools]{SomersDelta}}).
+#'    For the Poisson family performance measures above but calculated
+#'    from \code{\link{log1p}} transformed data are also returned.
+#'
 perf_cont <- function(object,
                       short = FALSE,
                       somersD = FALSE,
@@ -467,6 +508,9 @@ perf_cont <- function(object,
 #'     Used for cox models
 #' @importFrom Hmisc rcorr.cens
 #' @importFrom survival Surv is.Surv
+#' @description For **Cox** family models:
+#'     Harrell's C-index and Dxy using the \code{\link[Hmisc]{rcorr.cens}}
+#'     function.
 perf_cox <- function(object,
                      short = FALSE,
                      somersD = FALSE,
@@ -492,6 +536,8 @@ perf_cox <- function(object,
 #' @describeIn InternalPerformanceSummaryFunctions
 #'     Used for multivariate gaussian models
 #'
+#' @description For **multivariate Gaussian** family models:
+#'     Runs [perf_cont] for each outcome.
 perf_mgaussian <- function(object,
                            short = FALSE,
                            somersD = FALSE,

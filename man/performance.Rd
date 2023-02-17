@@ -59,14 +59,42 @@ one source, e.g. multiple reps}
 }
 }
 \description{
-extracts a standardised classification performance table for a model
-or list of models.
+Extracts the elements needed to calculate prediction performance
+for an object. These elements are returned with a standardised
+format, and the prediction performance measures can be calculated
+by calling the generic \code{summary()} function on the result.
 
 Default function behaviour assumes input is a
 \code{\link{dCVnet}} object (and fails if this is not reasonable).
 
-Applying performance to a performance object
-allows conversion between list/dataframe format.
+For a dCVnet object the outer-loop cross-validated performance
+is returned.
 
-For glm objects wraps \link{predict.glm} if newdata is specified.
+Applying performance to a performance object
+allows conversion between list and dataframe format.
+
+For glm objects performance wraps \link{predict.glm} if newdata is specified.
+}
+\details{
+Prediction performance measures differ for each model family.
+See \link{InternalPerformanceSummaryFunctions}.
+}
+\examples{
+\dontrun{
+
+data(QuickStartExample, package = "glmnet")
+m <- dCVnet(QuickStartExample$y,
+            QuickStartExample$x, family = "gaussian")
+
+# a performance 'object'
+performance(m)
+
+# Performance for each repeat of the outer-loop repeated k-fold:
+summary(performance(m))
+
+# The cross-validated performance measures:
+p <- report_performance_summary(m)
+subset(p, select = c("Measure", "mean"))
+
+}
 }

@@ -37,8 +37,29 @@ or a vector of length n_categories (for multinomial) containing numerics
 in \code{[0,1]}.}
 }
 \description{
-Internal summary functions for performance objects from
-different model families.
+For \strong{binomial and multinomial} family models:
+Various performance metrics from \code{\link[caret]{confusionMatrix}};
+AUC (or mAUC) (\code{\link[ModelMetrics]{auc}});
+Brier Score (\code{\link[ModelMetrics]{brier}})
+
+For \strong{Gaussian/Poisson} family models:
+Root Mean Square Error (RMSE; \code{\link[ModelMetrics]{rmse}});
+Mean Absolute Error (MAE; \code{\link[ModelMetrics]{mae}});
+Pearson's correlation r and r^2 between observed and predicted (R, R2);
+simple linear calibration intercept and slope (cal_Intercept, cal_Slope).
+Brier score, which in this context is the Mean Square Error == RMSE^2;
+RMSE and MSE scaled by the S.D. of y (SDScaledRMSE, SDScaledMAE);
+Optionally Somer's Dxy can be returned (SomersDxy;
+\code{\link[DescTools]{SomersDelta}}).
+For the Poisson family performance measures above but calculated
+from \code{\link{log1p}} transformed data are also returned.
+
+For \strong{Cox} family models:
+Harrell's C-index and Dxy using the \code{\link[Hmisc]{rcorr.cens}}
+function.
+
+For \strong{multivariate Gaussian} family models:
+Runs \link{perf_cont} for each outcome.
 }
 \section{Functions}{
 \itemize{
