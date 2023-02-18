@@ -20,15 +20,9 @@ plot_outerloop_coefs(
 \arguments{
 \item{object}{a \code{\link{dCVnet}} object}
 
-\item{type}{How to display coefficients.
-passed to \code{\link{coef.dCVnet}} .
-\itemize{
-\item{\code{"all"} - boxplot of coefficients for each rep/fold.}
-\item{\code{"rep"} - boxplot of mean coefficients for each rep
-(mean average over folds).}
-\item{\code{"mean"} - dotplot of the mean of \code{"rep"}.}
-\item{\code{"median"} - dotplot of the median of \code{"rep"}.}
-}}
+\item{type}{Use "all" to inspect variability
+over cross-validation folds and reps. Use "production" for only the final
+model. See \code{\link{coef.dCVnet}} for full list of options.}
 
 \item{ordered}{sort predictors by size?}
 

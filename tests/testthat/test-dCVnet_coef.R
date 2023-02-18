@@ -20,6 +20,7 @@ types_of_coefs <- c("production",
                     "byrep_mean",
                     "byrep_median")
 names(types_of_coefs) <- types_of_coefs
+
 coef_list <- lapply(types_of_coefs,
                     function(x) coef(m, type = x))
 

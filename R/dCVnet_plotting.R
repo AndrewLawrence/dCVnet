@@ -358,15 +358,9 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
 #'      optimism in cross-validated estimates of performance.
 #'
 #' @param object a \code{\link{dCVnet}} object
-#' @param type How to display coefficients.
-#'                 passed to \code{\link{coef.dCVnet}} .
-#'     \itemize{
-#'     \item{\code{"all"} - boxplot of coefficients for each rep/fold.}
-#'     \item{\code{"rep"} - boxplot of mean coefficients for each rep
-#'         (mean average over folds).}
-#'     \item{\code{"mean"} - dotplot of the mean of \code{"rep"}.}
-#'     \item{\code{"median"} - dotplot of the median of \code{"rep"}.}
-#'     }
+#' @param type Use "all" to inspect variability
+#'     over cross-validation folds and reps. Use "production" for only the final
+#'     model. See \code{\link{coef.dCVnet}} for full list of options.
 #' @param ordered sort predictors by size?
 #' @param abs plot absolute values?
 #' @param intercept include the value of the intercept coefficient in the plot?

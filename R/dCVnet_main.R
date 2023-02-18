@@ -875,3 +875,42 @@ predict.dCVnet <- function(object,
 family.dCVnet <- function(object, ...) {
   object$input$callenv$family
 }
+
+#' variable_importance
+#'
+#' Variable importance for dCVnet/glmnet models does not require permutation
+#'     methods, because coefficients are directly interpretable.
+#'
+#'     This VI function follow caret's example (see \code{\link[caret]{varImp}}
+#'     function) and simply returns the absolute values of the coefficients.
+#'
+#'     As variable importance is inferential this is done for the tuned
+#'     "production" model rather than the cross-validated outer-loop.
+#'
+#' @param x a dCVnet object
+#' @param scale Boolean. Should the return values be scaled so the most
+#' important value is 1?
+#' @param percentage Boolean. Should the return values be scaled so the most
+#'     important value is 100?
+#' @return a data.frame of variable names "Predictor"
+#'     and variable importance "varImp".
+#' @seealso \code{\link[caret]{varImp}}
+#' @export
+variable_importance <- function(x,
+                                scale = FALSE,
+                                percentage = FALSE) {
+  vi <- tidy_coef.multialpha.repeated.cv.glmnet(x$prod$model)
+
+  names(vi)[names(vi) == "Coef"] <- "varImp"
+  vi$varImp <- abs(vi$varImp)
+
+  if ( scale && !percentage ) {
+    vi$varImp <- vi$varImp / max(vi$varImp)
+    names(vi)[names(vi) == "varImp"] <- "varImp_scaled"
+  }
+  if ( percentage ) {
+    vi$varImp <- 100 * vi$varImp / max(vi$varImp)
+    names(vi)[names(vi) == "varImp"] <- "varImp_pc"
+  }
+  vi
+}
