@@ -64,12 +64,14 @@ data("blrsim")
 
 # View the help file for more information:
 # ?blrsim
+lapply(blrsim, class)
 
-sapply(blrsim, function(x) {
-  list(class = class(x),
-       nvars = NCOL(x),
+vapply(blrsim, function(x) {
+  list(nvars = NCOL(x),
        nobs = NROW(x))
-})
+  },
+  FUN.VALUE = list(1L, 1L)
+)
 
 # we have training datasets: x and y, test datasets: x.test and y.test,
 #   and the recorded classification accuracy of an ideal classifier (bayes.rate)
