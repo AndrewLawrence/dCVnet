@@ -20,7 +20,8 @@ provided with the Elements of Statistical Learning (ESL) textbook.
 First, get required libraries, load the data and take a look:
 
 ```{r setup}
-library(tidyverse)
+shh <- function(...) suppressPackageStartupMessages(suppressWarnings(...))
+shh(library(tidyverse))
 ggplot2::theme_set(theme_minimal())
 library(dCVnet)
 data(prostate)
@@ -37,8 +38,7 @@ sprostate <- data.frame(scale(prostate[, -10]))
 
 Note that we will ignore the train-test split as this vignette will demonstrate cross-validation.
 
-Next noting that the base unregularised model is not very overfit, we can make the problem harder
-by adding noise predictors unrelated to the outcome:
+Next, noting that the base unregularised model is not very overfit, we can make the problem harder by adding noise predictors unrelated to the outcome:
 
 ```{r add noise}
 set.seed(1)
@@ -47,6 +47,7 @@ colnames(noise) <- paste0("noise", 1:10)
 sprostate <- cbind(sprostate,
                    noise)
 
+# By construction, the noise variables are not correlated with the outcome:
 cor(cbind(sprostate$lpsa, noise))[-1, 1]
 
 ```
@@ -95,8 +96,9 @@ predictdf <- data.frame(
   ))
 )
 
-sapply(predictdf[, -1], caret::postResample, predictdf[, 1]) %>%
-  knitr::kable(digits = 3)
+results_nonCV <- sapply(predictdf[, -1], caret::postResample, predictdf[, 1])
+
+knitr::kable(results_nonCV, digits = 3)
 
 ```
 
@@ -123,31 +125,45 @@ cross-validated performance results and improve the tuning of the glmnet models 
   1) repeating the k-fold CV to stabilise tuning parameter selection
   1) tuning over alpha (elastic-net hyperparameter for the balance between L1 and L2 penalties)
  
-First though, we shall produce cross-validated estimates of the lm performance:
+First though, we shall assess the scale of the overfitting problem by producing cross-validated estimates of lm performance:
 ```{r cv_lm}
-if ( require(lmvar, quietly = TRUE) ) {
-  set.seed(42)
-  m1.cv <- lmvar::cv.lm(m1, k = 10, max_cores = 1)
-  m1.cv.repeat <- lmvar::cv.lm(m1, k = 10, max_cores = 1)
-  rbind(repeat1 = data.frame(unclass(m1.cv)),
-        repeat2 = data.frame(unclass(m1.cv.repeat))) %>%
-      select(-contains(".sd")) %>%
-      knitr::kable(digits = 3)
-  perf.train <- signif(mean(abs(m1$fitted.values - m1$y)), 3)
-  perf.test <- signif(m1.cv$MAE$mean, 3)
-} else {
-  print("install.packages('lmvar') to run this chunk.")
-  perf.train <- signif(mean(abs(m1$fitted.values - m1$y)), 3)
-  perf.test <- "LMVAR missing"
-}
+
+# set folds:
+#   there are 97 observations
+#   so make 7 folds with 10, and 3 folds with 9.
+folds <- rep(1:10, times = rep(c(10, 9), times = c(7, 3)))
+table(folds)
+
+# randomise order:
+folds <- sample(folds)
+
+cv_lm_results <- map_dfr(
+  # For folds 1:10:
+  1:10,
+  function(i) {
+    # split data:
+    d_train <- sprostate[folds != i, ]
+    d_test <- sprostate[folds == i, ]
+    # train model:
+    m <- lm(formula = formula(m1),
+            data = d_train)
+    # predict in held out data:
+    p <- predict(m, newdata = d_test)
+    # calculate performance measures and return:
+    return(as.list(caret::postResample(pred = p, obs = d_test$lpsa)))
+  }
+)
+
+# Average over 10-folds:
+colMeans(cv_lm_results)
 
 ```
 
-So there is a performance gap for the simple linear model (e.g. in MAE) such
+So there is a performance gap for the unregularised lm model (e.g. in MAE) such
 that the complete data performance
-(`r signif(perf.train,3)`)
-is better than the cross-validated performance
- (`r signif(perf.test,3)`).
+(`r signif(results_nonCV["MAE","lm"],3)`)
+appears better than the cross-validated performance
+ (`r signif(colMeans(cv_lm_results)["MAE"],3)`).
 
 We can run the equivalent model in dCVnet:
 
@@ -168,8 +184,8 @@ report_performance_summary(m3)[1:2, ] %>%
   knitr::kable(digits = 3)
 ```
 
-Taken together we can see that the cross-validated MAE of the LASSO (`r signif(report_performance_summary(m3)[2,2],3)`) is lower/better than the cross-validated MAE of the un-regularised model (`r perf.test`). A comparison between the prediction performances without cross-validation would have concluded that LASSO was less performant (MAE = `r signif(caret::postResample(predictdf$glmnet.lambda.min, predictdf$observed)[["MAE"]],3)`) than an unregularised model (MAE = `r signif(caret::postResample(predictdf$lm, predictdf$observed)[["MAE"]],3)`)
+Taken together we can see that the cross-validated MAE of the LASSO (`r signif(report_performance_summary(m3)[2,2],3)`) is lower/better than the cross-validated MAE of the un-regularised model (`r signif(colMeans(cv_lm_results)["MAE"],3)`). A comparison between the prediction performances without cross-validation would have concluded that LASSO was less performant (MAE = `r signif(caret::postResample(predictdf$glmnet.lambda.min, predictdf$observed)[["MAE"]],3)`) than an unregularised model (MAE = `r signif(caret::postResample(predictdf$lm, predictdf$observed)[["MAE"]],3)`)
 
-In this example the difference is not dramatic without adding the noise predictors (without noise there's not a lot of overfitting in the unregularised model). So albeit slightly artificially, the principle that tuned regularisation can produce better generalisation error has been demonstrated.
+In this example the difference is not dramatic without adding the noise predictors (without noise there's not a lot of overfitting in the unregularised model). Nevertheless the principle that tuned regularisation can produce better generalisation error has been demonstrated.
 
 
