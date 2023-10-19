@@ -66,7 +66,9 @@ extract_rocdata <- function(performance,
                          .extract_pred,
                          invert = invertprob),
     labels = lapply(performance, "[[", "reference"),
-    label.ordering = levels(performance[[1]]$reference))
+    label.ordering = levels(performance[[1]]$reference)
+  )
+
   outer.perf <- ROCR::performance(outer.pred, "tpr", "fpr")
 
   R <- .rocperformance_to_data_frame(outer.perf, names(performance))

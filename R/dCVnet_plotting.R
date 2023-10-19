@@ -201,12 +201,12 @@ plot.rocdata <- function(x,
     x$PThreshold <- NA_character_
     # get closest for each group (called run):
     # note: lappy used for side effect.
-    lapply(
-      setNames(unique(x$run),
-               unique(x$run)),
-      function(g) {
-        x$PThreshold[x$run == g] <<- .closest(alphalabel, x$alpha[x$run == g])
-      })
+    lapply(setNames(unique(x$run),
+                    unique(x$run)),
+           function(g) {
+             x$PThreshold[x$run == g] <<-
+               .closest(alphalabel, x$alpha[x$run == g])
+           })
     x$PThreshold <- factor(x$PThreshold, levels = names(alphalabel))
   }
 
@@ -222,14 +222,16 @@ plot.rocdata <- function(x,
                                            x = "InvSpec")) +
     ggplot2::geom_segment(
       ggplot2::aes_(
-        x = ~InvSpec,
-        y = ~Sens,
-        xend = ~InvSpecEnd,
-        yend = ~SensEnd,
-        lty = ~lty),
+        x = ~ InvSpec,
+        y = ~ Sens,
+        xend = ~ InvSpecEnd,
+        yend = ~ SensEnd,
+        lty = ~ lty
+      ),
       show.legend = legend,
       data = refline,
-      inherit.aes = FALSE) +
+      inherit.aes = FALSE
+    ) +
     ggplot2::geom_line(ggplot2::aes_string(colour = "run"),
                        show.legend = legend) +
     ggplot2::xlab("False Positive Rate") +
@@ -243,12 +245,16 @@ plot.rocdata <- function(x,
   if ( legend ) {
     p <- p + ggplot2::guides(
       colour = ggplot2::guide_legend(title = guide_labels$group, order = 1),
-      lty = ggplot2::guide_legend(title = NULL,
-                                  order = 3,
-                                  override.aes = list(
-                                    linetype = 1,
-                                    shape = 32,
-                                    alpha = 1)))
+      lty = ggplot2::guide_legend(
+        title = NULL,
+        order = 3,
+        override.aes = list(
+          linetype = 1,
+          shape = 32,
+          alpha = 1
+        )
+      )
+    )
   }
 
   if ( hasalphas ) {
@@ -322,21 +328,31 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
   # should we treat alpha as continuous or discrete?
   if ( length(unique(pdf$alpha)) < 7 ) pdf$alpha <- as.factor(pdf$alpha)
 
-  p <- ggplot2::ggplot(pdf,
-                       ggplot2::aes_string(
-                         y = "cvm",
-                         x = "log10(lambda)",
-                         colour = "alpha", fill = "alpha",
-                         label = "gsub(\"OutFold\", \"\", Fold)",
-                         group = "paste(alpha, outfold)")) +
+
+  p <- ggplot2::ggplot(
+    pdf,
+    ggplot2::aes_string(
+      y = "cvm",
+      x = "log10(lambda)",
+      colour = "alpha",
+      fill = "alpha",
+      label = "gsub(\"OutFold\", \"\", Fold)",
+      group = "paste(alpha, outfold)"
+    )
+  ) +
     ggplot2::geom_line() +
-    ggplot2::geom_point(data = pdf[pdf$lambda.min, ],
-                        colour = "black", size = 3, shape = 24) +
+    ggplot2::geom_point(
+      data = pdf[pdf$lambda.min, ],
+      colour = "black",
+      size = 3,
+      shape = 24
+    ) +
     ggplot2::geom_text(data = pdf[pdf$lambda.min, ],
-                       colour = "black", size = 3) +
+                       colour = "black",
+                       size = 3) +
     ggplot2::ylab(paste("Metric:", attr(pdf, "type.measure"))) +
     ggplot2::xlab("lambda path (log10)") +
-    ggplot2::facet_wrap(~Rep) +
+    ggplot2::facet_wrap( ~ Rep) +
     ggplot2::theme_light()
 
   if ( plot ) print(p)

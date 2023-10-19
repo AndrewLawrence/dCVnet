@@ -120,7 +120,8 @@ dCVnet <- function(
   opt.uniquefolds = FALSE,
   opt.ystratify = TRUE,
 
-  ...) {
+  ...
+) {
 
   # Parse input -------------------------------------------------------------
 
@@ -148,7 +149,8 @@ dCVnet <- function(
       stop(
         paste("AUC is not possible due to small sample size!\n
               Estimated inner foldsize =", auc_magic,
-              "\nuse different type.measure (e.g. 'class')."))
+              "\nuse different type.measure (e.g. 'class').")
+      )
     }
   }
 
@@ -324,7 +326,8 @@ dCVnet <- function(
         offset = offset,
         label = strsplit(names(outfolds)[[i]],
                          split = ".", fixed = TRUE)[[1]][2],
-        s = fit_lambda)
+        s = fit_lambda
+      )
 
       return(list(tuning = drop_models.multialpha.repeated.cv.glmnet(inners),
                   model = inners$models[[inners$bestmodel]],
@@ -377,18 +380,20 @@ dCVnet <- function(
     binomial_thresh = cutoff,
     offset = offset,
     label = "Production",
-    s = prod_tuning$best$lambda)
+    s = prod_tuning$best$lambda
+  )
 
   prod_performance <- structure(prod_performance,
                                 family = family,
-                                 class = c("performance",
-                                           "data.frame"))
+                                class = c("performance",
+                                          "data.frame"))
 
   prod <- list(
     tuning = drop_models.multialpha.repeated.cv.glmnet(prod_tuning),
     performance = prod_performance,
     model = prod_tuning,
-    preprocess = prod_PPx) # include the preprocessing for predict method.
+    preprocess = prod_PPx # include the preprocessing for predict method.
+  )
 
   time_stop <- Sys.time()
   run_time <- difftime(time_stop, time_start, units = "hours")
@@ -510,21 +515,22 @@ coef.dCVnet <- function(object, type = "all", ...) {
                  mean)
   names(R)[3] <- "Coef"
   R <- R[, c(1, 3, 2)] # reorder columns
-  return(switch(type,
-                byrep = R,
-                byrep_mean = stats::setNames(
-                  aggregate(R$Coef,
-                            by = list(Predictor = R$Predictor),
-                            mean),
-                  c("Predictor", "Coef")),
-                byrep_median = stats::setNames(
-                  aggregate(R$Coef,
-                            by = list(Predictor = R$Predictor),
-                            stats::median),
-                  c("Predictor", "Coef")),
-                stop(paste("type:",
-                           type,
-                           " - is non-sensical"))
+  return(switch(
+    type,
+    byrep = R,
+    byrep_mean = stats::setNames(aggregate(R$Coef,
+                                           by = list(Predictor = R$Predictor),
+                                           mean),
+                                 c("Predictor", "Coef")),
+    byrep_median = stats::setNames(
+      aggregate(R$Coef,
+                by = list(Predictor = R$Predictor),
+                stats::median),
+      c("Predictor", "Coef")
+    ),
+    stop(paste("type:",
+               type,
+               " - is non-sensical"))
   ))
 }
 
@@ -881,7 +887,7 @@ family.dCVnet <- function(object, ...) {
 #' Variable importance for dCVnet/glmnet models does not require permutation
 #'     methods, because coefficients are directly interpretable.
 #'
-#'     This VI function follow caret's example (see \code{\link[caret]{varImp}}
+#'     This VI function follows caret's example (see \code{\link[caret]{varImp}}
 #'     function) and simply returns the absolute values of the coefficients.
 #'
 #'     As variable importance is inferential this is done for the tuned

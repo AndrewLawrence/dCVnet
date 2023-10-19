@@ -23,9 +23,11 @@ imperfect_classification.s <- summary(imperfect_classification)
 
 
 perfect_classification.c <- suppressWarnings(
-  calibration(perfect_classification))
+  calibration(perfect_classification)
+)
 imperfect_classification.c <- suppressWarnings(
-  calibration(imperfect_classification))
+  calibration(imperfect_classification)
+)
 
 class_measures <- c("Accuracy", "Kappa",
                     "Sensitivity", "Specificity",
@@ -45,13 +47,17 @@ test_that("classes are correct", {
 # The tests:
 test_that("binomial classification is as expected", {
   # perfect:
-  expect_equal(perfect_classification.s$Value[
-    perfect_classification.s$Measure %in% class_measures],
+  expect_equal(
+    perfect_classification.s$Value[
+      perfect_classification.s$Measure %in% class_measures
+    ],
     c(1, 1, 1, 1, 1, 1, 1, 1, 1, 0.5, 0.5, 0.5, 1, 1, 0.0875)
   )
   # imperfect:
-  expect_equal(imperfect_classification.s$Value[
-    imperfect_classification.s$Measure %in% class_measures],
+  expect_equal(
+    imperfect_classification.s$Value[
+      imperfect_classification.s$Measure %in% class_measures
+    ],
     c(0, -1, 0, 0, 0, 0, 0, 0, NaN, 0.5, 0.0, 0.5, 0, 0, 0.5875)
   )
 })

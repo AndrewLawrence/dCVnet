@@ -94,9 +94,10 @@ repeated.cv.glmnet <- function(x, y,
   # estimate models over folds:
   models <- lapply(seq_along(folds), function(i) {
     cl.cvgnet$foldid <- quote(folds[[i]])
-    return(set_glmnet_alpha(
-      do.call("cv.glmnet", cl.cvgnet),
-      setalpha = alpha))
+    return(
+      set_glmnet_alpha(do.call("cv.glmnet", cl.cvgnet),
+                       setalpha = alpha)
+    )
   } )
   # merge and return:
   if (debug) return(models)
@@ -154,7 +155,8 @@ repeated.cv.glmnet <- function(x, y,
 #' @seealso \code{\link{repeated.cv.glmnet}}
 #' @export
 multialpha.repeated.cv.glmnet <- function(
-  x, y,
+  x,
+  y,
   alphalist = round(seq(0.2, 1, len = 6) ^ exp(1), 2),
   lambdas = NULL,
   k = 10,
@@ -164,7 +166,8 @@ multialpha.repeated.cv.glmnet <- function(
   opt.uniquefolds = FALSE,
   family,
   opt.keep_models = c("best", "none", "all"),
-  ...) {
+  ...
+) {
 
   cl <- as.list(match.call())[-1]
   opt.lambda.type <- match.arg(opt.lambda.type)
@@ -184,8 +187,10 @@ multialpha.repeated.cv.glmnet <- function(
                         cl.gnet <- cl[names(cl) %in%
                                         methods::formalArgs(glmnet::glmnet)]
                         cl.gnet$alpha <- ii
-                        return(do.call(glmnet::glmnet, cl.gnet)$lambda)
-                        })
+                        return(
+                          do.call(glmnet::glmnet, cl.gnet)$lambda
+                        )
+                      })
   }
 
   # Fold generation:
@@ -466,11 +471,16 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
   if ( missing(s) ) {
     s <- object$best$lambda
   } else {
-    warning(paste("alpha is selected optimally,",
-                  "but lambda is manually specified.",
-                  "manual alpha: ", s,
-                  "best alpha:", object$best$lambda
-                  ))
+    warning(
+      paste(
+        "alpha is selected optimally,",
+        "but lambda is manually specified.",
+        "manual alpha: ",
+        s,
+        "best alpha:",
+        object$best$lambda
+      )
+    )
   }
 
   # run the prediction:

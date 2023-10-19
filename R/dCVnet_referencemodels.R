@@ -62,22 +62,25 @@ refunreg.default <- function(object, ...) {
 #'
 #' @export
 refunreg.dCVnet <- function(object,
-                             univariate = TRUE,
-                             doPCA = "auto",
-                             ncomp = "auto",
-                             ...) {
+                            univariate = TRUE,
+                            doPCA = "auto",
+                            ncomp = "auto",
+                            ...) {
   cl <- as.list(match.call(expand.dots = TRUE))[-1]
 
   f <- family(object)
 
-  switch(f,
-         binomial = do.call("refunreg_glm", args = cl),
-         gaussian = do.call("refunreg_glm", args = cl),
-         poisson = do.call("refunreg_glm", args = cl),
-         stop(paste0("family ",
-                      f,
-                      " is currently unsupported for refunreg"))
-         )
+  switch(
+    f,
+    binomial = do.call("refunreg_glm", args = cl),
+    gaussian = do.call("refunreg_glm", args = cl),
+    poisson = do.call("refunreg_glm", args = cl),
+    stop(paste0(
+      "family ",
+      f,
+      " is currently unsupported for refunreg"
+    ))
+  )
 }
 
 .estimate_ncomp <- function(y,
@@ -96,10 +99,11 @@ refunreg.dCVnet <- function(object,
 
 # Use 1 function for all model families handled by glm:
 refunreg_glm <- function(object,
-                           univariate = TRUE,
-                           doPCA = "auto",
-                           ncomp = "auto",
-                           ...) {
+                         univariate = TRUE,
+                         doPCA = "auto",
+                         ncomp = "auto",
+                         ...) {
+
   # extract parsed input
   parsed <- parse_dCVnet_input(f = object$input$callenv$f,
                                y = object$input$callenv$y,
@@ -112,8 +116,9 @@ refunreg_glm <- function(object,
                               familystring = parsed$family)
 
   # Settings:
-  doPCA <- ( ( (doPCA == "auto") && (estncomp$k > estncomp$estncomp) ) ||
-               identical(doPCA, TRUE) )
+  doPCA <- ((doPCA == "auto") && (estncomp$k > estncomp$estncomp)) ||
+    identical(doPCA, TRUE)
+
   if ( identical(ncomp, "auto") ) ncomp <- estncomp$estncomp
 
   # Is PCA required?:
@@ -155,14 +160,19 @@ refunreg_glm <- function(object,
                                        class(punivariate)))
   }
   # Merge:
-  rlr <- structure(list(glm = pglm,
-                        univariate = punivariate,
-                        object = deparse(substitute(object)),
-                        options = list(doPCA = doPCA,
-                                       ncomp = ncomp,
-                                       univariate = univariate)
-  ),
-  class = c("refunreg", "list"))
+  rlr <- structure(
+    list(
+      glm = pglm,
+      univariate = punivariate,
+      object = deparse(substitute(object)),
+      options = list(
+        doPCA = doPCA,
+        ncomp = ncomp,
+        univariate = univariate
+      )
+    ),
+    class = c("refunreg", "list")
+  )
   return(rlr)
 }
 
@@ -238,8 +248,8 @@ coef_refunreg <- function(refobj) {
   }
 
   if ( a && b ) return(data.frame(glm = G,
-                                 univariate = U,
-                                 stringsAsFactors = FALSE))
+                                  univariate = U,
+                                  stringsAsFactors = FALSE))
   if ( a ) return(data.frame(glm = G, stringsAsFactors = FALSE))
   if ( b ) return(data.frame(univariate = U, stringsAsFactors = FALSE))
   return(NA)

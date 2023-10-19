@@ -28,23 +28,23 @@ p1.yname <- dCVnet::parse_dCVnet_input(y = y1, data = x1, family = "binomial",
 # basic tests -------------------------------------------------------------
 
 test_that("parsed data equals input for simple calls", {
-    # outcome values:
-    expect_equal(as.factor(y1), p1.basic$y)
-    expect_equal(as.factor(y1), p1.yname$y)
-    # data values:
-    expect_equal(as.matrix(x1), p1.basic$x_mat, ignore_attr = TRUE)
-    expect_equal(as.matrix(x1), p1.yname$x_mat, ignore_attr = TRUE)
-    # data colnames:
-    expect_equal(colnames(p1.basic$x_mat), colnames(x1))
-    expect_equal(colnames(p1.yname$x_mat), colnames(x1))
+  # outcome values:
+  expect_equal(as.factor(y1), p1.basic$y)
+  expect_equal(as.factor(y1), p1.yname$y)
+  # data values:
+  expect_equal(as.matrix(x1), p1.basic$x_mat, ignore_attr = TRUE)
+  expect_equal(as.matrix(x1), p1.yname$x_mat, ignore_attr = TRUE)
+  # data colnames:
+  expect_equal(colnames(p1.basic$x_mat), colnames(x1))
+  expect_equal(colnames(p1.yname$x_mat), colnames(x1))
 
-    # yname:
-    expect_equal("y", p1.basic$yname)
-    expect_equal(yn, p1.yname$yname)
+  # yname:
+  expect_equal("y", p1.basic$yname)
+  expect_equal(yn, p1.yname$yname)
 
-    # output when yname changes:
-    expect_equal(p1.basic[names(p1.basic) != "yname"],
-                 p1.yname[names(p1.yname) != "yname"])
+  # output when yname changes:
+  expect_equal(p1.basic[names(p1.basic) != "yname"],
+               p1.yname[names(p1.yname) != "yname"])
 })
 
 

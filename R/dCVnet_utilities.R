@@ -132,8 +132,8 @@ parse_dCVnet_input <- function(data,
     y <- subset(y, complete)
     data <- subset(data, complete)
     warning(paste0("Removing ", sum(!complete),
-               " of ", length(complete),
-               " subjects due to missing data.\n"))
+                   " of ", length(complete),
+                   " subjects due to missing data.\n"))
   }
 
   # coerce y into factor and check, because...
@@ -555,8 +555,9 @@ extract_glmnet_alpha <- function(mod) {
   # as a fallback, stop and print name of missing object:
   stop(
     paste0("alpha in model call is a named object
-              which could not be found in the environment.
-             object name was: ", alpha))
+            which could not be found in the environment.
+            object name was: ", alpha)
+  )
   return(NULL)
 }
 
@@ -679,17 +680,20 @@ amalgamate_cv.glmnet <- function(cvglmlist,
     }
     # filter results to common set:
     common <- lapply(cvglmlist, function(x) x[["lambda"]] %in% lambda)
-    cvglmlist <- mapply(function(mod, sel) {
-      mod$lambda <- mod$lambda[sel]
-      mod$cvm <- mod$cvm[sel]
-      mod$cvsd <- mod$cvsd[sel]
-      mod$cvup <- mod$cvup[sel]
-      mod$cvlo <- mod$cvlo[sel]
-      mod$nzero <- mod$nzero[sel]
-      return(mod) },
+    cvglmlist <- mapply(
+      function(mod, sel) {
+        mod$lambda <- mod$lambda[sel]
+        mod$cvm <- mod$cvm[sel]
+        mod$cvsd <- mod$cvsd[sel]
+        mod$cvup <- mod$cvup[sel]
+        mod$cvlo <- mod$cvlo[sel]
+        mod$nzero <- mod$nzero[sel]
+        return(mod)
+      },
       mod = cvglmlist,
       sel = common,
-      SIMPLIFY = FALSE)
+      SIMPLIFY = FALSE
+    )
   }
 
   # check alphas
@@ -1241,7 +1245,8 @@ cv_performance_glm <- function(y,
       glm.performance = p0,
       cv.performance = ppp,
       folds = folds,
-      call = cl))
+      call = cl
+    ))
   }
 
   return(list(

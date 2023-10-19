@@ -12,8 +12,8 @@ vignette: >
   
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-collapse = TRUE,
-comment = "#>"
+  collapse = TRUE,
+  comment = "#>"
 )
 ```
 
@@ -108,9 +108,11 @@ short the glm is over-fit to the data.
 
 A model that is overfit will perform poorly in unseen data. Lets check how well the model fits the independent test dataset:
 ```{r test.glm}
-m1.test <- summary(dCVnet::performance(m1,
-                                 newdata = data.frame(y = blrsim$y.test,
-                                                      blrsim$x.test)))
+m1.test <- summary(
+  dCVnet::performance(m1,
+                      newdata = data.frame(y = blrsim$y.test,
+                                           blrsim$x.test))
+)
 # Accuracy:
 print(m1.test[5, 2])
 
@@ -201,7 +203,8 @@ m2.test <- summary(
                                          type = "class")[, 1]),
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
-      stringsAsFactors = FALSE),
+      stringsAsFactors = FALSE
+    ),
     family = "binomial",
     class = c("performance", "data.frame")
   )
@@ -283,24 +286,25 @@ rm1 <- glm(y ~ ., data = data.frame(y = ry, blrsim$x), family = "binomial")
 rm1.train <- summary(dCVnet::performance(rm1))
 
 rm1.cv <- dCVnet::cv_performance_glm(y = ry,
-                                          data = blrsim$x,
-                                          f = "~.",
-                                          k = 5,
-                                          nrep = 10)
+                                     data = blrsim$x,
+                                     f = "~.",
+                                     k = 5,
+                                     nrep = 10)
 
 rm1.test <- summary(
   dCVnet::performance(rm1,
                       newdata = data.frame(y = blrsim$y.test,
-                                           blrsim$x.test)))
+                                           blrsim$x.test))
+)
 # dCVnet with shuffled labels:
 rm2 <- dCVnet::dCVnet(y = ry,
-                     data = blrsim$x,
-                     k_outer = 5,
-                     k_inner = 5,
-                     nrep_outer = 10,
-                     nrep_inner = 5,
-                     alphalist = 0.1,
-                     type.measure = "class")
+                      data = blrsim$x,
+                      k_outer = 5,
+                      k_inner = 5,
+                      nrep_outer = 10,
+                      nrep_inner = 5,
+                      alphalist = 0.1,
+                      type.measure = "class")
 
 rm2.train <- summary(performance(rm2$prod$performance))
 
@@ -313,7 +317,8 @@ rm2.test <- summary(
                                          type = "class")[, 1]),
       reference = as.factor(blrsim$y.test),
       label = "m2.test",
-      stringsAsFactors = FALSE),
+      stringsAsFactors = FALSE
+    ),
     family = "binomial",
     class = c("performance", "data.frame")
   )

@@ -56,10 +56,8 @@ capture.output(
 )
 
 # Tests:
-test_that(
-  "multialpha objects pass test", {
-  for ( i in seq_along(ma.glmnets) ) {
+test_that("multialpha objects pass test", {
+  for (i in seq_along(ma.glmnets)) {
     expect_true(is_multialpha.repeated.cv.glmnet(ma.glmnets[[i]]))
   }
-  }
-)
+})

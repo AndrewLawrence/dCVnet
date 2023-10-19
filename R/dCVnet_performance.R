@@ -447,9 +447,12 @@ perf_cont <- function(object,
   # used for centering:
   ref_mean <- mean(object$reference) #nolint
 
-  mod <- stats::coef(stats::lm(I(reference - ref_mean) ~
-                               I(prediction - ref_mean),
-                               data = as.data.frame(object)))
+  mod <- stats::coef(
+    stats::lm(
+      formula = I(reference - ref_mean) ~ I(prediction - ref_mean),
+      data = as.data.frame(object)
+    )
+  )
 
   # Using ModelMetrics:
   R <- c(

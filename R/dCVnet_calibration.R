@@ -69,20 +69,20 @@ calibration.default <- function(x,
                                 ooid = "reference",
                                 gid = "label",
                                 ...) {
-  if ( length(unique(c(ppid, ooid, gid))) != 3 ) {
+  if (length(unique(c(ppid, ooid, gid))) != 3) {
     stop("Predictions and observations must be distinct elements in x")
   }
   pp <- x[[ppid]]
   oo <- x[[ooid]]
 
   # No implicit recyling
-  if ( length(pp) != length(oo) ) {
+  if (length(pp) != length(oo)) {
     stop("numbers of predicted probabilities and
          observed outcomes must match")
   }
 
   # grouping variable?
-  if ( is.na(gid) ) {
+  if (is.na(gid)) {
     g <- rep(deparse(substitute(x)), times = length(pp))
   } else {
     g <- x[[gid]]
@@ -100,7 +100,8 @@ calibration.default <- function(x,
     },
     FUN.VALUE = c(Intercept = 0.0,
                   Slope = 1.0),
-    USE.NAMES = TRUE)
+    USE.NAMES = TRUE
+  )
 
   class(result) <- c("calcoefs")
   result

@@ -103,11 +103,14 @@ modsel_perf <- list(
 )
 
 # report minimum and maximum Accuracy and AUROC
-modsel_perf <- lapply(modsel_perf, function(x) {
-  subset(x,
-         subset = x$Measure %in% c("Accuracy", "AUROC"),
-         select = c("Measure", "mean", "min", "max"))
-  })
+modsel_perf <- lapply(modsel_perf,
+                      function(x) {
+                        subset(
+                          x,
+                          subset = x$Measure %in% c("Accuracy", "AUROC"),
+                          select = c("Measure", "mean", "min", "max")
+                        )
+                      })
 ```
 
 We can inspect the results over the 10 repeats of 10-fold cross-validation:

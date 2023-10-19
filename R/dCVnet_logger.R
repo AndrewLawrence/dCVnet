@@ -61,11 +61,11 @@ log_results_to_excel <- function(object,
   # production classification + hyperparameters:
   prod <- summary(object$prod$performance)[, -3]
   prod.hps <- data.frame(Measure = c("...",
-                                      "Production Model Hyperparameters",
-                                      "lambda",
-                                      "alpha"),
-                          Value = NA,
-                          stringsAsFactors = FALSE)
+                                     "Production Model Hyperparameters",
+                                     "lambda",
+                                     "alpha"),
+                         Value = NA,
+                         stringsAsFactors = FALSE)
   prod.hps[3, 2] <- object$prod$tuning$best$lambda
   prod.hps[4, 2] <- as.numeric(object$prod$tuning$best$alpha)
   prod <- as.data.frame(data.table::rbindlist(list(prod, prod.hps)))
@@ -104,14 +104,15 @@ log_results_to_excel <- function(object,
         c("Summary", NA),
         c("OutcomeDesc", "Descriptives for Outcome Variable"),
         c("PredictorDesc", "Descriptives for Matrix of Predictors"),
-        c("CV-Performance",
-          "Outer loop cross-validated performance"),
+        c("CV-Performance", "Outer loop cross-validated performance"),
         c("SubjectClass", "Subject performance over outer loops"),
         c("Hyperparameters",
           "Hyperparameters chosen for outer loop folds/reps"),
         c("Coefficients", "Descriptives of Model coefficients"),
         c("Production Model", "Performance of Model (not cross-validated)")
-      ), stringsAsFactors = FALSE),
+      ),
+      stringsAsFactors = FALSE
+    ),
     c("sheetname", "name")
   )
 

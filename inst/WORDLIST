@@ -45,7 +45,6 @@ cutoff
 cv
 cvglmlist
 dCVnet's
-dotplot
 elasticnet
 enet
 errorbars
@@ -106,4 +105,5 @@ uncrossvalidated
 unmerged
 unregularised
 val
+varImp
 writable

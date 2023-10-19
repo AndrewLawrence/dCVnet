@@ -24,7 +24,7 @@ Variable importance for dCVnet/glmnet models does not require permutation
 methods, because coefficients are directly interpretable.
 }
 \details{
-\if{html}{\out{<div class="sourceCode">}}\preformatted{This VI function follow caret's example (see \code{\link[caret]{varImp}}
+\if{html}{\out{<div class="sourceCode">}}\preformatted{This VI function follows caret's example (see \code{\link[caret]{varImp}}
 function) and simply returns the absolute values of the coefficients.
 
 As variable importance is inferential this is done for the tuned

@@ -22,7 +22,8 @@ multialpha.repeated.cv.glmnet(
 \arguments{
 \item{x}{input matrix, of dimension nobs x nvars; each row is an observation
 vector. Can be in sparse matrix format (inherit from class
-\code{"sparseMatrix"} as in package \code{Matrix})}
+\code{"sparseMatrix"} as in package \code{Matrix}).
+Requirement: \code{nvars >1}; in other words, \code{x} should have 2 or more columns.}
 
 \item{y}{response variable. Quantitative for \code{family="gaussian"}, or
 \code{family="poisson"} (non-negative counts). For \code{family="binomial"}
