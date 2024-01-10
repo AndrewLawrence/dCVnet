@@ -408,7 +408,7 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
 #'
 #' obtain predictions from a
 #'     \code{\link{multialpha.repeated.cv.glmnet}} object.
-#'     Uses the 'best' alpha \& lambda hyperparameters determined by the
+#'     Uses the 'best' alpha & lambda hyperparameters determined by the
 #'     internal cross-validation results. For lambda this will be lambda.min
 #'     or lambda.1se (determined at model runtime) unless requested otherwise.
 #'

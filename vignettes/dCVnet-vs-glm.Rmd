@@ -66,12 +66,12 @@ data("blrsim")
 # ?blrsim
 lapply(blrsim, class)
 
+
 vapply(blrsim, function(x) {
   list(nvars = NCOL(x),
        nobs = NROW(x))
-  },
-  FUN.VALUE = list(1L, 1L)
-)
+},
+FUN.VALUE = list(1L, 1L))
 
 # we have training datasets: x and y, test datasets: x.test and y.test,
 #   and the recorded classification accuracy of an ideal classifier (bayes.rate)
