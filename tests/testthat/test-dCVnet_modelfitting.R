@@ -20,7 +20,7 @@ exlabs[exlabs == "multigaussian"] <- "mgaussian"
 
 
 # merge
-examples <- do.call(list, args = vapply(exlist, as.name, FUN.VALUE = "chr"))
+examples <- do.call(list, args = lapply(exlist, FUN = as.name))
 examples <- setNames(examples, exlabs)
 
 examples <- examples[!names(examples) %in% c("sparse")]
