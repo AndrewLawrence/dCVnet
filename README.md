@@ -48,7 +48,7 @@ toy example from the package's main function.
 
 #### List of dCVnet Vignettes
 
-    vignette(package = "dCVnet")
+    browseVignettes(package = "dCVnet")
 
 Note: this needs `build_vignettes = TRUE` to be set at installation.
 

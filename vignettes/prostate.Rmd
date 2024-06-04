@@ -167,9 +167,9 @@ appears better than the cross-validated performance
 
 We can run the equivalent model in dCVnet:
 
-```{r dCVnet, echo=FALSE}
+```{r dCVnet}
 m3 <- dCVnet(y = sprostate$lpsa,
-             data = sprostate[, -9:-10],
+             data = sprostate[, -9],
              f = "~.",
              family = "gaussian",
              alphalist = 1.0,
@@ -180,7 +180,7 @@ m3 <- dCVnet(y = sprostate$lpsa,
 ```
 
 ```{r dCVnet_summary }
-report_performance_summary(m3)[1:2, ] %>%
+report_performance_summary(m3)[c(1:2, 4), c(1:3, 7:9)] %>%
   knitr::kable(digits = 3)
 ```
 
