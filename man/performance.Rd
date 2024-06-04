@@ -78,6 +78,10 @@ For glm objects performance wraps \link{predict.glm} if newdata is specified.
 \details{
 Prediction performance measures differ for each model family.
 See \link{InternalPerformanceSummaryFunctions}.
+
+Performance is \emph{always} calculated at the level of CV-repeats.
+dCVnet does not report the fold-to-fold variability
+in CV performance.
 }
 \examples{
 \dontrun{

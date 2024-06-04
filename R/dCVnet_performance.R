@@ -63,6 +63,10 @@
 #'    Prediction performance measures differ for each model family.
 #'    See [InternalPerformanceSummaryFunctions].
 #'
+#'    Performance is *always* calculated at the level of CV-repeats.
+#'    dCVnet does not report the fold-to-fold variability
+#'    in CV performance.
+#'
 #' @name performance
 #'
 #' @param x an object from which prediction performance can be extracted.
