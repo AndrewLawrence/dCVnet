@@ -14,6 +14,7 @@ multialpha.repeated.cv.glmnet(
   opt.lambda.type = c("min", "1se"),
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
+  opt.random_seed = NULL,
   family,
   opt.keep_models = c("best", "none", "all"),
   ...
@@ -62,6 +63,9 @@ This is implemented with \code{\link[caret]{createFolds}}}
 In most circumstances folds will be unique. This requests
 that random folds are checked for uniqueness in inner and outer loops.
 Currently it warns if non-unique values are found.}
+
+\item{opt.random_seed}{Interpreted as integer. This is used to control
+the generation of random folds.}
 
 \item{family}{Either a character string representing
 one of the built-in families, or else a \code{glm()} family object. For more

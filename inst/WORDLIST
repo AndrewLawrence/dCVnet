@@ -64,6 +64,7 @@ lpsa
 lty
 mAUC
 mgaussian
+missForestPredict
 modelsummary
 multialpha
 nestedcv

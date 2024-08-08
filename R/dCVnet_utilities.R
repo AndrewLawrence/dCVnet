@@ -121,7 +121,6 @@ parse_dCVnet_input <- function(data,
   if ( passNA && dmiss ) {
     dcomplete <- rep(TRUE, length(dcomplete))
     dmiss <- FALSE
-    warning("Passing NAs - missing data (non-outcome)")
   }
 
   # joint removal:
@@ -204,11 +203,14 @@ parseddata_summary <- function(object) {
   # First describe the target:
   stry <- describe_y_from_performance(performance(object))
 
-  if ( inherits(object, "dCVnet") ) {
-    object <- parse_dCVnet_input(f = object$input$callenv$f,
-                                 y = object$input$callenv$y,
-                                 data = object$input$callenv$data,
-                                 family = object$input$callenv$family)
+  if (inherits(object, "dCVnet")) {
+    object <- parse_dCVnet_input(
+      f = object$input$callenv$f,
+      y = object$input$callenv$y,
+      data = object$input$callenv$data,
+      family = object$input$callenv$family,
+      passNA = object$input$callenv$opt.use_imputation
+    )
   }
 
   # Next the predictor matrix:
@@ -1122,6 +1124,54 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
   return(factor(R, levels = lvl))
 }
 
+
+
+preproc_imp_functions <- function(opt.imputation_method) {
+  .pp_fit_mean <- function(x) {
+    caret::preProcess(x, method = c("center", "scale"))
+  }
+  .pp_apply_mean <- function(x, newdata) {
+    newdata[is.na(newdata)] <- 0.0
+    as.matrix(predict(x, newdata = newdata))
+  }
+  .pp_fit_caretknn <- function(x) {
+    caret::preProcess(x, method = c("center", "scale", "knnImpute"))
+  }
+  .pp_apply_caret <- function(x, newdata) {
+    as.matrix(predict(x, newdata = newdata))
+  }
+  .pp_fit_mfp <- function(x) {
+    requireNamespace("missForestPredict", quietly = TRUE)
+    mfp <- missForestPredict::missForest(as.data.frame(x),
+                                         save_models = TRUE, verbose = FALSE)
+    PPx <- caret::preProcess(
+      missForestPredict::missForestPredict(mfp,
+                                           newdata = as.data.frame(x)),
+      method = c("center", "scale")
+    )
+    list(missForest = mfp, PPx = PPx)
+  }
+  .pp_apply_mfp <- function(x, newdata) {
+    newdata <- missForestPredict::missForestPredict(
+      x[["missForest"]],
+      newdata = as.data.frame(newdata)
+    )
+    as.matrix(predict(x[["PPx"]], newdata = newdata))
+  }
+  pp_fit <- switch(
+    opt.imputation_method,
+    mean = .pp_fit_mean,
+    knn = .pp_fit_caretknn,
+    missForestPredict = .pp_fit_mfp
+  )
+  pp_apply <- switch(
+    opt.imputation_method,
+    mean = .pp_apply_mean,
+    knn = .pp_apply_caret,
+    missForestPredict = .pp_apply_mfp
+  )
+  return(list(fit = pp_fit, apply = pp_apply))
+}
 
 #' cv_performance_glm
 #'

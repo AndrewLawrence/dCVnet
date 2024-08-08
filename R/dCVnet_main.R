@@ -36,6 +36,11 @@
 #'     Use the empirical proportion of cases as the cutoff for outer CV
 #'     classification (affects outer CV performance only).
 #'     Otherwise classify at 50% probability.
+#' @param opt.use_imputation Boolean.
+#'     Run imputation on missing predictors? (UNDER DEVELOPMENT)
+#' @param opt.imputation_method options: \code{"mean"} - mean imputation using
+#'     \code{\link[glmnet]{makeX}}. \code{"missForestPredict"} - use the
+#'     missForestPredict package to impute missing values.
 #' @param ... Arguments to pass through to cv.glmnet
 #'     (may break things).
 #' @return a dCVnet object.
@@ -119,26 +124,44 @@ dCVnet <- function(
   opt.empirical_cutoff = FALSE,
   opt.uniquefolds = FALSE,
   opt.ystratify = TRUE,
+  opt.random_seed = NULL,
+
+  opt.use_imputation = FALSE,
+  opt.imputation_method = c("mean", "knn", "missForestPredict"),
 
   ...
 ) {
 
   # Parse input -------------------------------------------------------------
 
-  # call for printing:
+  # function call (for printing):
   thecall <- match.call()
 
-  # call for posterity (save objects from environment):
+  opt.imputation_method <- match.arg(opt.imputation_method)
+  if (!opt.use_imputation) {
+    opt.imputation_method <- "mean" # will not be applied.
+  }
+
+  # save arguments for posterity (i.e. save objects from environment):
   callenv <- c(as.list(environment()), list(...))
 
   time_start <- force(Sys.time()) # for logging.
+
+  # Parse basic model input:
   parsed <- parse_dCVnet_input(f = f,
                                y = y,
                                data = data,
                                family = family,
-                               passNA = FALSE)
+                               passNA = opt.use_imputation)
   x <- parsed$x_mat
   y <- parsed$y
+
+  # If the imputation method is missForestPredict then check we have the package
+  #   and fail if not:
+  if ( opt.imputation_method == "missForestPredict" &&
+        ! requireNamespace("missForestPredict", quietly = TRUE) ) {
+    stop("Please install the missForestPredict package to use this option.")
+  }
 
   # stop if AUC requested and magic number not met.
   if ( type.measure == "auc" ) {
@@ -156,10 +179,10 @@ dCVnet <- function(
 
   # Check the alpha values:
   alphalist <- parse_alphalist(alphalist)
-  # how many alphas did we feed in:
   nalpha <- length(alphalist)
 
-  # are we reporting performance at 0.5 or the empirical cutoff?
+  # for classification problems:
+  #   are we reporting performance at 0.5 or the empirical cutoff?
   cutoff <- 0.5
   if ( opt.empirical_cutoff ) {
     cutoff <- (as.numeric(table(y)[1]) / sum(as.numeric(table(y))))
@@ -174,6 +197,14 @@ dCVnet <- function(
                   family = family,
                   time.start = time_start)
 
+  # Preprocessing functions -------------------------------------------------
+
+  # Data is preprocessed repeatedly, and differently depending on imputation
+  #   use a utility function to get appropriate preprocessing functions
+  #   depending on opt.imputation_method.
+
+  pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method)
+
   # Create outer folds ------------------------------------------------------
   # Note: this is by default stratified by y, we obtain unstratified sampling
   #         by giving caret::createMultiFolds a single-level factor/char.
@@ -181,6 +212,11 @@ dCVnet <- function(
   if ( identical(opt.ystratify, FALSE) || family %in% c("cox", "mgaussian") ) {
     ystrat <- rep("x", length(y))
   }
+
+  set.seed(opt.random_seed)
+  # But don't use the same fixed seed for all the inner loop calls:
+  opt.random_seed <- NULL
+
   outfolds <- caret::createMultiFolds(y = ystrat,
                                       k = k_outer,
                                       times = nrep_outer)
@@ -194,59 +230,81 @@ dCVnet <- function(
   # Initialise the call -----------------------------------------------------
 
   # create a call to multialpha.repeated.cv.glmnet which will be
-  #   updated with new data and re-evaluated within each run of the outer loop.
+  #   used later as the basis of the outer loop.
+  #
+  #   For each outer fold this call will be updated with new data and
+  #   evaluated.
   cl.marcvglm.argset <- unique(
     c(methods::formalArgs(multialpha.repeated.cv.glmnet),
       methods::formalArgs(repeated.cv.glmnet),
       methods::formalArgs(glmnet::glmnet),
       methods::formalArgs(glmnet::cv.glmnet))
   )
+  # Initialise the call with all relevant arguments provided to dCVnet:
   cl.marcvglm <- callenv[names(callenv) %in% cl.marcvglm.argset]
-  # force no standardisation:
+
+  # Then make some key adjustments
+  # Ensure no standardisation in glmnet
+  #   (because standardisation will be handled independently by preProcess):
   cl.marcvglm$standardize <- FALSE
-  # force keep multialpha models:
-  cl.marcvglm$opt.keep_models <- "best"
-  # translate some dCVnet args to multialpha.repeated.cv.glmnet:
+  # Ensure we keep multialpha models:
+  if ( is.null(cl.marcvglm$opt.keep_models) ||
+        cl.marcvglm$opt.keep_models == "none" ) {
+    cl.marcvglm$opt.keep_models <- "best"
+  }
+  # Translate some dCVnet args to multialpha.repeated.cv.glmnet format:
   cl.marcvglm$k <- k_inner
   cl.marcvglm$nrep <- nrep_inner
 
-  # add the list of alpha values:
+  # Add the processed list of alpha values:
   cl.marcvglm$alphalist <- alphalist
 
 
+  # Production (Final) Model ------------------------------------------------
+  #   start at the end. This is the model we are cross-validating.
+  #   note that no output from this model are used in the cross-validation.
+  #   excepting - the lambda list.
+  prod_PPx <- structure(
+    pp_fn$fit(x),
+    fit = pp_fn$fit,
+    apply = pp_fn$apply
+  )
+  xs <- attr(prod_PPx, "apply")(prod_PPx, x)
+
   # Create Lambda paths -----------------------------------------------------
 
-  # Lambda path notes:
-  # Inspired by the source of cv.glmnet, we get the list of lambdas once,
-  #   rather than per-CV fold. This is done by running a glmnet at each alpha
-  #   for all data and extracting the list of lambdas used.
-  # Previously a wider/more representative range of lambdas was obtained by
-  #   by applying a formula for calculation of max lambda to random samplings
-  #   of the data (per alpha).
+  # Lambda paths:
+  # dCVnet works with a single, fixed list of lambdas applied to all folds/reps
+  #   of the CV, rather than independent lambda lists.
+  #
+  # Lambda lists are obtained by running a glmnet at each alpha and extracting
+  #   the list of lambdas used.
+  #
+  # In an earlier version of glmnet, aiming to be more robust, a single list
+  #   was obtained by directly calculation of max-lambda for random samplings of
+  #   the data. This used a formula for max lambda.
   #
   # However, 1) The formula involved matrix multiplication and
   #             The multiple random samplings was time consuming.
-  #          2) There is no published formula for these calculations for
-  #             mgaussian/cox family models, so the previous method could not
-  #             be extended.
-  #          3) Using a call to fortran ensures the lambda sequence is formatted
-  #             in the way glmnet expects annd avoids inconsistency in rounding
-  #             and excess precision.
+  #          2) For mgaussian/cox family models there is no published formula
+  #             for these calculations , so the previous method could not
+  #             be generalised.
+  #          3) Using a call to glmnet ensures the lambda sequence is formatted
+  #             exactly as glmnet expects, avoiding rounding inconsistency and
+  #             excess precision.
   #          4) Hastie et al use the whole-data fortran-call method in cv.glmnet
   #
   # Note: creating lambdas before standardising the data is OK because
-  #   the internal glmnet code which uses internal standardisation and
-  #   standardisation is idempotent. This would need to be revisited if
-  #   other transformations are implemented - e.g. yeo-johnsson.
+  #   the glmnet uses internal standardisation and standardisation is idempotent
+  #   This would need to be revisited if other transformations are implemented
+  #   - e.g. yeo-johnsson.
 
-  # subset the above call such that it containts all valid arguments for glmnet:
+  # Subset the above call to retain all valid arguments for glmnet:
   cl.lf <- cl.marcvglm[
     names(cl.marcvglm) %in% methods::formalArgs(glmnet::glmnet)
   ]
-  # modify to force glmnet internal standardisation:
-  cl.lf$standardize <- TRUE
   # add x and y
-  cl.lf$x <- x
+  cl.lf$x <- xs
   cl.lf$y <- y
 
   # Loop over alpha values and extract lambda list for each alpha:
@@ -258,8 +316,41 @@ dCVnet <- function(
                     })
 
 
-  # add to the main call:
+  # add lambdas to the main call:
   cl.marcvglm$lambdas <- lambdas
+
+  # Production (Final) Model (cont.) ----------------------------------------
+
+  # Run the inner loop for the production model:
+  cat("\n\nProduction Model\n")
+
+  cl.marcvglm$y <- y
+  cl.marcvglm$x <- xs
+  prod_tuning <- do.call("multialpha.repeated.cv.glmnet", cl.marcvglm)
+
+  prod_performance <- tidy_predict.glmnet(
+    mod = prod_tuning$models[[prod_tuning$bestmodel]],
+    newx = xs,
+    family = family,
+    newy = y,
+    binomial_thresh = cutoff,
+    offset = offset,
+    label = "Production",
+    s = prod_tuning$best$lambda
+  )
+
+  prod_performance <- structure(prod_performance,
+                                family = family,
+                                class = c("performance",
+                                          "data.frame"))
+
+  prod <- list(
+    tuning = drop_models.multialpha.repeated.cv.glmnet(prod_tuning),
+    performance = prod_performance,
+    model = prod_tuning,
+    preprocess = prod_PPx # include the preprocessing for predict method.
+  )
+
 
 
   # Run Outer Loop (Start) --------------------------------------------------
@@ -293,9 +384,13 @@ dCVnet <- function(
 
       # scaling to mean=0, sd=1
       #   (scaling calculated on completecases train data, applied to test data)
-      PPx <- caret::preProcess(trainx, method = c("center", "scale"))
-      trainx <- predict(PPx, trainx)
-      testx <- predict(PPx, testx)
+      PPx <- structure(
+        pp_fn$fit(trainx),
+        fit = pp_fn$fit,
+        apply = pp_fn$apply
+      )
+      trainx <- attr(PPx, "apply")(PPx, trainx)
+      testx  <- attr(PPx, "apply")(PPx, testx)
 
       # inner loop train data -------------------------------------------
       #   - receives no (outer) test data
@@ -361,40 +456,6 @@ dCVnet <- function(
   }
 
 
-  # Production (Final) Model ------------------------------------------------
-  prod_PPx <- caret::preProcess(x, method = c("center", "scale"))
-  xs <- predict(prod_PPx, x)
-
-  # Run the inner loop for the production model:
-  cat("\n\nProduction Model\n")
-
-  cl.marcvglm$y <- y
-  cl.marcvglm$x <- xs
-  prod_tuning <- do.call("multialpha.repeated.cv.glmnet", cl.marcvglm)
-
-  prod_performance <- tidy_predict.glmnet(
-    mod = prod_tuning$models[[prod_tuning$bestmodel]],
-    newx = xs,
-    family = family,
-    newy = y,
-    binomial_thresh = cutoff,
-    offset = offset,
-    label = "Production",
-    s = prod_tuning$best$lambda
-  )
-
-  prod_performance <- structure(prod_performance,
-                                family = family,
-                                class = c("performance",
-                                          "data.frame"))
-
-  prod <- list(
-    tuning = drop_models.multialpha.repeated.cv.glmnet(prod_tuning),
-    performance = prod_performance,
-    model = prod_tuning,
-    preprocess = prod_PPx # include the preprocessing for predict method.
-  )
-
   time_stop <- Sys.time()
   run_time <- difftime(time_stop, time_start, units = "hours")
 
@@ -420,12 +481,16 @@ dCVnet <- function(
 }
 
 
+# dCVnet methods ----------------------------------------------------------
+
+
 # Extract coefficients from a dCVnet object:
 #' coef.dCVnet
 #'
 #' Coefficients from a dCVnet object. If type is "production" this gives the
-#' coefficients from the production model fit to all data. Otherwise
-#' coefficients are returned from the outerloop of the cross-validation.
+#' coefficients from the production model fit to all data. Other options for
+#' type return coefficients from the outerloop of the cross-validation which
+#' are summarised/presented in different ways.
 #'
 #' @param object a dCVnet object
 #' @param type how to return coefficients.
@@ -466,16 +531,16 @@ coef.dCVnet <- function(object, type = "all", ...) {
                                       "byrep_mean",
                                       "byrep_median"))
 
-  # first handle production:
+  # first: "production"
   if ( type == "production" ) {
     return(tidy_coef.multialpha.repeated.cv.glmnet(object$prod$model))
   }
 
-  # next handle outerloop coefficients:
+  # next: outerloop coefficients
 
   # works on the output of the outerloop.
   #   Given the 'best' alpha/lambda from the inner loop,
-  #     what were the coefficients in a model selected with the best alpha.
+  #     what were the coefficients in a model selected with the best alpha?
   R <- lapply(seq_along(object$tuning), function(ii) {
     tt <- object$tuning[[ii]]
     coefs <- tidy_coef.glmnet(
@@ -496,6 +561,7 @@ coef.dCVnet <- function(object, type = "all", ...) {
                   2)
 
   if (type == "all") return(R)
+
   if (type == "mean") {
     R <- aggregate(R$Coef, by = list(Predictor = R$Predictor), mean)
     colnames(R)[2] <- "Coef"
@@ -542,7 +608,8 @@ print.dCVnet <- function(x, ...) {
   parsed <- parse_dCVnet_input(f = callenv$f,
                                y = callenv$y,
                                data = callenv$data,
-                               family = callenv$family)
+                               family = callenv$family,
+                               passNA = callenv$opt.use_imputation)
 
   nalphas <- length(callenv$alphalist)
   nlambdas <- range(vapply(x$input$lambdas, length, c(1)))
@@ -857,11 +924,10 @@ predict.dCVnet <- function(object,
                            newx,
                            ...) {
   # apply the preprocessing from the production model:
-
-  preProcessPredict <- utils::getFromNamespace(x = "predict.preProcess",
-                                               ns = "caret")
+  preProcessPredict <- attr(object$prod$preprocess,
+                            "apply")
   newx <- as.matrix(newx) # coerce to matrix (this fixed a random bug...)
-  newx <- preProcessPredict(object$prod$preprocessing, newx)
+  newx <- preProcessPredict(object$prod$preprocess, newx)
   # run the prediction:
   predict.multialpha.repeated.cv.glmnet(object$prod$model,
                                         newx = newx,

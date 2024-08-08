@@ -42,6 +42,7 @@ Suggests:
     boot,
     tidyverse,
     broom,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    missForestPredict
 VignetteBuilder: knitr
 Config/testthat/edition: 3

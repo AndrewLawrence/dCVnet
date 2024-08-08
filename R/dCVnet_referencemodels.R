@@ -50,7 +50,8 @@ refunreg.default <- function(object, ...) {
 #'
 #' @describeIn refunreg refunreg for \code{\link{dCVnet}} object
 #'
-#' @param univariate calculate per-variable logistic-regression models.
+#' @param univariate boolean: also calculate per-variable
+#'     models?
 #' @param doPCA first run PCA on the features can be "auto" or a boolean.
 #'                  \itemize{
 #'                  \item{\code{"auto"} determines based on ratio of
@@ -66,7 +67,7 @@ refunreg.dCVnet <- function(object,
                             doPCA = "auto",
                             ncomp = "auto",
                             ...) {
-  cl <- as.list(match.call(expand.dots = TRUE))[-1]
+  cl <- c(as.list(environment()), list(...))
 
   f <- family(object)
 
@@ -108,7 +109,18 @@ refunreg_glm <- function(object,
   parsed <- parse_dCVnet_input(f = object$input$callenv$f,
                                y = object$input$callenv$y,
                                data = object$input$callenv$data,
-                               family = object$input$callenv$family)
+                               family = object$input$callenv$family,
+                               passNA = object$input$callenv$opt.use_imputation)
+  opt.imputation_method <- object$input$callenv$opt.imputation_method
+
+  pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method)
+
+  prod_PPx <- structure(
+    pp_fn$fit(parsed$x_mat),
+    fit = pp_fn$fit,
+    apply = pp_fn$apply
+  )
+  parsed$x_mat <- attr(prod_PPx, "apply")(prod_PPx, parsed$x_mat)
 
   # estimate reasonable dimensionality:
   estncomp <- .estimate_ncomp(y = parsed$y,
@@ -164,7 +176,8 @@ refunreg_glm <- function(object,
     list(
       glm = pglm,
       univariate = punivariate,
-      object = deparse(substitute(object)),
+      object = object,
+      preproc = prod_PPx,
       options = list(
         doPCA = doPCA,
         ncomp = ncomp,
@@ -179,7 +192,7 @@ refunreg_glm <- function(object,
 # Simple print function for \code{\link{refunreg}} objects.
 #' @export
 print.refunreg <- function(x, ...) {
-  cat(paste("\nReference models fit to", x$object, "\n\n"))
+  cat(paste("\nReference models fit to", deparse(substitute(x$object)), "\n\n"))
   cat(paste("\tncases:", length(x$glm$y), "\n"))
   cat(paste("\tnpreds:", length(x$glm$coefficients) - 1, "\n\n"))
   cat(paste("options:\n"))

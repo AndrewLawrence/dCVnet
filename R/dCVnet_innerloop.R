@@ -67,7 +67,7 @@ repeated.cv.glmnet <- function(x, y,
     lambdaseq <- lambda
   }
   cl$lambda <- quote(lambdaseq)
-  cl$x <- quote(x)
+  # cl$x <- quote(x) # nolint
   cl$y <- quote(y)
   cl$family <- quote(family)
 
@@ -135,6 +135,8 @@ repeated.cv.glmnet <- function(x, y,
 #'     In most circumstances folds will be unique. This requests
 #'     that random folds are checked for uniqueness in inner and outer loops.
 #'     Currently it warns if non-unique values are found.
+#' @param opt.random_seed Interpreted as integer. This is used to control
+#'     the generation of random folds.
 #' @param opt.keep_models The models take up memory. What should we return?
 #'     \itemize{
 #'       \item{ best - model with the alpha value selected as optimal. }
@@ -164,6 +166,7 @@ multialpha.repeated.cv.glmnet <- function(
   opt.lambda.type = c("min", "1se"),
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
+  opt.random_seed = NULL,
   family,
   opt.keep_models = c("best", "none", "all"),
   ...
@@ -199,6 +202,7 @@ multialpha.repeated.cv.glmnet <- function(
     # caret stratification isn't sensible for cox / mgauss:
     ystrat <- rep("x", NROW(y))
   }
+  set.seed(opt.random_seed)
   folds <- lapply(1:nrep, function(i) {
     caret::createFolds(y = ystrat, k = k, list = FALSE, returnTrain = FALSE)
   })

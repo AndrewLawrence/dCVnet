@@ -30,8 +30,9 @@ columns: Predictor and Coef (as well as Rep and fold if applicable)
 }
 \description{
 Coefficients from a dCVnet object. If type is "production" this gives the
-coefficients from the production model fit to all data. Otherwise
-coefficients are returned from the outerloop of the cross-validation.
+coefficients from the production model fit to all data. Other options for
+type return coefficients from the outerloop of the cross-validation which
+are summarised/presented in different ways.
 }
 \seealso{
 coefficients_summary

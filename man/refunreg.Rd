@@ -17,7 +17,8 @@ refunreg(object, ...)
 
 \item{...}{arguments to pass on}
 
-\item{univariate}{calculate per-variable logistic-regression models.}
+\item{univariate}{boolean: also calculate per-variable
+models?}
 
 \item{doPCA}{first run PCA on the features can be "auto" or a boolean.
 \itemize{

@@ -89,10 +89,10 @@ test_that("missing x can be passed (but not y)", {
 
   expect_identical(p3.y, p2.y)
   # Second x only missing:
-  expect_warning((p3.x <- dCVnet::parse_dCVnet_input(y = y1,
-                                                     data = x2,
-                                                     family = "binomial",
-                                                     passNA = TRUE)))
+  (p3.x <- dCVnet::parse_dCVnet_input(y = y1,
+                                      data = x2,
+                                      family = "binomial",
+                                      passNA = TRUE))
   expect_equal(NROW(p3.x$y), NROW(p3.x$x_mat))
   expect_gt(NROW(p3.x$y), sum(complete.cases(x2)))
   expect_equal(nested_anyna(p3.x), TRUE)

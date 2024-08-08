@@ -21,6 +21,9 @@ dCVnet(
   opt.empirical_cutoff = FALSE,
   opt.uniquefolds = FALSE,
   opt.ystratify = TRUE,
+  opt.random_seed = NULL,
+  opt.use_imputation = FALSE,
+  opt.imputation_method = c("mean", "knn", "missForestPredict"),
   ...
 )
 }
@@ -81,6 +84,16 @@ Currently it warns if non-unique values are found.}
 \item{opt.ystratify}{Boolean.
 Outer and inner sampling is stratified by outcome.
 This is implemented with \code{\link[caret]{createFolds}}}
+
+\item{opt.random_seed}{Interpreted as integer. This is used to control
+the generation of random folds.}
+
+\item{opt.use_imputation}{Boolean.
+Run imputation on missing predictors? (UNDER DEVELOPMENT)}
+
+\item{opt.imputation_method}{options: \code{"mean"} - mean imputation using
+\code{\link[glmnet]{makeX}}. \code{"missForestPredict"} - use the
+missForestPredict package to impute missing values.}
 
 \item{...}{Arguments to pass through to cv.glmnet
 (may break things).}
