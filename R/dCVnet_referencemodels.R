@@ -6,7 +6,8 @@
 #'
 #' Unregularised prediction models for comparison
 #'
-#' Calculate reference unregularised regressions to help interpret performance.
+#' Calculate uncrossvalidated performance for reference unregularised
+#'     models to help interpret dCVnet performance.
 #'     given \eqn{n} observations of \eqn{p} predictors, the models calculated
 #'     are:
 #'     \itemize{
@@ -32,6 +33,14 @@
 #'                 one for each predictor}
 #' }
 #'
+#' @examples
+#' \dontrun{
+#' data(QuickStartExample, package = "glmnet")
+#' m <- dCVnet(y = QuickStartExample$y,
+#'             data = QuickStartExample$x,
+#'             family = "gaussian")
+#' report_reference_performance_summary(refunreg(m))
+#' }
 #' @export
 refunreg <- function(object, ...) {
   UseMethod("refunreg", object)
