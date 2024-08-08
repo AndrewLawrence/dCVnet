@@ -31,6 +31,7 @@ x <- MASS::mvrnorm(n = nobs_total,
                    mu = rep(0, nvar),
                    Sigma = xsig,
                    empirical = TRUE)
+colnames(x) <- paste0("V", 1:nvar)
 
 y <- ifelse(rowSums(x[, seq_len(ngood)]) > 0 +
               rnorm(n = nobs_total, mean = 0, sd = 2.5),
