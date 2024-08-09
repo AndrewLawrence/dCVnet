@@ -75,7 +75,7 @@ calibration.default <- function(x,
   pp <- x[[ppid]]
   oo <- x[[ooid]]
 
-  # No implicit recyling
+  # No implicit recycling
   if (length(pp) != length(oo)) {
     stop("numbers of predicted probabilities and
          observed outcomes must match")

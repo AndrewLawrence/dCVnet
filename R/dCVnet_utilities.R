@@ -222,7 +222,9 @@ parseddata_summary <- function(object) {
                               max = max(x, na.rm = TRUE),
                               skew = e1071::skewness(x, na.rm = TRUE, type = 2),
                               kurt = e1071::kurtosis(x, na.rm = TRUE, type = 2),
-                              nnz = sum(x != 0),
+                              nmiss = sum(is.na(x)),
+                              n = sum(!is.na(x)),
+                              nnz = sum(x != 0, na.rm = TRUE),
                               stringsAsFactors = FALSE)
                  })
   xdes <- as.data.frame(data.table::rbindlist(xdes), stringsAsFactors = FALSE)
