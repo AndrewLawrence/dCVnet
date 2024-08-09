@@ -37,14 +37,14 @@ calibration intercept and calibration slope
 calculates 'weak' (i.e. intercept + slope) calibration for binomial family
 outcome. This is equivalent to the values returned by the val.prob
 function in the \code{rms} package
-(which accompanies Frank Harrell's Regression Modelling Strategies book).
+that accompanies Frank Harrell's Regression Modelling Strategies book.
 
 Default function behaviour assumes input is a
 list/data.frame with required vectors as elements.
 }
 \details{
-Binomial calibration is not returned via \code{\link{performance}} because
-of the computational overhead of model fitting.
+Calibration for binomial families is not returned by default
+for \code{\link{performance}} because of its computational overhead.
 }
 \section{Methods (by class)}{
 \itemize{
