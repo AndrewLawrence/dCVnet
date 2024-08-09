@@ -142,7 +142,9 @@ Mean imputation does not noticeably de-bias performance back towards the "true" 
 
 In contrast, the k-nearest neighbours and random-forest imputation approaches brings the mean CV-prediction performance closer to the "true" non-missing model's performance (albeit not perfectly) and also narrows the variability to that of the "true" data.
 
-In this simulation we show prediction models using conditional single imputation (knn or random forest) show cross-validated results closer to complete data than mean imputation or complete-cases excluding the 10% of subjects with missing values. Note that the simulation is only an illustration, the values were removed with a Missing at Random mechanism (i.e. not Missing Completely At Random, or Missing Not At Random), and the predictors with missing data had other predictors that were good indicators of them - i.e. there is some redundancy.
+In this simulation we show prediction models using conditional single imputation (knn or random forest) show cross-validated results closer to complete data than mean imputation or complete-cases excluding the 10% of subjects with missing values.
+
+Note that the simulation is only an illustration, the values were removed with a Missing at Random mechanism. This was deliberate to favour imputation. Missing Completely At Random data would classically produce unbiased coefficients under a complete-cases analysis and so not benefit from imputation. While Missing Not At Random missingness would be expected to not approach ideal performance with either complete-cases or imputation. Also note that the predictors with missing data had other predictors that were good indicators of them - i.e. there was some multi-colinearity/redundancy where it mattered. In a study where predictors were uncorrelated we should not expect this form of imputation to be useful (but also probably not harmful).
 
 ## dCVnet Imputation Details
 
