@@ -58,12 +58,14 @@ glmnet
 hdi
 ing
 innerloop
+knn
 linetype
 lm
 lpsa
 lty
 mAUC
 mgaussian
+missForest
 missForestPredict
 modelsummary
 multialpha
@@ -100,7 +102,6 @@ se
 selectiveInference
 seq
 setalpha
-signif
 un
 uncrossvalidated
 unmerged
