@@ -59,4 +59,3 @@ blrsim <- list(x = x,
                bayes.rate = bayes.rate)
 
 usethis::use_data(blrsim, overwrite = TRUE)
-
