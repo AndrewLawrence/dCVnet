@@ -34,9 +34,8 @@
 #' @importFrom stats median prcomp relevel setNames
 #' @importFrom methods formalArgs
 #'
-#' @docType package
 #' @name dCVnet-package
-NULL
+"_PACKAGE"
 
 
 # model families are being added gradually to this package.

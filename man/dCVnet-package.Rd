@@ -28,3 +28,15 @@ performance of the selected hyperparameters) keeps the cross-validated
 performance estimates 'honest' by reducing optimism bias related to
 hyperparameter tuning.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/AndrewLawrence/dCVnet}
+  \item Report bugs at \url{https://github.com/AndrewLawrence/dCVnet/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Andrew J. Lawrence \email{lawrenceajl@gmail.com}
+
+}
