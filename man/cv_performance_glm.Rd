@@ -15,6 +15,7 @@ cv_performance_glm(
   opt.ystratify = TRUE,
   opt.uniquefolds = FALSE,
   return_summary = TRUE,
+  offset = NULL,
   ...
 )
 }
@@ -50,6 +51,8 @@ Currently it warns if non-unique values are found.}
 
 \item{return_summary}{bool. return summarised performance (default), or
 \code{\link{performance}} objects for further analysis (set to FALSE)}
+
+\item{offset}{optional model offset (see \code{\link{glmnet}})}
 
 \item{...}{other arguments}
 }

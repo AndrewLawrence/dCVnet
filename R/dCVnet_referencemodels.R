@@ -119,7 +119,8 @@ refunreg_glm <- function(object,
                                y = object$input$callenv$y,
                                data = object$input$callenv$data,
                                family = object$input$callenv$family,
-                               passNA = object$input$callenv$opt.use_imputation)
+                               passNA = object$input$callenv$opt.use_imputation,
+                               offset = object$input$callenv$offset)
   opt.imputation_method <- object$input$callenv$opt.imputation_method
 
   pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method)

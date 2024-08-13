@@ -174,7 +174,8 @@ parse_dCVnet_input <- function(data,
   return(list(y = y,
               x_mat = x_mat,
               yname = yname,
-              family = family))
+              family = family,
+              offset = offset))
 }
 
 
@@ -209,7 +210,8 @@ parseddata_summary <- function(object) {
       y = object$input$callenv$y,
       data = object$input$callenv$data,
       family = object$input$callenv$family,
-      passNA = object$input$callenv$opt.use_imputation
+      passNA = object$input$callenv$opt.use_imputation,
+      offset = object$input$callenv$offset
     )
   }
 
@@ -1200,6 +1202,7 @@ preproc_imp_functions <- function(opt.imputation_method) {
 #' @param ... other arguments
 #' @inheritParams multialpha.repeated.cv.glmnet
 #' @inheritParams repeated.cv.glmnet
+#' @inheritParams dCVnet
 #' @return A list containing the following:
 #'     \itemize{
 #'     \item{glm.performance - summary(performance(x))
@@ -1221,10 +1224,12 @@ cv_performance_glm <- function(y,
                                opt.ystratify = TRUE,
                                opt.uniquefolds = FALSE,
                                return_summary = TRUE,
+                               offset = NULL,
                                ...) {
   cl <- as.list(match.call())[-1]
 
-  parsed <- parse_dCVnet_input(data = data, y = y, f = f, family = family)
+  parsed <- parse_dCVnet_input(data = data, y = y, f = f, family = family,
+                               offset = offset, passNA = FALSE)
 
   x <- data.frame(parsed$x)
   y <- parsed$y
@@ -1232,7 +1237,8 @@ cv_performance_glm <- function(y,
   # observed model:
   m0 <- glm(y ~ .,
             data = data.frame(y = y, x, stringsAsFactors = FALSE),
-            family = family)
+            family = family,
+            offset = offset)
   # prediction performance:
   p0 <- summary(performance(m0), label = "observed")
 

@@ -195,7 +195,8 @@ dCVnet <- function(
                                y = y,
                                data = data,
                                family = family,
-                               passNA = opt.use_imputation)
+                               passNA = opt.use_imputation,
+                               offset = offset)
   x <- parsed$x_mat
   y <- parsed$y
 
@@ -652,7 +653,8 @@ print.dCVnet <- function(x, ...) {
                                y = callenv$y,
                                data = callenv$data,
                                family = callenv$family,
-                               passNA = callenv$opt.use_imputation)
+                               passNA = callenv$opt.use_imputation,
+                               offset = callenv$offset)
 
   nalphas <- length(callenv$alphalist)
   nlambdas <- range(vapply(x$input$lambdas, length, c(1)))
