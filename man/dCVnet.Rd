@@ -2,7 +2,7 @@
 % Please edit documentation in R/dCVnet_main.R
 \name{dCVnet}
 \alias{dCVnet}
-\title{Fit a doubly cross-validated elastic-net regularised logistic regression}
+\title{Double cross-validated elastic-net regularised regression}
 \usage{
 dCVnet(
   y,
@@ -99,19 +99,66 @@ missForestPredict package to impute missing values.}
 (may break things).}
 }
 \value{
-a dCVnet object.
+a dCVnet object containing:
+\itemize{
+\item{\code{input}: call arguments and input data}
+\item{\code{prod}: the production model and preprocessing information
+used in making new predictions.}
+\item{\code{folds}: outer-loop CV fold membership}
+\item{\code{performance}: Cross-validated \code{\link{performance}}}
+\item{\code{tuning}: Outer loop CV tuning information}
+}
 }
 \description{
-Double (nested) repeated k-fold cross-validation used to:
+Fits and cross-validates an elastic-net regularised regression model
+using independent cross-validation to select optimal alpha and lambda
+hyperparameters for the regularisation.
+}
+\details{
+The time-consuming double (i.e. nested) cross-validation (CV) is used because
+single cross-validation - which both tunes hyperparameters and estimates
+out-of-sample classification performance - will be optimistically biased.
+
+Cross-validation for both the inner and outer loop is \emph{repeated k-fold}.
+
+Both alpha and lambda hyperparameters of the elastic-net can be tuned:
 \itemize{
-\item{Produce unbiased estimates of out-of-sample
-classification performance (outer CV).}
-\item{Select optimal hyperparameters for the elasticnet (inner CV).}
+\item{\bold{lambda} - the total regularisation penalty}
+\item{\bold{alpha} - the balance of L1(LASSO) and L2 (Ridge)
+regularisation types}
 }
-Elasticnet hyperparameters are
-\bold{lambda} (the total regularisation penalty)
-and \bold{alpha} (the balance of L1 and L2 regularisation types).
 }
+\section{Coefficients}{
+
+
+Currently all coefficients reported / used by dCVnet are
+\emph{semi-standardised} for x, but not y. In other words, the predictor matrix x
+is mean-centered and scaled by the standard deviation prior to calculations.
+
+The predict method for dCVnet stores these means/SDs, and will apply the same
+standardisation to x on predicting new values.
+
+As a result the reported coefficients for dCVnet can be interpreted as
+(semi-)standardised effect sizes. A coefficient of 0.5 is the effect of a 1SD
+difference in that x matrix element. Note this is the same for all elements
+of x, even factors, and so if coefficients for binary variables are
+interpreted as an effect size this will include the impact of prevalence.
+
+When running cross-validation, standardisation is based on the means
+and standard deviations of the training dataset, not the held-out test data.
+This prevents leakage from train to test data.
+
+This approach can be contrasted with glmnet which internally standardises,
+and then back-transforms, coefficients to the original scale. In contrast
+dCVnet model coefficients are \emph{always} presented as (semi-)standardised.
+
+Coefficients in the original scale can be recovered using the
+standard deviations and means employed in the standardisation
+(see: \url{https://stats.stackexchange.com/a/75025})
+These means and standard deviations are retained for the production model
+in the \code{preprocess} slots of the dCVnet object: \code{my_model$prod$preprocess}.
+}
+
 \section{Factor Outcomes}{
 
 For categorical families (binomial, multinomial) input can be:
@@ -197,7 +244,6 @@ dCVnet::selected_hyperparameters(model, what = "data")
 ref_model <- dCVnet::refunreg(model)
 
 dCVnet::report_reference_performance_summary(ref_model)
-
 
 }
 }

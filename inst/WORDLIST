@@ -4,7 +4,6 @@ Coef
 Dxy
 EDA
 ESL
-Elasticnet
 ElemStatLearn
 Harrell's
 Hastie
@@ -22,6 +21,7 @@ ROCs
 RStudio
 SDScaledMAE
 SDScaledRMSE
+SDs
 Somer's
 SomersDxy
 Stamey
