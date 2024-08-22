@@ -32,15 +32,17 @@ x <- prostate[, c(-1, -10)]
 xmiss <- x
 xmiss$lcp[c(39, 64, 71, 74, 75, 76, 83, 88, 94, 95)] <- NA
 
-# Specifically, this removes ten of the larger values of lcp
-#   we do this to show the result clearly.
-#   lcp was chosen because:
-#   1) lcp is a strong predictor
-#       (missing values in irrelevant predictors will matter less)
-#   2) lcp is correlated quite strongly (~0.67) with svi
-#       (so conditional imputation models will be able to use svi, and other
-#        features, to impute missing lcp)
+```
 
+We have induced Missing At Random (MAR) missingness for this dataset for a single variable. Specifically, ten of the larger values of the variable `lcp` were removed.
+
+This variable was chosen because:
+
+1)  `lcp` is a strong predictor. We want to demonstrate the potential utility of imputation and if missing values are only in predictors without much predictive power then the impact of imputing their values will be small.
+
+2)  `lcp` is correlated quite strongly (\~0.67) with `svi`, which has no missing values. As a result we expect conditional imputation models will be able to use `svi`, and other features, to do a reasonable job of imputing the missing values of `lcp`.
+
+```{r missingness}
 # Plot to show the missing values of lcp in context of svi:
 prostate %>%
   cbind(., missingness = is.na(xmiss$lcp)) %>%
@@ -50,7 +52,22 @@ prostate %>%
 
 ```
 
-Next we will develop and cross-validate a dCVnet model and fit it to the full dataset. This result will then be compared with a complete cases approach which excludes observations with any missing variables, and three varieties of imputation in dCVnet.
+Imputation in dCVnet is controlled by a number of option arguments:
+
+-   `opt.use_imputation` (`FALSE`/`TRUE`) - determines if imputation is used. The default (`FALSE`) behaviour is to filter out any observations with any missing data in predictors or outcome and run dCVnet on the complete cases dataset.
+
+-   `opt.imputation_method`, use one of the following imputation methods:
+
+    -   `"mean"`
+    -   `"knn"`
+    -   `"missForestPredict"`
+
+To demonstrate imputation in dCVnet we will fit (and cross-validate) five dCVnet models:
+
+-   `"orig"` - A standard dCVnet run on the original data without any missing values. The performance of this model is the "true" performance we wish to recover by employing imputation.
+-   `"cc"` - A dCVnet model run without imputation. The performance of this model should be negatively impacted by the 10% fewer cases and the biased coefficients resulting from the MAR missingness of the `lcp` variable.
+-   `"meanimp"` - A dCVnet model with unconditional mean imputation of missing values. This will have the same number of cases as `"orig"` but the imputed values of `lcp` will be biased so performance may not improve much relative to `"cc"`.
+-   `"knnimp"` and `"rfimp"` - These are conditional imputation methods so should produce better imputations of missing svi scores than `"meanimp"`. Hopefully will recover much of the performance difference between `"orig"` and `"cc"`.
 
 ```{r fit_models, echo=TRUE, eval = FALSE}
 # Note: the models take a long time to fit, so this vignette loads stored
@@ -136,26 +153,30 @@ cv_rmse_results %>%
   theme(axis.text.x = element_text(angle = 45))
 ```
 
-Relative to the non-missing data ("orig"), the exclusion of the subjects with missing data (the "cc" or complete-cases analysis) has a negative effect on the CV prediction performance (RMSE) and increases the variability of results over CV-repetitions.
+First, as expected given the reduced sample size and induced bias, relative to the non-missing data (`"orig"`), the complete-cases (`"cc")` model has a worse CV prediction performance (RMSE) with greater variability of CV-RMSE over CV-repetitions (indicated by error bars).
 
-Mean imputation does not noticeably de-bias performance back towards the "true" non-missing model, but it does narrow the variability.
+The first imputation method (unconditional mean imputation; `"meanimp"`) does not noticeably de-bias performance back towards the "true" model (`"orig"`), but it does slightly narrow the variability.
 
-In contrast, the k-nearest neighbours and random-forest imputation approaches brings the mean CV-prediction performance closer to the "true" non-missing model's performance (albeit not perfectly) and also narrows the variability to that of the "true" data.
+In contrast, the k-nearest neighbours (`"knnimp"`) and random-forest imputation (`"rfimp"`) approaches bring the mean CV-prediction performance closer to the "true" non-missing model's performance (albeit not perfectly) and also narrows the variability to be closer to that of the "true" dataset.
 
-In this simulation we show prediction models using conditional single imputation (knn or random forest) show cross-validated results closer to complete data than mean imputation or complete-cases excluding the 10% of subjects with missing values.
-
-Note that the simulation is only an illustration, the values were removed with a Missing at Random mechanism. This was deliberate to favour imputation. Missing Completely At Random data would classically produce unbiased coefficients under a complete-cases analysis and so not benefit from imputation. While Missing Not At Random missingness would be expected to not approach ideal performance with either complete-cases or imputation. Also note that the predictors with missing data had other predictors that were good indicators of them - i.e. there was some multicollinearity/redundancy where it mattered. In a study where predictors were uncorrelated we should not expect this form of imputation to be useful (but also probably not harmful).
+*In this simulation we demonstrated that including conditional single imputation (knn or random forest) in a dCVnet prediction model can yield improved cross-validated results - ones closer to the unavailable complete data than a complete-cases approach or unsophisticated mean imputation.*
 
 ## dCVnet Imputation Details
 
-dCVnet supports single imputation methods. Imputation is either unconditional ("mean") or conditional, with either the k-nearest neighbour method ("knn", from the caret package, averaging missing values from the k=5 nearest observations), or using the "missForestPredict" approach to missing data employing iterative random forests.
+dCVnet supports single imputation methods. Imputation is either unconditional (the sample "mean" of observed values, or conditional. The two conditional methods are:
 
-Imputation is conducted on the x-matrix of predictor variables and occurs *after* expansion for formula terms; e.g. `poly(age,2)` produces two variables for a single predictor column called age. For the cross-validated outputs of dCVnet (i.e. excluding the production model) imputation is conducted independently for each fold of the repeated k-fold CV.
+-   k-nearest neighbour method ("knn") from the caret package, which imputes missing values as the average from the k=5 nearest observations).
 
-All imputation methods in dCVnet allow "prediction" i.e. we generate an imputation "model" on the training dataset then apply the imputation model to the held-out dataset to impute missing data there. Specifically, for **mean imputation** this is as simple as imputing missing held-out data with the mean calculated from the test data. For **knn imputation** it means each held-out subject with missing data has their nearest-neighbours identified from the train dataset. For [**missForest**](https://github.com/stekhoven/missForest) **imputation** we use the [missForestPredict](https://github.com/sibipx/missForestPredict) package to allow prediction of the held-out data from the train data imputation model.
+-   The "missForestPredict" approach to missing data employing iterative random forests.
 
-In contrast, as **production model** is fitted to the full dataset it applies the requested imputation on the full dataset. The dCVnet object then includes this full-data imputation model, and using the `predict.dCVnet` method will apply this imputation model to replace missing data in the data predictions are requested for.
+Imputation of all types is conducted on the x-matrix of predictor variables and occurs *after* expansion for dummy variables and formula terms; e.g. `poly(age,2)` produces two variables for a single predictor column called age.
+
+For the cross-validated outputs of dCVnet (i.e. excluding the production model) imputation is conducted independently for each fold of the repeated k-fold CV and so estimates of cross-validated model performance are not inflated by data-leakage related to imputation.
+
+For practical reasons, all imputation methods in dCVnet must allow "prediction" i.e. we must be able to generate imputed values for new observations not used in the original imputation model. Specifically, for **mean imputation** this is as simple as imputing missing held-out data with the mean calculated from the test data. For **knn imputation** it means each held-out subject with missing data has their nearest-neighbours identified from the train dataset. For [**missForest**](https://github.com/stekhoven/missForest) **imputation** we use the [missForestPredict](https://github.com/sibipx/missForestPredict) package to allow prediction of the held-out data from the train data imputation model.
+
+When dCVnet fits the **production model** this is is done to the full dataset and an imputation model is generated for the full dataset. The dCVnet object then includes this full-data imputation model, and using the `predict.dCVnet` method will incorporate the requested imputation type for missing data in the new observations predictions are requested for.
 
 ### Imputation: Outcome
 
-dCVnet presently does not use the outcome (`y`) in the imputation model. When a prediction model is eventually employed we will not have access to the true y label, and so any improvement in performance due to using y in imputation will not be expected to generalise. However, the development of the model may be improved by including y (this distinction is sometimes called pragmatic vs. ideal performance in prediction modelling) and in future imputation using y may be added.
+dCVnet presently does not use the outcome (`y`) in the imputation model. When a prediction model is eventually employed we will not have access to the true y label, and so any improvement in performance due to using y in imputation will not be expected to generalise. However, the development of the model may be improved by including y (this distinction is sometimes called pragmatic vs. ideal performance in prediction modelling) so in future imputation using y may be added.

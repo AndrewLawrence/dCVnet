@@ -102,6 +102,7 @@ se
 selectiveInference
 seq
 setalpha
+svi
 un
 uncrossvalidated
 unmerged
