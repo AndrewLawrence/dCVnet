@@ -104,7 +104,7 @@ parse_dCVnet_input <- function(data,
   }
   # check formula is has no response variable:
   if ( !identical(attr(fterms, "response"), 0L) ) {
-    stop("Error: use a RHS formula to specify in data")
+    stop("Error: use a RHS formula to specify the predictor matrix from data")
   }
 
   data <- data[, vars, drop = FALSE]
@@ -155,7 +155,7 @@ parse_dCVnet_input <- function(data,
                                               no = stats::na.omit))
   x_mat <- model.matrix(f, data = mf)[, -1]
 
-  # force matrices to vectors:
+  # force y matrices to vectors:
   if ( family %in% c("gaussian", "poisson") && inherits(y, "matrix") ) {
     y <- as.vector(y)
   }
@@ -170,7 +170,7 @@ parse_dCVnet_input <- function(data,
     }
   }
 
-  # return the outcome, predictor matrix and flattened formula.
+  # return the outcome, predictor matrix and model family
   return(list(y = y,
               x_mat = x_mat,
               yname = yname,

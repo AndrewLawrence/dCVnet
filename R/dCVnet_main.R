@@ -308,6 +308,8 @@ dCVnet <- function(
   #   start at the end. This is the model we are cross-validating.
   #   note that no output from this model are used in the cross-validation.
   #   excepting - the lambda list.
+  #
+  #   first, create the preprocessing object:
   prod_PPx <- structure(
     pp_fn$fit(x),
     fit = pp_fn$fit,

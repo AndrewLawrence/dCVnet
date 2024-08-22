@@ -1,7 +1,16 @@
 # Functions related to the implementation of imputation in dCVnet
 
-
+# The preproc_imp_functions function returns functions.
+#   It produces a list of two functions selected appropriate to
+#     the opt.imputation_method argument.
+#   The functions are:
+#       fit - for running preprocessing + imputation
+#             the "fit" function returns an object.
+#       apply - for making predictions using the object
+#               returned from fit and some newdata.
+# preproc_imp_functions does not use y in imputation or prediction.
 preproc_imp_functions <- function(opt.imputation_method) {
+  # Mean imputation:
   .pp_fit_mean <- function(x) {
     caret::preProcess(x, method = c("center", "scale"))
   }
@@ -9,12 +18,14 @@ preproc_imp_functions <- function(opt.imputation_method) {
     newdata[is.na(newdata)] <- 0.0
     as.matrix(predict(x, newdata = newdata))
   }
+  # knn imputation:
   .pp_fit_caretknn <- function(x) {
     caret::preProcess(x, method = c("center", "scale", "knnImpute"))
   }
   .pp_apply_caret <- function(x, newdata) {
     as.matrix(predict(x, newdata = newdata))
   }
+  # missForestPredict imputation:
   .pp_fit_mfp <- function(x) {
     requireNamespace("missForestPredict", quietly = TRUE)
     mfp <- missForestPredict::missForest(as.data.frame(x),
@@ -33,6 +44,7 @@ preproc_imp_functions <- function(opt.imputation_method) {
     )
     as.matrix(predict(x[["PPx"]], newdata = newdata))
   }
+  # Main:
   pp_fit <- switch(
     opt.imputation_method,
     mean = .pp_fit_mean,
