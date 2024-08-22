@@ -149,29 +149,36 @@
 #' @importFrom data.table rbindlist
 #' @export
 dCVnet <- function(
+  # model spec:
   y,
   data,
   f = "~.", # nolint
+  family = "binomial",
+  offset = NULL,
 
+  # nested repeated k-fold:
   nrep_outer = 2,
   k_outer = 10,
   nrep_inner = 5,
   k_inner = 10,
+
+  # Hyperparameter tuning:
   alphalist = c(0.2, 0.5, 0.8),
   nlambda = 100,
   type.measure = "deviance",
-  family = "binomial",
-  offset = NULL,
 
+  # Options
   opt.lambda.type = c("min", "1se"),
   opt.empirical_cutoff = FALSE,
   opt.uniquefolds = FALSE,
   opt.ystratify = TRUE,
   opt.random_seed = NULL,
 
+  # Imputation options:
   opt.use_imputation = FALSE,
   opt.imputation_method = c("mean", "knn", "missForestPredict"),
 
+  # dots
   ...
 ) {
 

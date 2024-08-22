@@ -8,6 +8,8 @@ dCVnet(
   y,
   data,
   f = "~.",
+  family = "binomial",
+  offset = NULL,
   nrep_outer = 2,
   k_outer = 10,
   nrep_inner = 5,
@@ -15,8 +17,6 @@ dCVnet(
   alphalist = c(0.2, 0.5, 0.8),
   nlambda = 100,
   type.measure = "deviance",
-  family = "binomial",
-  offset = NULL,
   opt.lambda.type = c("min", "1se"),
   opt.empirical_cutoff = FALSE,
   opt.uniquefolds = FALSE,
@@ -40,6 +40,10 @@ interactions, transformations or expansions (like \code{\link{poly}}, or
 \code{\link{log}}).
 The formula \emph{must} include an intercept.}
 
+\item{family}{the model family (see \code{\link{glmnet}})}
+
+\item{offset}{optional model offset (see \code{\link{glmnet}})}
+
 \item{nrep_outer}{an integer, the number of repetitions (k-fold outer CV)}
 
 \item{k_outer}{an integer, the k in the outer k-fold CV.}
@@ -59,10 +63,6 @@ See \code{glmnet} argument \code{nlambda}.}
 This sets the metric used for hyperparameter optimisation in the
 inner cross-validation. Options: \code{"deviance"}, \code{"class"},
 \code{"mse"}, \code{"mae"}}
-
-\item{family}{the model family (see \code{\link{glmnet}})}
-
-\item{offset}{optional model offset (see \code{\link{glmnet}})}
 
 \item{opt.lambda.type}{Method for selecting optimum lambda. One of
 \itemize{
