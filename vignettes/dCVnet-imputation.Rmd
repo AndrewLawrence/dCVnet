@@ -16,7 +16,9 @@ knitr::opts_chunk$set(
 
 This vignette will demonstrate the options provided for imputation in dCVnet.
 
-Start by loading the prostate dataset (see the "prostate" dCVnet example for more details) and artificially remove some predictor data.
+## Setup
+
+Start by loading the prostate dataset (see `?prostate` and `vignette("prostate", package = "dCVnet")` for more details), and then simulate missingness.
 
 ```{r setup}
 suppressPackageStartupMessages(suppressWarnings(library(tidyverse)))
@@ -34,13 +36,13 @@ xmiss$lcp[c(39, 64, 71, 74, 75, 76, 83, 88, 94, 95)] <- NA
 
 ```
 
-We have induced Missing At Random (MAR) missingness for this dataset for a single variable. Specifically, ten of the larger values of the variable `lcp` were removed.
+Above we have simulated Missing At Random (MAR) missingness in a single variable. The values selected for removal were ten of the larger values of the variable `lcp`. Specifically, there is a strong correlation between `lcp` and `svi`, and the missing `lcp` values were selected at random among subjects with high `svi`. Thus the missing values are MAR because they are typical `lcp` values given the observed values of `svi`. They are not MCAR because they are not unconditionally typical of `lcp` values. They are not MNAR because the probability of missingness depends only on observed values (of `svi`).
 
-This variable was chosen because:
+This approach was chosen for this example because:
 
-1)  `lcp` is a strong predictor. We want to demonstrate the potential utility of imputation and if missing values are only in predictors without much predictive power then the impact of imputing their values will be small.
+1)  `lcp` is a strong predictor. We want to demonstrate the potential utility of imputation - if missing values are only found for predictors without much predictive power then the impact of imputing their values will likely be small.
 
-2)  `lcp` is correlated quite strongly (\~0.67) with `svi`, which has no missing values. As a result we expect conditional imputation models will be able to use `svi`, and other features, to do a reasonable job of imputing the missing values of `lcp`.
+2)  `lcp` is correlated quite strongly (\~0.67) with `svi`, which has no missing values. Under MAR missingness we expect a-priori that conditional imputation will be able to use this relationship to do a reasonable job of imputing the missing values of `lcp`.
 
 ```{r missingness}
 # Plot to show the missing values of lcp in context of svi:
@@ -52,22 +54,32 @@ prostate %>%
 
 ```
 
-Imputation in dCVnet is controlled by a number of option arguments:
+## Imputation syntax
 
--   `opt.use_imputation` (`FALSE`/`TRUE`) - determines if imputation is used. The default (`FALSE`) behaviour is to filter out any observations with any missing data in predictors or outcome and run dCVnet on the complete cases dataset.
+Imputation in dCVnet is controlled by two option arguments:
 
--   `opt.imputation_method`, use one of the following imputation methods:
+-   `opt.use_imputation` (`FALSE`/`TRUE`) - determines if imputation is used.
+
+-   `opt.imputation_method`, specifies the imputation methods (if being used):
 
     -   `"mean"`
     -   `"knn"`
     -   `"missForestPredict"`
 
-To demonstrate imputation in dCVnet we will fit (and cross-validate) five dCVnet models:
+By default, or if the `opt.use_imputation` argument is set to `FALSE`, dCVnet will run no imputation. Observations with any missing values in outcome or predictor variables will be excluded (dCVnet prints a warning).
+
+When `opt.use_imputation` is set to `TRUE` dCVnet will use the imputation method specified by `opt.imputation_type` to impute missing values in the predictor matrix.
+
+## Example
+
+To demonstrate imputation in dCVnet we will fit (and cross-validate) five dCVnet models to the prostate dataset above:
 
 -   `"orig"` - A standard dCVnet run on the original data without any missing values. The performance of this model is the "true" performance we wish to recover by employing imputation.
--   `"cc"` - A dCVnet model run without imputation. The performance of this model should be negatively impacted by the 10% fewer cases and the biased coefficients resulting from the MAR missingness of the `lcp` variable.
+-   `"cc"` - A *complete cases* dCVnet model run without imputation. The performance of this model should be negatively impacted by the 10% fewer cases and the biased coefficients resulting from the MAR missingness of the `lcp` variable.
 -   `"meanimp"` - A dCVnet model with unconditional mean imputation of missing values. This will have the same number of cases as `"orig"` but the imputed values of `lcp` will be biased so performance may not improve much relative to `"cc"`.
--   `"knnimp"` and `"rfimp"` - These are conditional imputation methods so should produce better imputations of missing svi scores than `"meanimp"`. Hopefully will recover much of the performance difference between `"orig"` and `"cc"`.
+-   `"knnimp"` and `"rfimp"` - These are conditional imputation methods so should produce better imputations of missing `lcp` values than `"meanimp"`. Hopefully this will recover the performance difference between `"orig"` and `"cc"`.
+
+Note, below I fit the models in a loop using a settings object to determine which particular model is fit. This is to avoid writing out the call to dCVnet five times. In typical usage one should just add any imputation arguments to a standard dCVnet call: `dCVnet(my_outcome, data = my_data, ..., opt.use_imputation = TRUE, opt.imputation_method = "knn")`.
 
 ```{r fit_models, echo=TRUE, eval = FALSE}
 # Note: the models take a long time to fit, so this vignette loads stored
@@ -131,7 +143,9 @@ row.names = c(NA, -5L))
 
 ```
 
-Now, inspect the output:
+## Results
+
+Now, inspect the output, we are looking at the cross-validated Root Mean Square Error (RMSE), a performance measure where smaller values indicate predictions closer to the true values.
 
 ```{r inspect}
 cv_rmse_results %>% knitr::kable(digits = 3)
@@ -159,17 +173,19 @@ The first imputation method (unconditional mean imputation; `"meanimp"`) does no
 
 In contrast, the k-nearest neighbours (`"knnimp"`) and random-forest imputation (`"rfimp"`) approaches bring the mean CV-prediction performance closer to the "true" non-missing model's performance (albeit not perfectly) and also narrows the variability to be closer to that of the "true" dataset.
 
-*In this simulation we demonstrated that including conditional single imputation (knn or random forest) in a dCVnet prediction model can yield improved cross-validated results - ones closer to the unavailable complete data than a complete-cases approach or unsophisticated mean imputation.*
+*In this simulation we demonstrated that including conditional single imputation (knn or random forest) in a dCVnet prediction model can yield improved cross-validated results - ones closer to the unavailable complete data - relative to a complete-cases approach (or unsophisticated mean imputation).*
 
 ## dCVnet Imputation Details
 
-dCVnet supports single imputation methods. Imputation is either unconditional (the sample "mean" of observed values, or conditional. The two conditional methods are:
+dCVnet supports single imputation methods. Imputation is either unconditional (the sample "mean" of observed values, or conditional.
+
+The two conditional methods are:
 
 -   k-nearest neighbour method ("knn") from the caret package, which imputes missing values as the average from the k=5 nearest observations).
 
 -   The "missForestPredict" approach to missing data employing iterative random forests.
 
-Imputation of all types is conducted on the x-matrix of predictor variables and occurs *after* expansion for dummy variables and formula terms; e.g. `poly(age,2)` produces two variables for a single predictor column called age.
+*Note that imputation is conducted on the x-matrix of predictor variables and occurs after expansion for dummy variables and formula terms; e.g. `poly(age,2)` produces two variables for a single predictor column called age.*
 
 For the cross-validated outputs of dCVnet (i.e. excluding the production model) imputation is conducted independently for each fold of the repeated k-fold CV and so estimates of cross-validated model performance are not inflated by data-leakage related to imputation.
 
