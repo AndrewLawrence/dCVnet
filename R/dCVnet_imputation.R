@@ -85,24 +85,24 @@ impy_dat_unmerger <- function(x) {
 
   if ( ny > 1 ) {
     ysel <- seq.int(NCOL(x)) %in% seq.int(ny)
-    y <- as.matrix(x[,ysel])
+    y <- as.matrix(x[, ysel])
     rownames(y) <- NULL
     colnames(y) <- gsub("^y.", "", colnames(y))
 
-    x <- as.matrix(x[,!ysel])
+    x <- as.matrix(x[, !ysel])
   } else {
-    y <- x[,1]
-    x <- as.matrix(x[,-1])
+    y <- x[, 1]
+    x <- as.matrix(x[, -1])
   }
   if ( family == "cox" ) {
     if ( ny == 2 ) {
-      y <- survival::Surv(time = as.vector(y[,1]),
-                          event = as.vector(y[,2]),
+      y <- survival::Surv(time = as.vector(y[, 1]),
+                          event = as.vector(y[, 2]),
                           type = Survtype)
     } else {
-      y <- survival::Surv(time = as.vector(y[,1]),
-                          time2 = as.vector(y[,2]),
-                          event = as.vector(y[,3]),
+      y <- survival::Surv(time = as.vector(y[, 1]),
+                          time2 = as.vector(y[, 2]),
+                          event = as.vector(y[, 3]),
                           type = Survtype)
     }
 
@@ -110,4 +110,3 @@ impy_dat_unmerger <- function(x) {
   list(x = x,
        y = y)
 }
-

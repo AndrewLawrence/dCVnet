@@ -194,9 +194,9 @@ test_that("multinomial y is formatted as expected", {
 
 # ~ mgaussian -------------------------------------------------------------
 
-mg_y1 <- matrix(rnorm(25*4), ncol = 4)
+mg_y1 <- matrix(rnorm(25 * 4), ncol = 4)
 mg_y2 <- as.data.frame(mg_y1)
-mg_x <- as.data.frame(matrix(rnorm(25*10), nrow = 25))
+mg_x <- as.data.frame(matrix(rnorm(25 * 10), nrow = 25))
 
 mg_proc1 <- dCVnet::parse_dCVnet_input(data = mg_x,
                                        y = mg_y1,
