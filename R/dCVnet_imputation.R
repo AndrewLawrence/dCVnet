@@ -60,3 +60,54 @@ preproc_imp_functions <- function(opt.imputation_method) {
   return(list(fit = pp_fit, apply = pp_apply))
 }
 
+# In order to use y-variables in the imputation we need to
+#   merge and unmerge y- and x- input without mangling
+#   or loss of information.
+# The following two functions should achieve this.
+impy_dat_merger <- function(x, y, family) {
+  ny <- NCOL(y)
+  if ( family == "cox" ) {
+    r <- data.frame(y = as.matrix(y), x)
+    attr(r, "Survtype") <- attr(y, "type")
+  } else {
+    r <- data.frame(y = y, x)
+    attr(r, "Survtype") <- NULL
+  }
+  attr(r, "family") <- family
+  attr(r, "ny") <- ny
+  r
+}
+
+impy_dat_unmerger <- function(x) {
+  family <- attr(x, "family")
+  Survtype <- attr(x, "Survtype")
+  ny <- attr(x, "ny")
+
+  if ( ny > 1 ) {
+    ysel <- seq.int(NCOL(x)) %in% seq.int(ny)
+    y <- as.matrix(x[,ysel])
+    rownames(y) <- NULL
+    colnames(y) <- gsub("^y.", "", colnames(y))
+
+    x <- as.matrix(x[,!ysel])
+  } else {
+    y <- x[,1]
+    x <- as.matrix(x[,-1])
+  }
+  if ( family == "cox" ) {
+    if ( ny == 2 ) {
+      y <- survival::Surv(time = as.vector(y[,1]),
+                          event = as.vector(y[,2]),
+                          type = Survtype)
+    } else {
+      y <- survival::Surv(time = as.vector(y[,1]),
+                          time2 = as.vector(y[,2]),
+                          event = as.vector(y[,3]),
+                          type = Survtype)
+    }
+
+  }
+  list(x = x,
+       y = y)
+}
+
