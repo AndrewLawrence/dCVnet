@@ -135,7 +135,7 @@ parse_dCVnet_input <- function(data,
                    " subjects due to missing data.\n"))
   }
 
-  # coerce y into factor and check, because...
+  # for factor outcome, coerce y into factor and check, because...
   #   - glmnet (for its own infernal reasons) does not honour factor ordering,
   #     the factor levels are converted to character and sorted alphabetically
   #   - previously in dCVnet there was an argument ('positive') to change factor
@@ -168,6 +168,11 @@ parse_dCVnet_input <- function(data,
     if ( !survival::is.Surv(y) ) {
       stop("Cox requires y be a survival::Surv object")
     }
+  }
+
+  # for mgaussian, coerce y to a matrix:
+  if ( (family %in% "mgaussian") ) {
+    y <- as.matrix(y)
   }
 
   # return the outcome, predictor matrix and model family
