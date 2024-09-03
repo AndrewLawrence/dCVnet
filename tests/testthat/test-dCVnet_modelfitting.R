@@ -1,35 +1,5 @@
 
-# Setup:
-
-# glmnet 4.1.4 changed how examples work, now the example creates a
-#   variable of the name of the example which is a two element list
-#   containing x and y.
-
-# identify available glmnet examples:
-exlist <- data(package = "glmnet")$results[, "Item"]
-exlist <- exlist[grepl("Example", exlist)]
-
-# load the data for each:
-for (i in exlist) {
-  data(package = "glmnet", list = i)
-}
-
-exlabs <- tolower(gsub("Example", "", exlist))
-exlabs[exlabs == "quickstart"] <- "gaussian"
-exlabs[exlabs == "multigaussian"] <- "mgaussian"
-
-
-# merge
-examples <- do.call(list, args = lapply(exlist, FUN = as.name))
-examples <- setNames(examples, exlabs)
-
-examples <- examples[!names(examples) %in% c("sparse")]
-
-# convert cox y to Surv
-examples$cox$y <- survival::Surv(time = examples$cox$y[, 1],
-                                 event = examples$cox$y[, 2],
-                                 type = "right")
-
+load(file = "data/examples.RData")
 
 # Run dCVnet parsing for examples:
 parsed <- mapply(function(x, y) {
