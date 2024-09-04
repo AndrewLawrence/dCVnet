@@ -23,6 +23,7 @@ dCVnet(
   opt.ystratify = TRUE,
   opt.random_seed = NULL,
   opt.use_imputation = FALSE,
+  opt.imputation_usey = FALSE,
   opt.imputation_method = c("mean", "knn", "missForestPredict"),
   ...
 )
@@ -89,11 +90,20 @@ This is implemented with \code{\link[caret]{createFolds}}}
 the generation of random folds.}
 
 \item{opt.use_imputation}{Boolean.
-Run imputation on missing predictors? (UNDER DEVELOPMENT)}
+Run imputation on missing predictors?}
 
-\item{opt.imputation_method}{options: \code{"mean"} - mean imputation using
-\code{\link[glmnet]{makeX}}. \code{"missForestPredict"} - use the
-missForestPredict package to impute missing values.}
+\item{opt.imputation_usey}{Boolean.
+Should conditional imputation methods use y in the imputation model?
+Note: no effect if \code{opt.use_imputation} is \code{FALSE}, or if
+\code{opt.imputation_method} is \code{"mean"}.}
+
+\item{opt.imputation_method}{Which imputation method?: \itemize{
+\item \code{"mean"} - mean imputation (unconditional)
+\item \code{"knn"} - k-nearest neighbours imputation
+(uses \code{\link[caret]{preProcess}}).
+\item \code{"missForestPredict"} - use the
+missForestPredict package to impute missing values.
+}}
 
 \item{...}{Arguments to pass through to cv.glmnet
 (may break things).}
