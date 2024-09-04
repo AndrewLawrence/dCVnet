@@ -192,7 +192,10 @@ dCVnet <- function(
   opt.imputation_method <- match.arg(opt.imputation_method)
   if (!opt.use_imputation) {
     opt.imputation_method <- "mean" # will not be applied.
+    opt.imputation_usey <- FALSE
   }
+
+  family <- match.arg(family, choices = supported_model_families())
 
   # save arguments for posterity (i.e. save objects from environment):
   callenv <- c(as.list(environment()), list(...))
