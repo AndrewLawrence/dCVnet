@@ -64,6 +64,7 @@ model_settings <- data.frame(
 
 data_list <- list(x, xmiss)
 
+# fit the models with different settings:
 models <- map(set_names(seq.int(nrow(model_settings)), model_settings$labels),
               ~ dCVnet(
                 y = y,
@@ -79,6 +80,7 @@ models <- map(set_names(seq.int(nrow(model_settings)), model_settings$labels),
                 opt.imputation_method = model_settings$imp_meth[.x]
               ))
 
+# extract CV results for RMSE:
 cv_rmse_results <- map_dfr(
   models,
   ~ report_performance_summary(.x, short = TRUE) %>%
@@ -87,6 +89,35 @@ cv_rmse_results <- map_dfr(
   .id = "model"
 )
 
+# extract the imputed values:
+extract_imputed_value <- function(obj, data) {
+  imp_sel <- c(39, 64, 71, 74, 75, 76, 83, 88, 94, 95)
+  unscale_vals <- list(mean = mean(data_list[[1]]$lcp),
+                       sd = sd(data_list[[1]]$lcp))
+  fn <- attr(obj, "apply")
+  vals <- fn(obj, newdata = data)[imp_sel, "lcp"]
+  (vals * unscale_vals$sd) + unscale_vals$mean
+}
+
+imputed_values <- data.frame(
+  true = data_list[[1]]$lcp[imp_sel],
+  mean = extract_imputed_value(
+    obj = models$meanimp$prod$preprocess,
+    data = data_list[[2]]
+  ),
+  knn = extract_imputed_value(
+    obj = models$knnimp$prod$preprocess,
+    data = data_list[[2]]
+  ),
+  rf = extract_imputed_value(
+    obj = models$rfimp$prod$preprocess,
+    data = data_list[[2]]
+  )
+) %>%
+  rownames_to_column() %>%
+  pivot_longer(cols = -rowname) %>% 
+  mutate(name = factor(name, levels = c("true", "mean", "knn", "rf")))
+
 ```
 
 ```{r load_results, include=FALSE}
@@ -94,27 +125,62 @@ cv_rmse_results <- map_dfr(
 
 cv_rmse_results <- structure(list(
   model = c("orig", "cc", "meanimp", "knnimp", "rfimp"),
-  mean = c(
-    0.739631127378644,
-    0.773580289068649,
-    0.776861612118786,
-    0.759540904081737,
-    0.756714809471389
+  mean = c(0.740889437989585,
+           0.773253753170968,
+           0.78335242815483, 
+           0.764582462458409,
+           0.759098935819382),
+  sd = c(0.00771592642747333,
+         0.0152789985183087,
+         0.0119181114007495,
+         0.00908568824915865,
+         0.00973050706755415)
   ),
-  sd = c(
-    0.0116423343714006,
-    0.0146832811277592,
-    0.0114885054274784,
-    0.011323831581812,
-    0.0109847869670491
-  )
-),
-class = "data.frame",
-row.names = c(NA, -5L))
+  class = "data.frame", row.names = c(NA,-5L))
+
+imputed_values <- structure(list(rowname = c("39", "39", "39", "39", "64", "64", 
+"64", "64", "71", "71", "71", "71", "74", "74", "74", "74", "75", 
+"75", "75", "75", "76", "76", "76", "76", "83", "83", "83", "83", 
+"88", "88", "88", "88", "94", "94", "94", "94", "95", "95", "95", 
+"95"), name = structure(c(1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 
+2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 
+2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L, 1L, 2L, 3L, 4L), levels = c("true", 
+"meanimp", "knnimp", "rfimp"), class = "factor"), value = c(1.83258146, 
+-0.179365577319588, 0.613753405334462, 0.901362884530402, 2.1102132, 
+-0.179365577319588, 1.13964983192454, 1.55517223800776, 1.32175584, 
+-0.179365577319588, 2.03024182854217, 1.42987747235525, 1.178655, 
+-0.179365577319588, 1.71691310386681, 1.18318086099696, 1.9095425, 
+-0.179365577319588, 1.32323276456299, 0.919471206547847, 2.42036813, 
+-0.179365577319588, 1.92066166459778, 1.22753401740914, 0.55961579, 
+-0.179365577319588, 1.91832359473926, 1.20506671097505, 0.30010459, 
+-0.179365577319588, 1.32323276456299, 0.871541548694189, 2.1690537, 
+-0.179365577319588, 1.7488299243668, 1.22234545629909, 2.46385324, 
+-0.179365577319588, 1.39191375677139, 0.377058085118181)), row.names = c(NA, 
+-40L), class = c("tbl_df", "tbl", "data.frame"))
 
 ```
 
-Now, inspect the output:
+First check how the imputation worked (in the full dataset):
+
+```{r imp_values}
+
+imputed_values %>% 
+  group_by(name) %>% 
+  summarise(mean = mean(value),
+            min = min(value),
+            max = max(value)) %>% 
+  knitr::kable()
+
+# Compare density:
+imputed_values %>% 
+  ggplot(aes(x = value, group = name, colour = name, fill = name)) +
+  geom_density(alpha = 0.2)
+
+```
+
+We can see agreement between the imputed values and the true missing values is not ideal with any method, but as expected the mean imputation is way off. The knn probably does the best job of approximating the distribution.
+
+Now, we can see how the cross-validated results were affected:
 
 ```{r inspect}
 cv_rmse_results %>% knitr::kable(digits = 3)
