@@ -15,8 +15,9 @@ preproc_imp_functions <- function(opt.imputation_method) {
     caret::preProcess(x, method = c("center", "scale"))
   }
   .pp_apply_mean <- function(x, newdata) {
-    newdata[is.na(newdata)] <- 0.0
-    as.matrix(predict(x, newdata = newdata))
+    r <- as.matrix(predict(x, newdata = newdata))
+    r[is.na(r)] <- 0.0
+    r
   }
   # knn imputation:
   .pp_fit_caretknn <- function(x) {
@@ -59,6 +60,7 @@ preproc_imp_functions <- function(opt.imputation_method) {
   )
   return(list(fit = pp_fit, apply = pp_apply))
 }
+
 
 # In order to use y-variables in the imputation we need to
 #   merge and unmerge y- and x- input without mangling
