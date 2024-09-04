@@ -186,18 +186,38 @@ dCVnet <- function(
 
   # ~ Parse input -------------------------------------------------------------
 
-  # function call (for printing):
+  # capture the function call (for printing):
   thecall <- match.call()
 
+  # check imputation arguments:
   opt.imputation_method <- match.arg(opt.imputation_method)
+
   if (!opt.use_imputation) {
     opt.imputation_method <- "mean" # will not be applied.
     opt.imputation_usey <- FALSE
   }
 
+  if ( opt.imputation_usey && opt.imputation_method == "mean" ) {
+    stopmsg <- paste(
+      "Invalid option combination.",
+      "Set opt.imputation_usey to FALSE if using mean imputation",
+      sep = "\n"
+    )
+    stop(stopmsg)
+  }
+
+  # If the imputation method is missForestPredict then check we have the package
+  #   and fail if not:
+  if ( opt.imputation_method == "missForestPredict" &&
+       ! requireNamespace("missForestPredict", quietly = TRUE) ) {
+    stop("Please install the missForestPredict package to use this option.")
+  }
+
+  # argument matching for model family:
   family <- match.arg(family, choices = supported_model_families())
 
-  # save arguments for posterity (i.e. save objects from environment):
+  # save arguments for posterity
+  #   (i.e. package objects from the calling environment):
   callenv <- c(as.list(environment()), list(...))
 
   time_start <- force(Sys.time()) # for logging.
@@ -211,13 +231,6 @@ dCVnet <- function(
                                offset = offset)
   x <- parsed$x_mat
   y <- parsed$y
-
-  # If the imputation method is missForestPredict then check we have the package
-  #   and fail if not:
-  if ( opt.imputation_method == "missForestPredict" &&
-        ! requireNamespace("missForestPredict", quietly = TRUE) ) {
-    stop("Please install the missForestPredict package to use this option.")
-  }
 
   # stop if AUC requested and magic number not met.
   if ( type.measure == "auc" ) {
@@ -255,11 +268,13 @@ dCVnet <- function(
 
   # ~ Preprocessing functions -------------------------------------------------
 
-  # Data is preprocessed repeatedly, and differently depending on imputation
+  # Data is preprocessed repeatedly during cross-validation,
+  #   the preprocessing differs depending on imputation method
   #   use a utility function to get appropriate preprocessing functions
   #   depending on opt.imputation_method.
 
-  pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method)
+  pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method,
+                                 opt.imputation_usey = opt.imputation_usey)
 
   # ~ Create outer folds ------------------------------------------------------
   # Note: this is by default stratified by y, we obtain unstratified sampling
