@@ -336,12 +336,22 @@ dCVnet <- function(
   #   excepting - the lambda list.
   #
   #   first, create the preprocessing object:
-  prod_PPx <- structure(
-    pp_fn$fit(x),
-    fit = pp_fn$fit,
-    apply = pp_fn$apply
-  )
-  xs <- attr(prod_PPx, "apply")(prod_PPx, x)
+  if ( ! opt.imputation_usey ) {
+    prod_PPx <- structure(
+      pp_fn$fit(x, family = family),
+      fit = pp_fn$fit,
+      apply = pp_fn$apply
+    )
+    xs <- attr(prod_PPx, "apply")(prod_PPx, x, family = family)
+  } else {
+    prod_PPx <- structure(
+      pp_fn$fit(x, family = family, y = y),
+      fit = pp_fn$fit,
+      apply = pp_fn$apply
+    )
+    xs <- attr(prod_PPx, "apply")(prod_PPx, x, family = family, newy = y)
+  }
+
 
   # ~ Create Lambda paths -----------------------------------------------------
 
@@ -456,13 +466,24 @@ dCVnet <- function(
 
       # scaling to mean=0, sd=1
       #   (scaling calculated on completecases train data, applied to test data)
-      PPx <- structure(
-        pp_fn$fit(trainx),
-        fit = pp_fn$fit,
-        apply = pp_fn$apply
-      )
-      trainx <- attr(PPx, "apply")(PPx, trainx)
-      testx  <- attr(PPx, "apply")(PPx, testx)
+      if ( ! opt.imputation_usey ) {
+        PPx <- structure(
+          pp_fn$fit(trainx, family = family),
+          fit = pp_fn$fit,
+          apply = pp_fn$apply
+        )
+        trainx <- attr(PPx, "apply")(PPx, trainx, family = family)
+        testx  <- attr(PPx, "apply")(PPx, testx, family = family)
+      } else {
+        PPx <- structure(
+          pp_fn$fit(trainx, family = family, y = trainy),
+          fit = pp_fn$fit,
+          apply = pp_fn$apply
+        )
+        trainx <- attr(PPx, "apply")(PPx, trainx,
+                                     family = family, newy = trainy)
+        testx  <- attr(PPx, "apply")(PPx, testx, family = family, newy = testy)
+      }
 
       # ~ inner loop train data -------------------------------------------
       #   - receives no (outer) test data
@@ -983,6 +1004,8 @@ summary.dCVnet <- function(object, ...) {
 #'     performance.
 #'
 #' @param object a a \code{\link{dCVnet}} object.
+#' @param newy required if imputation was used and the outcome (i.e. y) was used
+#'     in the imputation model.
 #' @param ... passed to \code{\link{predict.multialpha.repeated.cv.glmnet}},
 #'     then \code{\link[glmnet]{predict.glmnet}}
 #' @inheritParams predict.multialpha.repeated.cv.glmnet
@@ -995,12 +1018,22 @@ summary.dCVnet <- function(object, ...) {
 #' @export
 predict.dCVnet <- function(object,
                            newx,
+                           newy = NULL,
                            ...) {
+  # read the model family:
+  family <- family(object)
+
   # apply the preprocessing from the production model:
   preProcessPredict <- attr(object$prod$preprocess,
                             "apply")
   newx <- as.matrix(newx) # coerce to matrix (this fixed a random bug...)
-  newx <- preProcessPredict(object$prod$preprocess, newx)
+
+  if ( is.null(newy) ) {
+    newx <- preProcessPredict(object$prod$preprocess, newx, family = family)
+  } else {
+    newx <- preProcessPredict(object$prod$preprocess, newx,
+                              family = family, newy = newy)
+  }
   # run the prediction:
   predict.multialpha.repeated.cv.glmnet(object$prod$model,
                                         newx = newx,

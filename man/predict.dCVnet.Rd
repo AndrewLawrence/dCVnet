@@ -4,13 +4,16 @@
 \alias{predict.dCVnet}
 \title{predict.dCVnet}
 \usage{
-\method{predict}{dCVnet}(object, newx, ...)
+\method{predict}{dCVnet}(object, newx, newy = NULL, ...)
 }
 \arguments{
 \item{object}{a a \code{\link{dCVnet}} object.}
 
 \item{newx}{matrix of new values for x at which predictions are required.
 Note: no impact when type is "coefficients", "class" or "nonzero".}
+
+\item{newy}{required if imputation was used and the outcome (i.e. y) was used
+in the imputation model.}
 
 \item{...}{passed to \code{\link{predict.multialpha.repeated.cv.glmnet}},
 then \code{\link[glmnet]{predict.glmnet}}}
