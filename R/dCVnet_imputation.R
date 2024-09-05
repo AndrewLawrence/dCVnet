@@ -11,24 +11,77 @@
 # preproc_imp_functions does not use y in imputation or prediction.
 preproc_imp_functions <- function(opt.imputation_method) {
   # Mean imputation:
-  .pp_fit_mean <- function(x) {
+  .pp_fit_mean <- function(x, family, y = NULL) {
+    if (!is.null(y)) {
+      x <- impy_dat_merger(x = x, y = y, family = family)
+    }
     caret::preProcess(x, method = c("center", "scale"))
   }
-  .pp_apply_mean <- function(x, newdata) {
-    r <- as.matrix(predict(x, newdata = newdata))
+
+  .pp_apply_mean <- function(x, newdata, family, newy = NULL) {
+    if ( is.null(newy) ) {
+      r <- as.matrix(predict(x, newdata = newdata))
+      r[is.na(r)] <- 0.0
+      return(r)
+    }
+    new_comb <- impy_dat_merger(x = newdata, y = newy, family = family)
+    r <- predict(x, new_comb)
     r[is.na(r)] <- 0.0
-    r
+
+    attr(r, "family") <- attr(new_comb, "family")
+    if ( family == "cox" ) attr(r, "Survtype") <- attr(new_comb, "Survtype")
+    attr(r, "ny") <- attr(new_comb, "ny")
+
+    # undo centering / scaling for y:
+    for ( i in seq.int(attr(r, "ny")) ) {
+      if ( ! is.factor(r[, i]) ) {
+        r[, i] <- (r[, i] * x$std[[i]]) + x$mean[[i]]
+      }
+    }
+
+    r <- impy_dat_unmerger(r)
+    r$x
   }
+
+
+
   # knn imputation:
-  .pp_fit_caretknn <- function(x) {
+  .pp_fit_caretknn <- function(x, family, y = NULL) {
+    if (!is.null(y)) {
+      x <- impy_dat_merger(x = x, y = y, family = family)
+    }
     caret::preProcess(x, method = c("center", "scale", "knnImpute"))
   }
-  .pp_apply_caret <- function(x, newdata) {
-    as.matrix(predict(x, newdata = newdata))
+
+  .pp_apply_caret <- function(x, newdata, family, newy = NULL) {
+    if ( is.null(newy)) {
+      return(as.matrix(predict(x, newdata = newdata)))
+    }
+    new_comb <- impy_dat_merger(x = newdata, y = newy, family = family)
+    r <- predict(x, new_comb)
+
+    attr(r, "family") <- attr(new_comb, "family")
+    if ( family == "cox" ) attr(r, "Survtype") <- attr(new_comb, "Survtype")
+    attr(r, "ny") <- attr(new_comb, "ny")
+
+    # undo centering / scaling for y:
+    for ( i in seq.int(attr(r, "ny")) ) {
+      if ( ! is.factor(r[, i]) ) {
+        r[, i] <- (r[, i] * x$std[[i]]) + x$mean[[i]]
+      }
+    }
+
+    r <- impy_dat_unmerger(r)
+    r$x
   }
+
   # missForestPredict imputation:
-  .pp_fit_mfp <- function(x) {
+  .pp_fit_mfp <- function(x, family, y = NULL) {
     requireNamespace("missForestPredict", quietly = TRUE)
+    if ( ! is.null(y) ) {
+      x <- impy_dat_merger(x = x, y = y, family = family)
+    }
+
     mfp <- missForestPredict::missForest(as.data.frame(x),
                                          save_models = TRUE, verbose = FALSE)
     PPx <- caret::preProcess(
@@ -36,15 +89,46 @@ preproc_imp_functions <- function(opt.imputation_method) {
                                            newdata = as.data.frame(x)),
       method = c("center", "scale")
     )
-    list(missForest = mfp, PPx = PPx)
+    return(list(missForest = mfp, PPx = PPx))
   }
-  .pp_apply_mfp <- function(x, newdata) {
+
+  .pp_apply_mfp <- function(x, newdata, family, newy = NULL) {
+
+    if ( is.null(newy) ) {
+
+      newdata <- missForestPredict::missForestPredict(
+        x[["missForest"]],
+        newdata = as.data.frame(newdata)
+      )
+
+      return(as.matrix(predict(x[["PPx"]], newdata = newdata)))
+    }
+
+    new_comb <- impy_dat_merger(x = newdata,
+                                y = newy,
+                                family = family)
+
     newdata <- missForestPredict::missForestPredict(
       x[["missForest"]],
-      newdata = as.data.frame(newdata)
+      newdata = as.data.frame(new_comb)
     )
-    as.matrix(predict(x[["PPx"]], newdata = newdata))
+    r <- predict(x[["PPx"]], newdata = newdata)
+
+    attr(r, "family") <- attr(new_comb, "family")
+    if ( family == "cox" ) attr(r, "Survtype") <- attr(new_comb, "Survtype")
+    attr(r, "ny") <- attr(new_comb, "ny")
+
+    # undo centering / scaling for y:
+    for ( i in seq.int(attr(r, "ny")) ) {
+      if ( ! is.factor(r[, i]) ) {
+        r[, i] <- (r[, i] * x[["PPx"]]$std[[i]]) + x[["PPx"]]$mean[[i]]
+      }
+    }
+
+    r <- impy_dat_unmerger(r)
+    r[["x"]]
   }
+
   # Main:
   pp_fit <- switch(
     opt.imputation_method,
@@ -96,6 +180,7 @@ impy_dat_unmerger <- function(x) {
     y <- x[, 1]
     x <- as.matrix(x[, -1])
   }
+
   if ( family == "cox" ) {
     if ( ny == 2 ) {
       y <- survival::Surv(time = as.vector(y[, 1]),

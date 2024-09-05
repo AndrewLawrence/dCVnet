@@ -208,8 +208,8 @@ dCVnet <- function(
 
   # If the imputation method is missForestPredict then check we have the package
   #   and fail if not:
-  if ( opt.imputation_method == "missForestPredict" &&
-       ! requireNamespace("missForestPredict", quietly = TRUE) ) {
+  if (opt.imputation_method == "missForestPredict" &&
+        ! requireNamespace("missForestPredict", quietly = TRUE) ) {
     stop("Please install the missForestPredict package to use this option.")
   }
 
@@ -273,8 +273,7 @@ dCVnet <- function(
   #   use a utility function to get appropriate preprocessing functions
   #   depending on opt.imputation_method.
 
-  pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method,
-                                 opt.imputation_usey = opt.imputation_usey)
+  pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method)
 
   # ~ Create outer folds ------------------------------------------------------
   # Note: this is by default stratified by y, we obtain unstratified sampling

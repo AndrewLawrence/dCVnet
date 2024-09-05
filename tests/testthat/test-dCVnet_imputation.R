@@ -9,16 +9,16 @@ examples <- mapply(
 )
 
 examples_merged <- mapply(function(.x, .y) {
-  dCVnet:::impy_dat_merger(x = .x$x_mat,
-                           y = .x$y,
-                           family = .y)
+  impy_dat_merger(x = .x$x_mat,
+                  y = .x$y,
+                  family = .y)
 },
 examples,
 names(examples),
 SIMPLIFY = FALSE)
 
 examples_unmerged <- lapply(examples_merged,
-                            dCVnet:::impy_dat_unmerger)
+                            impy_dat_unmerger)
 
 test_that("y-merging and unmerging is lossless", {
   expect_equal(lapply(examples_unmerged, `[[`, "x"),
