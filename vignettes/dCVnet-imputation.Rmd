@@ -10,9 +10,13 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4
 )
 ```
+
+## Imputation Demonstration
 
 This vignette will demonstrate the options provided for imputation in dCVnet.
 
@@ -50,17 +54,32 @@ prostate %>%
 
 ```
 
-Next we will develop and cross-validate a dCVnet model and fit it to the full dataset. This result will then be compared with a complete cases approach which excludes observations with any missing variables, and three varieties of imputation in dCVnet.
+Now we will use the data with and without missingness in a cross-validated dCVnet model. First, dCVnet will be run on the full dataset with no missing values. This gives a "true" result we can use as a reference for the methods that work with missing data: 1) a complete-cases approach to missing data (excluding observations with *any* missing values), and 2) five ways of employing imputation in dCVnet.
+
+```{r setup_models, echo=TRUE, eval=TRUE} 
+# Note: we will use a data.frame of model settings
+#       to efficiently run the 7 different models.
+
+model_settings <- data.frame(
+  labels = c("orig", "cc",
+             "meanimp",
+             "knnimp_y-", "knnimp_y+",
+             "rfimp_y-", "rfimp_y+"),
+  data = c(1, 2, 2, 2, 2, 2, 2),
+  use_imp = c(FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE),
+  use_y = c(FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, TRUE),
+  imp_meth = rep(c("mean", "knn", "missForestPredict"), times = c(3, 2, 2))
+)
+
+# inspect the settings:
+knitr::kable(model_settings)
+```
+
+
 
 ```{r fit_models, echo=TRUE, eval = FALSE}
 # Note: the models take a long time to fit, so this vignette loads stored
-#       results so it compiles quickly.
-model_settings <- data.frame(
-  labels = c("orig", "cc", "meanimp", "knnimp", "rfimp"),
-  data = c(1, 2, 2, 2, 2),
-  use_imp = c(FALSE, FALSE, TRUE, TRUE, TRUE),
-  imp_meth = rep(c("mean", "knn", "missForestPredict"), times = c(3, 1, 1))
-)
+#        results to decrease compilation time.
 
 data_list <- list(x, xmiss)
 
@@ -77,7 +96,8 @@ models <- map(set_names(seq.int(nrow(model_settings)), model_settings$labels),
                 nrep_inner = 25,
                 nrep_outer = 25,
                 opt.use_imputation = model_settings$use_imp[.x],
-                opt.imputation_method = model_settings$imp_meth[.x]
+                opt.imputation_method = model_settings$imp_meth[.x],
+                opt.imputation_usey = model_settings$use_y[.x]
               ))
 
 # extract CV results for RMSE:
@@ -90,204 +110,224 @@ cv_rmse_results <- map_dfr(
 )
 
 # extract the imputed values:
-extract_imputed_value <- function(obj, data) {
-  imp_sel <- c(39, 64, 71, 74, 75, 76, 83, 88, 94, 95)
+imp_sel <- c(39, 64, 71, 74, 75, 76, 83, 88, 94, 95)
+
+extract_imputed_value <- function(obj, dat) {
   unscale_vals <- list(mean = mean(data_list[[1]]$lcp),
                        sd = sd(data_list[[1]]$lcp))
-  fn <- attr(obj, "apply")
-  vals <- fn(obj, newdata = data)[imp_sel, "lcp"]
+  fn <- attr(obj$prod$preprocess, "apply")
+
+  if (obj$input$callenv$opt.imputation_usey) {
+    vals <-  fn(
+      obj$prod$preprocess,
+      newdata = dat,
+      family = family(obj),
+      newy = y
+    )[imp_sel, "lcp"]
+  } else {
+    vals <- fn(obj$prod$preprocess,
+               newdata = dat,
+               family = family(obj))[imp_sel, "lcp"]
+  }
   (vals * unscale_vals$sd) + unscale_vals$mean
 }
 
 imputed_values <- data.frame(
   true = data_list[[1]]$lcp[imp_sel],
-  mean = extract_imputed_value(
-    obj = models$meanimp$prod$preprocess,
-    data = data_list[[2]]
-  ),
-  knn = extract_imputed_value(
-    obj = models$knnimp$prod$preprocess,
-    data = data_list[[2]]
-  ),
-  rf = extract_imputed_value(
-    obj = models$rfimp$prod$preprocess,
-    data = data_list[[2]]
-  )
+  map_dfc(models[3:7], extract_imputed_value, xmiss),
+  check.names = FALSE
 ) %>%
-  rownames_to_column() %>%
-  pivot_longer(cols = -rowname) %>%
-  mutate(name = factor(name, levels = c("true", "mean", "knn", "rf")))
-
+  pivot_longer(cols = everything()) %>%
+  mutate(name = factor(name, levels = c("true", names(models)[3:7])))
 ```
 
 ```{r load_results, include=FALSE}
 
-cv_rmse_results <- structure(
-  list(
-    model = c("orig", "cc", "meanimp", "knnimp", "rfimp"),
-    mean = c(0.740889437989585,
-             0.773253753170968,
-             0.78335242815483,
-             0.764582462458409,
-             0.759098935819382),
-    sd = c(0.00771592642747333,
-           0.0152789985183087,
-           0.0119181114007495,
-           0.00908568824915865,
-           0.00973050706755415)
+cv_rmse_results <- structure(list(
+  model = c(
+    "orig",
+    "cc",
+    "meanimp",
+    "knnimp_y-",
+    "knnimp_y+",
+    "rfimp_y-",
+    "rfimp_y+"
   ),
-  class = "data.frame", row.names = c(NA, -5L)
-)
+  mean = c(
+    0.738897216007547,
+    0.773153422858848,
+    0.782347138976727,
+    0.762219847243781,
+    0.756307916020417,
+    0.758895105846809,
+    0.754437734909193
+  ),
+  sd = c(
+    0.0124020849378806,
+    0.0156975025100774,
+    0.0147383130317717,
+    0.00959357335663984,
+    0.00918605033420394,
+    0.0124485555901956,
+    0.0141742649733353
+  )
+),
+class = "data.frame",
+row.names = c(NA, -7L))
 
 imputed_values <- structure(
   list(
-    rowname = c(
-      "39",
-      "39",
-      "39",
-      "39",
-      "64",
-      "64",
-      "64",
-      "64",
-      "71",
-      "71",
-      "71",
-      "71",
-      "74",
-      "74",
-      "74",
-      "74",
-      "75",
-      "75",
-      "75",
-      "75",
-      "76",
-      "76",
-      "76",
-      "76",
-      "83",
-      "83",
-      "83",
-      "83",
-      "88",
-      "88",
-      "88",
-      "88",
-      "94",
-      "94",
-      "94",
-      "94",
-      "95",
-      "95",
-      "95",
-      "95"
-    ),
     name = structure(
       c(
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
         4L,
+        5L,
+        6L,
         1L,
         2L,
         3L,
-        4L
+        4L,
+        5L,
+        6L
       ),
-      levels = c("true", "meanimp", "knnimp", "rfimp"),
+      levels = c(
+        "true",
+        "meanimp",
+        "knnimp_y-",
+        "knnimp_y+",
+        "rfimp_y-",
+        "rfimp_y+"
+      ),
       class = "factor"
     ),
     value = c(
       1.83258146,
       -0.179365577319588,
       0.613753405334462,
-      0.901362884530402,
+      0.88012048663534,
+      0.871983821306581,
+      1.45707665755804,
       2.1102132,
       -0.179365577319588,
       1.13964983192454,
-      1.55517223800776,
+      1.13964983192454,
+      1.53067452679211,
+      1.49968733219812,
       1.32175584,
       -0.179365577319588,
       2.03024182854217,
-      1.42987747235525,
+      2.03024182854217,
+      1.41344916788588,
+      1.29286595759855,
       1.178655,
       -0.179365577319588,
       1.71691310386681,
-      1.18318086099696,
+      1.77198356441845,
+      1.09154377985825,
+      1.10871038550679,
       1.9095425,
       -0.179365577319588,
       1.32323276456299,
-      0.919471206547847,
+      1.32323276456299,
+      0.834232786318951,
+      1.20122148951284,
       2.42036813,
       -0.179365577319588,
       1.92066166459778,
-      1.22753401740914,
+      1.68499197588966,
+      1.17300601378503,
+      1.44498254372453,
       0.55961579,
       -0.179365577319588,
       1.91832359473926,
-      1.20506671097505,
+      1.79457214197922,
+      1.14429421359544,
+      1.50593531038929,
       0.30010459,
       -0.179365577319588,
       1.32323276456299,
-      0.871541548694189,
+      1.32323276456299,
+      0.96980793866266,
+      0.82631232246934,
       2.1690537,
       -0.179365577319588,
       1.7488299243668,
-      1.22234545629909,
+      1.87258137712684,
+      1.19332251711617,
+      1.50656166543722,
       2.46385324,
       -0.179365577319588,
       1.39191375677139,
-      0.377058085118181
+      1.04666390411888,
+      0.58098493830887,
+      0.558400686234996
     )
   ),
-  row.names = c(NA, -40L),
+  row.names = c(NA, -60L),
   class = c("tbl_df", "tbl", "data.frame")
 )
 
 ```
 
-First check how the imputation worked (in the full dataset):
+First we can extract and inspect the values which were imputed to get an idea of how the imputation worked:
 
 ```{r imp_values}
-
 imputed_values %>%
   group_by(name) %>%
   summarise(mean = mean(value),
             min = min(value),
             max = max(value)) %>%
-  knitr::kable()
+  knitr::kable(digits = 3)
 
 # Compare density:
 imputed_values %>%
@@ -296,9 +336,9 @@ imputed_values %>%
 
 ```
 
-We can see agreement between the imputed values and the true missing values is not ideal with any method, but as expected the mean imputation is way off. The knn probably does the best job of approximating the distribution.
+We can see agreement between the imputed values and the true missing values is not ideal with any method, but as expected the mean imputation is way off. This is by construction, the removed values were unusually high, so the mean in the rest of the sample is not a close replacement. The conditional methods are a bit closer. Particularly the knn method (with and without y) probably does the best job of approximating the true distribution of the missing values.
 
-Now, we can see how the cross-validated results were affected:
+On to the main result: how were the cross-validated results affected?
 
 ```{r inspect}
 cv_rmse_results %>% knitr::kable(digits = 3)
@@ -320,26 +360,42 @@ cv_rmse_results %>%
   theme(axis.text.x = element_text(angle = 45))
 ```
 
-Relative to the non-missing data ("orig"), the exclusion of the subjects with missing data (the "cc" or complete-cases analysis) has a negative effect on the CV prediction performance (RMSE) and increases the variability of results over CV-repetitions.
+Relative to the "true" situation with no missing data ("orig"), the exclusion of the subjects with missing data (the "cc" or complete-cases analysis) has a negative effect on the CV prediction performance (increases RMSE) and increases the variability of results over CV-repetitions.
 
-Mean imputation does not noticeably de-bias performance back towards the "true" non-missing model, but it does narrow the variability.
+Mean imputation in this case does not help. The performance is similar to complete cases.
 
-In contrast, the k-nearest neighbours and random-forest imputation approaches brings the mean CV-prediction performance closer to the "true" non-missing model's performance (albeit not perfectly) and also narrows the variability to that of the "true" data.
+In contrast, the k-nearest neighbours and random-forest imputation approaches bring the mean CV-prediction performance closer to the "true" non-missing model's performance (albeit not perfectly) and also narrow the variability of the estimate.
 
-In this simulation we show prediction models using conditional single imputation (knn or random forest) show cross-validated results closer to complete data than mean imputation or complete-cases excluding the 10% of subjects with missing values.
+In this example there is only a small benefit to including the outcome in the imputation model. It is possible to construct examples where using y helps more significantly - particularly if important predictors are largely orthogonal to each other.
 
-Note that the simulation is only an illustration, the values were removed with a Missing at Random mechanism. This was deliberate to favour imputation. Missing Completely At Random data would classically produce unbiased coefficients under a complete-cases analysis and so not benefit from imputation. While Missing Not At Random missingness would be expected to not approach ideal performance with either complete-cases or imputation. Also note that the predictors with missing data had other predictors that were good indicators of them - i.e. there was some multicollinearity/redundancy where it mattered. In a study where predictors were uncorrelated we should not expect this form of imputation to be useful (but also probably not harmful).
+In summary, we have demonstrated the imputation methods in dCVnet and shown that in this simulation that prediction models using conditional single imputation (knn or random forest) yields cross-validated results closer to complete data than mean imputation or complete-cases approaches.
+
+Note that the simulation is only an illustration, the values were removed with a Missing at Random mechanism. This was deliberate to favour imputation. Missing Completely At Random data would classically produce unbiased coefficients under a complete-cases analysis and so not benefit from imputation. While Missing Not At Random missingness would be expected to not approach ideal performance with either complete-cases or imputation.
 
 ## dCVnet Imputation Details
 
-dCVnet supports single imputation methods. Imputation is either unconditional ("mean") or conditional, with either the k-nearest neighbour method ("knn", from the caret package, averaging missing values from the k=5 nearest observations), or using the "missForestPredict" approach to missing data employing iterative random forests.
+dCVnet currently only supports single imputation methods. Imputation is either unconditional ("mean") or conditional, currently the conditional methods provided are k-nearest neighbours ("knn", from the caret package, which imputes the average of the k=5 nearest observations), or using the "missForestPredict" approach to missing data, which employing iterative random forests.
 
-Imputation is conducted on the x-matrix of predictor variables and occurs *after* expansion for formula terms; e.g. `poly(age,2)` produces two variables for a single predictor column called age. For the cross-validated outputs of dCVnet (i.e. excluding the production model) imputation is conducted independently for each fold of the repeated k-fold CV.
+Imputation of missing values is conducted only for the x-matrix of predictor variables and the model outcome can optionally be included in the imputation model. Imputation always occurs *after* parsing of the predictor matrix, so factors, polynomial expansions and other related variables may hold nonsensical values as a result. This should not practically matter for prediction in most cases.
 
-All imputation methods in dCVnet allow "prediction" i.e. we generate an imputation "model" on the training dataset then apply the imputation model to the held-out dataset to impute missing data there. Specifically, for **mean imputation** this is as simple as imputing missing held-out data with the mean calculated from the test data. For **knn imputation** it means each held-out subject with missing data has their nearest-neighbours identified from the train dataset. For [**missForest**](https://github.com/stekhoven/missForest) **imputation** we use the [missForestPredict](https://github.com/sibipx/missForestPredict) package to allow prediction of the held-out data from the train data imputation model.
+Of key importance for the cross-validated outputs of dCVnet, the imputation is conducted fully independently within each fold of the repeated k-fold CV.
 
-In contrast, as **production model** is fitted to the full dataset it applies the requested imputation on the full dataset. The dCVnet object then includes this full-data imputation model, and using the `predict.dCVnet` method will apply this imputation model to replace missing data in the data predictions are requested for.
+All imputation methods in dCVnet necessarily allow "prediction" i.e. an imputation "model" is fit on the training dataset then applied to the held-out dataset in order to impute any missing data there. Specifically, for **mean imputation** this is as simple as replacing the missing held-out data with the mean calculated from the test data. For **knn imputation** it means each held-out test observation with missing data has its nearest-neighbours identified within the train dataset. For [**missForest**](https://github.com/stekhoven/missForest) **imputation** we use the [missForestPredict](https://github.com/sibipx/missForestPredict) package to allow prediction of the held-out data from the train data imputation model.
+
+Because the **production model** is fit to the full dataset, for the production model we apply the requested imputation method to the full dataset. This production imputation model is then stored in the dCVnet object allowing the `predict.dCVnet` method to apply this stored imputation model to replace missing data in any new data predictions are requested for.
 
 ### Imputation: Outcome
 
-dCVnet presently does not use the outcome (`y`) in the imputation model. When a prediction model is eventually employed we will not have access to the true y label, and so any improvement in performance due to using y in imputation will not be expected to generalise. However, the development of the model may be improved by including y (this distinction is sometimes called pragmatic vs. ideal performance in prediction modelling) and in future imputation using y may be added.
+dCVnet exposes the option to use outcome (`y`) in the imputation model.
+
+This is an important question in prediction modelling that is covered conceptually as the distinction between pragmatic and ideal model performance discussed by Wood and colleagues:
+
+*Wood, A. M., Royston, P. & White, I. R. The estimation and use of predictions for the assessment of model performance using large samples with multiply imputed data. Biom J 57, 614–632 (2015).*
+
+*Pragmatic* performance estimates do not use `y` in the imputation model, on the basis that when the model is applied the outcome will not be available, so any improvement in performance will not generalise. If the missingness pattern seen at the time of development is similar to the eventual missingness pattern at application then the pragmatic performance will be a better measure of the eventual performance.
+
+This contrasts with *ideal* performance which does use `y` in the imputation model. Ideal performance is justified as the metric of interest when the missingness pattern at application is expected to differ substantially from the missingness pattern at development. For example if limitations of the development dataset are expected to be resolved once the model is implemented.
+
+### Imputation: Single vs. Multiple
+
+Multiple imputation is not yet supported by dCVnet. It is not yet established how important multiple imputation is for prediction modelling. This is in contrast to inference settings where it is recommended to avoid narrowing standard errors.
