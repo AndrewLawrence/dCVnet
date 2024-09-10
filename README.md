@@ -1,15 +1,20 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
 
 # dCVnet
 
 **dCVnet** is an R package to estimate **d**oubly
 **C**ross-**V**alidated Elastic-**net** regularised generalised linear
 models (glm) with an approachable interface. dCVnet adds nested repeated
-k-fold cross-validation, and convenience functions, to the regularised
-glm fit by the [glmnet
+k-fold cross-validation, imputation for missing data, and assorted
+convenience functions, to the regularised glm fit by the [glmnet
 package](https://cran.r-project.org/web/packages/glmnet/index.html).
 
-If you use dCVnet in your research please cite our paper [Lawrence et al
-(2021)](https://pubmed.ncbi.nlm.nih.gov/34175478/)
+If you use dCVnet in your research, please cite our paper: [Lawrence et
+al (2021)](https://pubmed.ncbi.nlm.nih.gov/34175478/)
 
 ## Getting Started
 
@@ -18,11 +23,14 @@ fully featured interface to R (e.g. [RStudio](https://www.rstudio.com/))
 is recommended.
 
 dCVnet is not (yet) on [CRAN](https://cran.r-project.org/), so the
-remotes package is useful to download and build from github:
+remotes package is useful to download and install the package from
+github:
 
 #### First, install remotes (if needed):
 
-    install.packages("remotes")
+```         
+install.packages("remotes")
+```
 
 The commands below will install missing package dependencies (see the
 [DESCRIPTION](DESCRIPTION) file *Imports* section). It will then run a
@@ -30,25 +38,35 @@ toy example from the package's main function.
 
 #### Install dCVnet (from GitHub):
 
-    remotes::install_github("AndrewLawrence/dCVnet", dependencies = TRUE, build_vignettes = TRUE)
+```         
+remotes::install_github("AndrewLawrence/dCVnet", dependencies = TRUE, build_vignettes = TRUE)
+```
 
 #### -or- install the dev version of dCVnet (from GitHub):
 
-    remotes::install_github("AndrewLawrence/dCVnet@dev", dependencies = TRUE, build_vignettes = TRUE)
+```         
+remotes::install_github("AndrewLawrence/dCVnet@dev", dependencies = TRUE, build_vignettes = TRUE)
+```
 
-#### Install dCVnet (from an Archive):
+#### -or- install dCVnet (from an Archive):
 
-    remotes::install_local("path/to/dCVnet_1.0.8.tar.gz", dependencies = TRUE, build_vignettes = TRUE)
+```         
+remotes::install_local("path/to/dCVnet_1.0.8.tar.gz", dependencies = TRUE, build_vignettes = TRUE)
+```
 
 #### Run a simple example:
 
-    library(dCVnet)
-    example(dCVnet, run.dontrun = TRUE)
-    # to see the usage without running calculations set run.dontrun = FALSE
+```         
+library(dCVnet)
+example(dCVnet, run.dontrun = TRUE)
+# to see the usage without running calculations set run.dontrun = FALSE
+```
 
 #### List of dCVnet Vignettes
 
-    browseVignettes(package = "dCVnet")
+```         
+browseVignettes(package = "dCVnet")
+```
 
 Note: this needs `build_vignettes = TRUE` to be set at installation.
 
@@ -96,8 +114,7 @@ or able, to remove.
 In an ideal world we would collect more observations (i.e. increase
 *n*), or better understand which predictors to include/exclude or how to
 best model them (i.e. reduce *p*), but this can be impractical or
-impossible. For example, it is often a necessary step to justify funding
-for further research to increase *n* or reduce *p*.
+impossible.
 
 With few observations and many predictors several inter-related
 statistical problems arise. These problems become
@@ -117,17 +134,17 @@ tune the regularisation and validly assess model performance.
 A model which is overfit is tuned to the noise in the sample rather than
 reproducible relationships. As a result it will perform poorly in new
 (unseen) data. This failure to perform well in new data is termed
-generalisation (or out-of-sample) error.
+*generalisation* (or out-of-sample) *error*.
 
 Generalisation error can be assessed using properly conducted
-cross-validation. The model is repeatedly refit in different subsets of
-the data and performance evaluated in the observations which were not
-used for model fitting. Appropriately cross-validated estimates of model
+cross-validation. The model is repeatedly refit in subsets of the data
+and performance evaluated in the observations which were not used for
+model fitting. Appropriately cross-validated estimates of model
 performance are unaffected by the optimism caused by overfitting and
 reflect the likely performance of the model in unseen data.
 
-There are different forms of cross-validation, *dCVnet* implements
-repeated k-fold cross-validation.
+There are different forms of cross-validation, particularly *dCVnet*
+implements repeated k-fold cross-validation.
 
 However, cross-validation only tells the analyst if overfitting is
 occurring, it is not a means to reduce overfitting. For this purpose we
@@ -200,6 +217,21 @@ data when hyperparameters are estimated in this way. Double
 cross-validation is computationally expensive, but ensures
 hyperparameter tuning is fully separate from performance evaluation.
 
+#### Nested Imputation
+
+Imputation of missing variables should be nested within
+cross-validation, as of version 1.3 (September 2024) dCVnet supports
+some forms of imputation. This is described in the `dCVnet-imputation`
+vignette.
+
+#### Application
+
+A dCVnet object includes a final "production" model which can be applied
+to new data to make predictions. It is this production model (fit to the
+complete dataset) that the cross-validated performance metrics apply.
+Usually where coefficients are to be interpreted the coefficients of
+interest are those of this production model.
+
 ### Summary
 
 This package aims to provide an approachable interface for conducting a
@@ -215,10 +247,10 @@ ongoing.
 
 ### Footnotes
 
-<a name="fn1"><sup>1</sup></a> dCVnet can be useful
-for inference, but this is not its main purpose. The
-time-consuming outer cross-validation loop is not as important for
-inference, other software can be used directly.
+<a name="fn1"><sup>1</sup></a> dCVnet can be useful for inference, but
+this is not its main purpose. The time-consuming outer cross-validation
+loop is not as important for inference, other software can be used
+directly.
 
 <a name="fn2"><sup>2</sup></a> Where *p*/*n* \> 1, the standard
 least-squares regression solutions are not defined and generalised
