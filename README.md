@@ -235,10 +235,6 @@ inner loop cross-validation) are performed by the R package
 [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html)
 which dCVnet depends on.
 
-dCVnet was developed to work with two-class outcomes (binary logistic),
-but work on implementing other model families supported by glmnet is
-ongoing.
-
 ### Footnotes
 
 <a name="fn1"><sup>1</sup></a> dCVnet can be useful for inference, but
