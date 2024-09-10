@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # dCVnet
 
 **dCVnet** is an R package to estimate **d**oubly

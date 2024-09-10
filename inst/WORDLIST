@@ -10,7 +10,9 @@ Harrell's
 Hastie
 InternalPerformanceSummaryFunctions
 JMLR
+MCAR
 MLR
+MNAR
 Maudsley
 NIHR
 NPV
@@ -103,7 +105,6 @@ se
 selectiveInference
 seq
 setalpha
-svi
 un
 uncrossvalidated
 unmerged
