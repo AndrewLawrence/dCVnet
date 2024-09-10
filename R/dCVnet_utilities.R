@@ -104,7 +104,7 @@ parse_dCVnet_input <- function(data,
   }
   # check formula is has no response variable:
   if ( !identical(attr(fterms, "response"), 0L) ) {
-    stop("Error: use a RHS formula to specify in data")
+    stop("Error: use a RHS formula to specify the predictor matrix from data")
   }
 
   data <- data[, vars, drop = FALSE]
@@ -135,7 +135,7 @@ parse_dCVnet_input <- function(data,
                    " subjects due to missing data.\n"))
   }
 
-  # coerce y into factor and check, because...
+  # for factor outcome, coerce y into factor and check, because...
   #   - glmnet (for its own infernal reasons) does not honour factor ordering,
   #     the factor levels are converted to character and sorted alphabetically
   #   - previously in dCVnet there was an argument ('positive') to change factor
@@ -155,7 +155,7 @@ parse_dCVnet_input <- function(data,
                                               no = stats::na.omit))
   x_mat <- model.matrix(f, data = mf)[, -1]
 
-  # force matrices to vectors:
+  # force y matrices to vectors:
   if ( family %in% c("gaussian", "poisson") && inherits(y, "matrix") ) {
     y <- as.vector(y)
   }
@@ -170,7 +170,12 @@ parse_dCVnet_input <- function(data,
     }
   }
 
-  # return the outcome, predictor matrix and flattened formula.
+  # for mgaussian, coerce y to a matrix:
+  if ( (family %in% "mgaussian") ) {
+    y <- as.matrix(y)
+  }
+
+  # return the outcome, predictor matrix and model family
   return(list(y = y,
               x_mat = x_mat,
               yname = yname,
@@ -1128,54 +1133,6 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
   return(factor(R, levels = lvl))
 }
 
-
-
-preproc_imp_functions <- function(opt.imputation_method) {
-  .pp_fit_mean <- function(x) {
-    caret::preProcess(x, method = c("center", "scale"))
-  }
-  .pp_apply_mean <- function(x, newdata) {
-    newdata[is.na(newdata)] <- 0.0
-    as.matrix(predict(x, newdata = newdata))
-  }
-  .pp_fit_caretknn <- function(x) {
-    caret::preProcess(x, method = c("center", "scale", "knnImpute"))
-  }
-  .pp_apply_caret <- function(x, newdata) {
-    as.matrix(predict(x, newdata = newdata))
-  }
-  .pp_fit_mfp <- function(x) {
-    requireNamespace("missForestPredict", quietly = TRUE)
-    mfp <- missForestPredict::missForest(as.data.frame(x),
-                                         save_models = TRUE, verbose = FALSE)
-    PPx <- caret::preProcess(
-      missForestPredict::missForestPredict(mfp,
-                                           newdata = as.data.frame(x)),
-      method = c("center", "scale")
-    )
-    list(missForest = mfp, PPx = PPx)
-  }
-  .pp_apply_mfp <- function(x, newdata) {
-    newdata <- missForestPredict::missForestPredict(
-      x[["missForest"]],
-      newdata = as.data.frame(newdata)
-    )
-    as.matrix(predict(x[["PPx"]], newdata = newdata))
-  }
-  pp_fit <- switch(
-    opt.imputation_method,
-    mean = .pp_fit_mean,
-    knn = .pp_fit_caretknn,
-    missForestPredict = .pp_fit_mfp
-  )
-  pp_apply <- switch(
-    opt.imputation_method,
-    mean = .pp_apply_mean,
-    knn = .pp_apply_caret,
-    missForestPredict = .pp_apply_mfp
-  )
-  return(list(fit = pp_fit, apply = pp_apply))
-}
 
 #' cv_performance_glm
 #'

@@ -182,11 +182,31 @@ res <- lapply(ovars, function(y) {
       silent = TRUE)
 })
 
-test_that("binomial y is formatted as expected", {
+test_that("multinomial y is formatted as expected", {
   expect_identical(res[[1]]$y, as.factor(ovars[[1]]))
   expect_identical(res[[2]]$y, as.factor(ovars[[2]]))
   expect_identical(res[[3]]$y, ovars[[3]])
   expect_identical(class(res[[4]]), "try-error")
   expect_identical(as.character(res[[5]]$y), ovars[[5]])
   expect_identical(as.character(res[[6]]$y), ovars[[6]])
+})
+
+
+# ~ mgaussian -------------------------------------------------------------
+
+mg_y1 <- matrix(rnorm(25 * 4), ncol = 4)
+mg_y2 <- as.data.frame(mg_y1)
+mg_x <- as.data.frame(matrix(rnorm(25 * 10), nrow = 25))
+
+mg_proc1 <- dCVnet::parse_dCVnet_input(data = mg_x,
+                                       y = mg_y1,
+                                       family = "mgaussian")
+
+mg_proc2 <- dCVnet::parse_dCVnet_input(data = mg_x,
+                                       y = mg_y2,
+                                       family = "mgaussian")
+
+test_that("mgaussian y is formatted as expected: ", {
+  expect_true(inherits(mg_proc1$y, "matrix"))
+  expect_true(inherits(mg_proc2$y, "matrix"))
 })

@@ -1,5 +1,5 @@
 
-# Outer Loop functions ----------------------------------------------------
+# dCVnet function ----------------------------------------------------
 
 #' Double cross-validated elastic-net regularised regression
 #'
@@ -73,10 +73,18 @@
 #'     classification (affects outer CV performance only).
 #'     Otherwise classify at 50% probability.
 #' @param opt.use_imputation Boolean.
-#'     Run imputation on missing predictors? (UNDER DEVELOPMENT)
-#' @param opt.imputation_method options: \code{"mean"} - mean imputation using
-#'     \code{\link[glmnet]{makeX}}. \code{"missForestPredict"} - use the
+#'     Run imputation on missing predictors?
+#' @param opt.imputation_method Which imputation method?: \itemize{
+#'     \item \code{"mean"} - mean imputation (unconditional)
+#'     \item \code{"knn"} - k-nearest neighbours imputation
+#'         (uses \code{\link[caret]{preProcess}}).
+#'     \item \code{"missForestPredict"} - use the
 #'     missForestPredict package to impute missing values.
+#'     }
+#' @param opt.imputation_usey Boolean.
+#'     Should conditional imputation methods use y in the imputation model?
+#'     Note: no effect if \code{opt.use_imputation} is \code{FALSE}, or if
+#'     \code{opt.imputation_method} is \code{"mean"}.
 #' @param ... Arguments to pass through to cv.glmnet
 #'     (may break things).
 #' @return a dCVnet object containing:
@@ -176,23 +184,47 @@ dCVnet <- function(
 
   # Imputation options:
   opt.use_imputation = FALSE,
+  opt.imputation_usey = FALSE,
   opt.imputation_method = c("mean", "knn", "missForestPredict"),
 
   # dots
   ...
 ) {
 
-  # Parse input -------------------------------------------------------------
+  # ~ Parse input -------------------------------------------------------------
 
-  # function call (for printing):
+  # capture the function call (for printing):
   thecall <- match.call()
 
+  # check imputation arguments:
   opt.imputation_method <- match.arg(opt.imputation_method)
+
   if (!opt.use_imputation) {
     opt.imputation_method <- "mean" # will not be applied.
+    opt.imputation_usey <- FALSE
   }
 
-  # save arguments for posterity (i.e. save objects from environment):
+  if ( opt.imputation_usey && opt.imputation_method == "mean" ) {
+    stopmsg <- paste(
+      "Invalid option combination.",
+      "Set opt.imputation_usey to FALSE if using mean imputation",
+      sep = "\n"
+    )
+    stop(stopmsg)
+  }
+
+  # If the imputation method is missForestPredict then check we have the package
+  #   and fail if not:
+  if (opt.imputation_method == "missForestPredict" &&
+        ! requireNamespace("missForestPredict", quietly = TRUE) ) {
+    stop("Please install the missForestPredict package to use this option.")
+  }
+
+  # argument matching for model family:
+  family <- match.arg(family, choices = supported_model_families())
+
+  # save arguments for posterity
+  #   (i.e. package objects from the calling environment):
   callenv <- c(as.list(environment()), list(...))
 
   time_start <- force(Sys.time()) # for logging.
@@ -206,13 +238,6 @@ dCVnet <- function(
                                offset = offset)
   x <- parsed$x_mat
   y <- parsed$y
-
-  # If the imputation method is missForestPredict then check we have the package
-  #   and fail if not:
-  if ( opt.imputation_method == "missForestPredict" &&
-        ! requireNamespace("missForestPredict", quietly = TRUE) ) {
-    stop("Please install the missForestPredict package to use this option.")
-  }
 
   # stop if AUC requested and magic number not met.
   if ( type.measure == "auc" ) {
@@ -248,15 +273,16 @@ dCVnet <- function(
                   family = family,
                   time.start = time_start)
 
-  # Preprocessing functions -------------------------------------------------
+  # ~ Preprocessing functions -------------------------------------------------
 
-  # Data is preprocessed repeatedly, and differently depending on imputation
+  # Data is preprocessed repeatedly during cross-validation,
+  #   the preprocessing differs depending on imputation method
   #   use a utility function to get appropriate preprocessing functions
   #   depending on opt.imputation_method.
 
   pp_fn <- preproc_imp_functions(opt.imputation_method = opt.imputation_method)
 
-  # Create outer folds ------------------------------------------------------
+  # ~ Create outer folds ------------------------------------------------------
   # Note: this is by default stratified by y, we obtain unstratified sampling
   #         by giving caret::createMultiFolds a single-level factor/char.
   ystrat <- y
@@ -278,7 +304,7 @@ dCVnet <- function(
   imax <- length(outfolds)
   names(outfolds) <- paste0("Out", names(outfolds)) # give names
 
-  # Initialise the call -----------------------------------------------------
+  # ~ Initialise the call -----------------------------------------------------
 
   # create a call to multialpha.repeated.cv.glmnet which will be
   #   used later as the basis of the outer loop.
@@ -311,18 +337,30 @@ dCVnet <- function(
   cl.marcvglm$alphalist <- alphalist
 
 
-  # Production (Final) Model ------------------------------------------------
+  # ~ Production (Final) Model ------------------------------------------------
   #   start at the end. This is the model we are cross-validating.
   #   note that no output from this model are used in the cross-validation.
   #   excepting - the lambda list.
-  prod_PPx <- structure(
-    pp_fn$fit(x),
-    fit = pp_fn$fit,
-    apply = pp_fn$apply
-  )
-  xs <- attr(prod_PPx, "apply")(prod_PPx, x)
+  #
+  #   first, create the preprocessing object:
+  if ( ! opt.imputation_usey ) {
+    prod_PPx <- structure(
+      pp_fn$fit(x, family = family),
+      fit = pp_fn$fit,
+      apply = pp_fn$apply
+    )
+    xs <- attr(prod_PPx, "apply")(prod_PPx, x, family = family)
+  } else {
+    prod_PPx <- structure(
+      pp_fn$fit(x, family = family, y = y),
+      fit = pp_fn$fit,
+      apply = pp_fn$apply
+    )
+    xs <- attr(prod_PPx, "apply")(prod_PPx, x, family = family, newy = y)
+  }
 
-  # Create Lambda paths -----------------------------------------------------
+
+  # ~ Create Lambda paths -----------------------------------------------------
 
   # Lambda paths:
   # dCVnet works with a single, fixed list of lambdas applied to all folds/reps
@@ -370,7 +408,7 @@ dCVnet <- function(
   # add lambdas to the main call:
   cl.marcvglm$lambdas <- lambdas
 
-  # Production (Final) Model (cont.) ----------------------------------------
+  # ~ Production (Final) Model (cont.) ----------------------------------------
 
   # Run the inner loop for the production model:
   cat("\n\nProduction Model\n")
@@ -404,7 +442,7 @@ dCVnet <- function(
 
 
 
-  # Run Outer Loop (Start) --------------------------------------------------
+  # ~ Run Outer Loop (Start) --------------------------------------------------
 
   # Notes: x and y are added to the call within the outer loop.
   #        inner folds are generated by multialpha.repeated.cv.glmnet
@@ -420,7 +458,7 @@ dCVnet <- function(
         cat(paste0("\nOuterloop:", i, " of ", imax, "\n"))
       }
 
-      # split & preprocess data ---------------------------------------------
+      # ~ split & preprocess data ---------------------------------------------
 
       of <- outfolds[[i]]
 
@@ -435,15 +473,26 @@ dCVnet <- function(
 
       # scaling to mean=0, sd=1
       #   (scaling calculated on completecases train data, applied to test data)
-      PPx <- structure(
-        pp_fn$fit(trainx),
-        fit = pp_fn$fit,
-        apply = pp_fn$apply
-      )
-      trainx <- attr(PPx, "apply")(PPx, trainx)
-      testx  <- attr(PPx, "apply")(PPx, testx)
+      if ( ! opt.imputation_usey ) {
+        PPx <- structure(
+          pp_fn$fit(trainx, family = family),
+          fit = pp_fn$fit,
+          apply = pp_fn$apply
+        )
+        trainx <- attr(PPx, "apply")(PPx, trainx, family = family)
+        testx  <- attr(PPx, "apply")(PPx, testx, family = family)
+      } else {
+        PPx <- structure(
+          pp_fn$fit(trainx, family = family, y = trainy),
+          fit = pp_fn$fit,
+          apply = pp_fn$apply
+        )
+        trainx <- attr(PPx, "apply")(PPx, trainx,
+                                     family = family, newy = trainy)
+        testx  <- attr(PPx, "apply")(PPx, testx, family = family, newy = testy)
+      }
 
-      # inner loop train data -------------------------------------------
+      # ~ inner loop train data -------------------------------------------
       #   - receives no (outer) test data
 
       cl.marcvglm$x <- trainx
@@ -452,12 +501,12 @@ dCVnet <- function(
       inners <- do.call("multialpha.repeated.cv.glmnet",
                         cl.marcvglm)
 
-      # hyperparameter selection --------------------------------------------
+      # ~ hyperparameter selection --------------------------------------------
       #   - based on best CV/out-of-sample performance in inner loop
       fit_lambda <- inners$best$lambda
 
 
-      # tuned outer-train model ---------------------------------------------
+      # ~ tuned outer-train model ---------------------------------------------
       #   - tuned wrt best inner alpha
       #   - full lambda path is fit with subsequent selection
       #       (see https://web.stanford.edu/~hastie/glmnet/glmnet_beta.html:
@@ -484,10 +533,10 @@ dCVnet <- function(
     }
   )
   names(outers) <- names(outfolds)
-  # Run Outer Loop (End) ----------------------------------------------------
+  # ~ Run Outer Loop (End) ----------------------------------------------------
 
 
-  # Outer Loop Performance --------------------------------------------------
+  # ~ Outer Loop Performance --------------------------------------------------
 
   # Gather performance from the outers into a single dataframe.
   performance <- as.data.frame(
@@ -510,7 +559,7 @@ dCVnet <- function(
   time_stop <- Sys.time()
   run_time <- difftime(time_stop, time_start, units = "hours")
 
-  # Return object -----------------------------------------------------------
+  # ~ Return object -----------------------------------------------------------
   obj <- structure(list(tuning = outers,
                         performance = performance,
                         folds = outfolds,
@@ -962,6 +1011,8 @@ summary.dCVnet <- function(object, ...) {
 #'     performance.
 #'
 #' @param object a a \code{\link{dCVnet}} object.
+#' @param newy required if imputation was used and the outcome (i.e. y) was used
+#'     in the imputation model.
 #' @param ... passed to \code{\link{predict.multialpha.repeated.cv.glmnet}},
 #'     then \code{\link[glmnet]{predict.glmnet}}
 #' @inheritParams predict.multialpha.repeated.cv.glmnet
@@ -974,12 +1025,22 @@ summary.dCVnet <- function(object, ...) {
 #' @export
 predict.dCVnet <- function(object,
                            newx,
+                           newy = NULL,
                            ...) {
+  # read the model family:
+  family <- family(object)
+
   # apply the preprocessing from the production model:
   preProcessPredict <- attr(object$prod$preprocess,
                             "apply")
   newx <- as.matrix(newx) # coerce to matrix (this fixed a random bug...)
-  newx <- preProcessPredict(object$prod$preprocess, newx)
+
+  if ( is.null(newy) ) {
+    newx <- preProcessPredict(object$prod$preprocess, newx, family = family)
+  } else {
+    newx <- preProcessPredict(object$prod$preprocess, newx,
+                              family = family, newy = newy)
+  }
   # run the prediction:
   predict.multialpha.repeated.cv.glmnet(object$prod$model,
                                         newx = newx,
