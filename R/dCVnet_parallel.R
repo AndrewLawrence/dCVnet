@@ -78,12 +78,6 @@ mclapply_socket <- function(X,
 }
 
 
-# Overwrite the serial version of mclapply on Windows if mc.cores > 1:
-if (Sys.info()[["sysname"]] == "Windows" &&
-      !is.null(getOption("mc.cores")) &&
-      getOption("mc.cores") > 1L) {
-  mclapply <- mclapply_socket
-}
 
 clusterExport_function <- function(cl,
                                    FUN,
