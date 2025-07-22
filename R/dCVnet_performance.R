@@ -423,7 +423,6 @@ perf_nomial <- function(object,
 #'     Used for gaussian and poisson families
 #' @importFrom ModelMetrics rmse mae rmsle
 #' @importFrom stats lm cor
-#' @importFrom DescTools SomersDelta
 #' @description For **Gaussian/Poisson** family models:
 #'    Root Mean Square Error (RMSE; \code{\link[ModelMetrics]{rmse}});
 #'    Mean Absolute Error (MAE; \code{\link[ModelMetrics]{mae}});
@@ -484,8 +483,12 @@ perf_cont <- function(object,
 
   # Optionally add Somers' D:
   if (somersD) {
-    R["SomersDxy"] <- DescTools::SomersDelta(x = object$prediction,
-                                             y = object$reference)
+    if ( requireNamespace("DescTools", quietly = TRUE) ) {
+      R["SomersDxy"] <- DescTools::SomersDelta(x = object$prediction,
+                                               y = object$reference)
+    } else {
+      warning("Installation of {DescTools} required for SomersD.")
+    }
   }
 
   if ( f == "poisson" ) {

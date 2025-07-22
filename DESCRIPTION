@@ -28,7 +28,6 @@ Imports:
     survival,
     psych,
     Hmisc,
-    DescTools,
     methods,
     stats
 Roxygen: list(markdown = TRUE)
@@ -42,6 +41,7 @@ Suggests:
     boot,
     tidyverse,
     broom,
+    DescTools,
     testthat (>= 3.0.0),
     missForestPredict
 VignetteBuilder: knitr
