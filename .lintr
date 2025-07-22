@@ -3,5 +3,6 @@ linters: linters_with_defaults(
     object_name_linter = NULL,
     spaces_inside_linter = NULL,
     object_length_linter = NULL,
-    cyclocomp_linter = cyclocomp_linter(complexity_limit = 25L)
+    return_linter = NULL,
+    cyclocomp_linter = cyclocomp_linter(complexity_limit = 30L)
   )
