@@ -526,7 +526,7 @@ perf_cox <- function(object,
                      somersD = FALSE,
                      pvprevalence = "observed") {
   R <- Hmisc::rcorr.cens(
-    x = object$prediction,
+    x = -1 * object$prediction,
     S = survival::Surv(object$reference.Time,
                        object$reference.Status)
   )[1:3]
