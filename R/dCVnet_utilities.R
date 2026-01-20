@@ -732,11 +732,19 @@ amalgamate_cv.glmnet <- function(cvglmlist,
   #       fold.
   #       This makes the below averaging unneccesary when dealing with
   #       a list of calls to cv.glmnet with different folds.
-  nz <- rowMeans(as.data.frame(base::Map("[[", cvglmlist, "nzero"),
-                               stringsAsFactors = FALSE))
-  # format nzero:
-  nm <- paste0("s", seq.int(from = 0, length.out = length(lambda)))
-  names(nz) <- nm
+
+  nz <- base::Map("[[", cvglmlist, "nzero")
+  # Add handling for an edge-case bug in glmnet v4.1.10
+  if ( identical("which", names(nz[[1]])) ) {
+    nz_vals <- predict(cvglmlist[[1]]$glmnet.fit, type = "nonzero")
+    nz <- setNames(rep(1, nrow(nz_vals)), rownames(nz_vals))
+  } else {
+    nz <- rowMeans(as.data.frame(nz, stringsAsFactors = FALSE))
+    # format nzero:
+    nm <- paste0("s", seq.int(from = 0, length.out = length(lambda)))
+    names(nz) <- nm
+  }
+
   # lookup lambda.min/lambda.1se
   lamin <- if (cvname == "AUC") {
     glmnet_getmin(lambda, -cvm, cvsd)
