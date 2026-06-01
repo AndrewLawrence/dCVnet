@@ -915,7 +915,7 @@ coefficients_summary <- function(object, ...) {
 #' summary.dCVnet
 #'
 #' a summary of key options and results for a
-#'     \code{\link{dCVnet}} object.
+#'     [dCVnet::dCVnet] object.
 #'
 #' Prints the following sections: \itemize{
 #' \item{Input descriptives}
@@ -926,7 +926,7 @@ coefficients_summary <- function(object, ...) {
 #' }
 #'     The outer loop tests generalisation of the model.
 #'
-#' @param object a a \code{\link{dCVnet}} object.
+#' @param object a a [dCVnet::dCVnet] object.
 #' @param ... NULL
 #'
 #' @return a dataframe of tuning results for each outer fold/rep.
@@ -1015,12 +1015,12 @@ summary.dCVnet <- function(object, ...) {
 
 #' predict.dCVnet
 #'
-#' predict method for a \code{\link{dCVnet}} object.
+#' predict method for a [dCVnet::dCVnet] object.
 #'     predictions come from the "production" model fitted to the full data.
 #'     As a result they do not reflect cross-validated/out-of-sample
 #'     performance.
 #'
-#' @param object a a \code{\link{dCVnet}} object.
+#' @param object a a [dCVnet::dCVnet] object.
 #' @param newy required if imputation was used and the outcome (i.e. y) was used
 #'     in the imputation model.
 #' @param ... passed to \code{\link{predict.multialpha.repeated.cv.glmnet}},
@@ -1061,7 +1061,7 @@ predict.dCVnet <- function(object,
 #'
 #' Extracts the model family from a dCVnet object as a string
 #'
-#' @param object a a \code{\link{dCVnet}} object.
+#' @param object a a [dCVnet::dCVnet] object.
 #' @param ... further arguments passed to methods
 #'
 #' @return character vector (of length 1)

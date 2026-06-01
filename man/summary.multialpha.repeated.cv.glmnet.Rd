@@ -7,7 +7,7 @@
 \method{summary}{multialpha.repeated.cv.glmnet}(object, print = TRUE, ...)
 }
 \arguments{
-\item{object}{a a \code{\link{multialpha.repeated.cv.glmnet}} object.}
+\item{object}{a \link{multialpha.repeated.cv.glmnet} object.}
 
 \item{print}{if FALSE silently returns the summary results table.}
 
@@ -15,5 +15,5 @@
 }
 \description{
 a summary of key options and results for a
-\code{\link{multialpha.repeated.cv.glmnet}} object.
+\link{multialpha.repeated.cv.glmnet} object.
 }

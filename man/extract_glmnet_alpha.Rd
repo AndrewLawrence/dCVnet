@@ -7,8 +7,7 @@
 extract_glmnet_alpha(mod)
 }
 \arguments{
-\item{mod}{a \code{\link[glmnet]{glmnet}} or \code{\link[glmnet]{cv.glmnet}}
-model}
+\item{mod}{a \link[glmnet:glmnet]{glmnet::glmnet} or \link[glmnet:cv.glmnet]{glmnet::cv.glmnet} model}
 }
 \description{
 glmnet model objects do not explicitly include the alpha value which was
@@ -20,11 +19,11 @@ environment)
 \details{
 Note: dCVnet will quietly extend the glmnet models it fits to include
 additional information. This information includes the alpha value
-(see \code{\link{set_glmnet_alpha}}). This dCVnet specified
+(see \link{set_glmnet_alpha}). This dCVnet specified
 alpha value will be extracted with priority over alpha values implied
 in the model without checking.
 The dCVnet extension of the (cv.)glmnet S3 class is very basic.
 }
 \seealso{
-\code{\link{set_glmnet_alpha}}
+\code{\link[=set_glmnet_alpha]{set_glmnet_alpha()}}
 }

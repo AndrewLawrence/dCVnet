@@ -28,9 +28,9 @@
 #' @param ... arguments passed to \code{\link[glmnet]{cv.glmnet}}
 #' @param debug return an unmerged list.
 #'
-#' @return a \code{\link{cv.glmnet}} object with cv performance averaged.
+#' @return a [glmnet::cv.glmnet] object with cv performance averaged.
 #'
-#' @seealso \code{\link{amalgamate_cv.glmnet}}
+#' @seealso [amalgamate_cv.glmnet()]
 #' @examples
 #' \dontrun{
 #' data("CoxExample", package = "glmnet") # x and y
@@ -109,7 +109,7 @@ repeated.cv.glmnet <- function(x, y,
 
 #' multialpha.repeated.cv.glmnet
 #'
-#' Runs \code{\link{repeated.cv.glmnet}} for a list of alpha values and
+#' Runs [repeated.cv.glmnet] for a list of alpha values and
 #'     returns averaged results, selects the 'best' alpha.
 #'     One key difference between (repeated.)cv.glmnet and this function is
 #'     that a single 'best' lambda/alpha combination is identified
@@ -144,9 +144,9 @@ repeated.cv.glmnet <- function(x, y,
 #'       \item{ all - list of models at all alphas. }
 #'     }
 #'
-#' @return an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
+#' @return an object of class [multialpha.repeated.cv.glmnet].
 #'     Containing: \itemize{
-#'     \item{results - merged \code{\link{repeated.cv.glmnet}} with
+#'     \item{results - merged [repeated.cv.glmnet] with
 #'         additional columns indicating *alpha* and logical for *best* overall}
 #'     \item{best - best selected row from results}
 #'     \item{folds - record of folds used}
@@ -154,7 +154,7 @@ repeated.cv.glmnet <- function(x, y,
 #'     \item{bestmodel - index of the best model such that
 #'         \code{models[[bestmodel]]} returns the model selected as optimal.}
 #'     }
-#' @seealso \code{\link{repeated.cv.glmnet}}
+#' @seealso [repeated.cv.glmnet()]
 #' @export
 multialpha.repeated.cv.glmnet <- function(
   x,
@@ -364,9 +364,9 @@ print.multialpha.repeated.cv.glmnet <- function(x, ...) {
 #' summary.multialpha.repeated.cv.glmnet
 #'
 #' a summary of key options and results for a
-#'     \code{\link{multialpha.repeated.cv.glmnet}} object.
+#'     [multialpha.repeated.cv.glmnet] object.
 #'
-#' @param object a a \code{\link{multialpha.repeated.cv.glmnet}} object.
+#' @param object a [multialpha.repeated.cv.glmnet] object.
 #' @param print if FALSE silently returns the summary results table.
 #' @param ... NULL
 #'
@@ -411,12 +411,12 @@ summary.multialpha.repeated.cv.glmnet <- function(object, print = TRUE, ...) {
 #' predict.multialpha.repeated.cv.glmnet
 #'
 #' obtain predictions from a
-#'     \code{\link{multialpha.repeated.cv.glmnet}} object.
+#'     [multialpha.repeated.cv.glmnet] object.
 #'     Uses the 'best' alpha & lambda hyperparameters determined by the
 #'     internal cross-validation results. For lambda this will be lambda.min
 #'     or lambda.1se (determined at model runtime) unless requested otherwise.
 #'
-#' @param object a a \code{\link{multialpha.repeated.cv.glmnet}} object.
+#' @param object a a [multialpha.repeated.cv.glmnet] object.
 #' @param newx matrix of new values for x at which predictions are required.
 #'     Note: no impact when type is "coefficients", "class" or "nonzero".
 #' @param alpha the penalty type alpha at which prediction is required.
@@ -496,7 +496,7 @@ predict.multialpha.repeated.cv.glmnet <- function(object,
 #' coef.multialpha.repeated.cv.glmnet
 #'
 #' obtain coefficients from a
-#'     \code{\link{multialpha.repeated.cv.glmnet}} object.
+#'     [multialpha.repeated.cv.glmnet] object.
 #'     This is a wrapper for \code{\link{predict.multialpha.repeated.cv.glmnet}}
 #'
 #' @inheritParams predict.multialpha.repeated.cv.glmnet

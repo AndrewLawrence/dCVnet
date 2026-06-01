@@ -7,7 +7,7 @@
 \method{summary}{dCVnet}(object, ...)
 }
 \arguments{
-\item{object}{a a \code{\link{dCVnet}} object.}
+\item{object}{a a \link{dCVnet} object.}
 
 \item{...}{NULL}
 }
@@ -17,7 +17,7 @@ a dataframe of tuning results for each outer fold/rep.
 }
 \description{
 a summary of key options and results for a
-\code{\link{dCVnet}} object.
+\link{dCVnet} object.
 }
 \details{
 Prints the following sections: \itemize{

@@ -17,7 +17,7 @@
 #' @param ... NULL
 #'
 #' @inheritParams tuning_plot_dCVnet
-#'
+#' @importFrom ggplot2 .data
 #' @export
 plot.multialpha.repeated.cv.glmnet <- function(x,
                                                xvar = c("lambda", "s"),
@@ -40,13 +40,16 @@ plot.multialpha.repeated.cv.glmnet <- function(x,
     x$s <- x$s / smax$x[match(x$alpha, smax$alpha)]
   }
 
+
   p <- ggplot2::ggplot(x,
-                       ggplot2::aes_string(y = "cvm",
-                                           ymin = "cvlo",
-                                           ymax = "cvup",
-                                           x = xvar,
-                                           colour = "alpha",
-                                           fill = "alpha")) +
+                       ggplot2::aes(
+                         y = .data$cvm,
+                         ymin = .data$cvlo,
+                         ymax = .data$cvup,
+                         x = .data[[xvar]],
+                         colour = .data$alpha,
+                         fill = .data$alpha
+                       ))+
     ggplot2::geom_line()
 
   # error-bars?
@@ -218,21 +221,21 @@ plot.rocdata <- function(x,
                         stringsAsFactors = FALSE)
 
   p <- ggplot2::ggplot(x,
-                       ggplot2::aes_string(y = "Sens",
-                                           x = "InvSpec")) +
+                       ggplot2::aes(y = .data$Sens,
+                                    x = .data$InvSpec)) +
     ggplot2::geom_segment(
-      ggplot2::aes_(
-        x = ~ InvSpec,
-        y = ~ Sens,
-        xend = ~ InvSpecEnd,
-        yend = ~ SensEnd,
-        lty = ~ lty
+      ggplot2::aes(
+        x = .data$InvSpec,
+        y = .data$Sens,
+        xend = .data$InvSpecEnd,
+        yend = .data$SensEnd,
+        lty = .data$lty
       ),
       show.legend = legend,
       data = refline,
       inherit.aes = FALSE
     ) +
-    ggplot2::geom_line(ggplot2::aes_string(colour = "run"),
+    ggplot2::geom_line(ggplot2::aes(colour = .data$run),
                        show.legend = legend) +
     ggplot2::xlab("False Positive Rate") +
     ggplot2::ylab("True Positive Rate") +
@@ -259,10 +262,11 @@ plot.rocdata <- function(x,
 
   if ( hasalphas ) {
     p <- p +
-      ggplot2::geom_point(data = x[!is.na(x$PThreshold), ],
-                          mapping = ggplot2::aes_string(shape = "PThreshold",
-                                                        colour = "run"),
-                          show.legend = legend)
+      ggplot2::geom_point(
+        data = x[!is.na(x$PThreshold), ],
+        mapping = ggplot2::aes(shape = .data$PThreshold, colour = .data$run),
+        show.legend = legend
+      )
 
     if ( legend ) {
       p <- p + ggplot2::guides(
@@ -331,13 +335,13 @@ tuning_plot_dCVnet <- function(object, n.random = 0, plot = TRUE) {
 
   p <- ggplot2::ggplot(
     pdf,
-    ggplot2::aes_string(
-      y = "cvm",
-      x = "log10(lambda)",
-      colour = "alpha",
-      fill = "alpha",
-      label = "gsub(\"OutFold\", \"\", Fold)",
-      group = "paste(alpha, outfold)"
+    ggplot2::aes(
+      y = .data$cvm,
+      x = log10(.data$lambda),
+      colour = .data$alpha,
+      fill = .data$alpha,
+      label = gsub("OutFold", "", .data$Fold),
+      group = paste(.data$alpha, .data$outfold)
     )
   ) +
     ggplot2::geom_line() +
@@ -432,8 +436,8 @@ plot_outerloop_coefs <- function(object,
   }
 
   p <-  ggplot2::ggplot(df,
-                        ggplot2::aes_string(y = "stdbeta",
-                                            x = "Predictor")) +
+                        ggplot2::aes(y = .data$stdbeta,
+                                     x = .data$Predictor)) +
     ggplot2::geom_hline(yintercept = 0.0) +
     ggplot2::ylab(ylabel) +
     ggplot2::theme_light() +
@@ -543,10 +547,10 @@ prediction_error_plot <- function(x,
 
   if ( bylabel ) {
     p <- ggplot2::ggplot(x,
-                         ggplot2::aes_string(y = "prediction",
-                                             x = "reference",
-                                             colour = "label",
-                                             group = "rowid")) +
+                         ggplot2::aes(y = .data$prediction,
+                                      x = .data$reference,
+                                      colour = .data$label,
+                                      group = .data$rowid)) +
       ggplot2::geom_abline(intercept = 0,
                            slope = 1,
                            colour = "black",
@@ -563,9 +567,9 @@ prediction_error_plot <- function(x,
   } else {
 
     p <- ggplot2::ggplot(x,
-                         ggplot2::aes_string(y = "prediction",
-                                             x = "reference",
-                                             group = "rowid")) +
+                         ggplot2::aes(y = .data$prediction,
+                                      x = .data$reference,
+                                      group = .data$rowid)) +
       ggplot2::geom_abline(intercept = 0,
                            slope = 1,
                            colour = "red") +

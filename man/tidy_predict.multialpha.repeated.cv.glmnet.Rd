@@ -22,10 +22,10 @@ tidy_predict.multialpha.repeated.cv.glmnet(
 \item{newx}{new values of x for which predictions are desired.}
 
 \item{s}{specify a lambda, or leave NULL to use the optimal lambda
-identified by \code{\link{multialpha.repeated.cv.glmnet}}.}
+identified by \code{\link[=multialpha.repeated.cv.glmnet]{multialpha.repeated.cv.glmnet()}}.}
 
 \item{alpha}{specify an alpha, or leave NULL to use the optimal alpha
-identified by \code{\link{multialpha.repeated.cv.glmnet}}.}
+identified by \code{\link[=multialpha.repeated.cv.glmnet]{multialpha.repeated.cv.glmnet()}}.}
 
 \item{newy}{outcome associated with newx. If provided these will be included
 in the output (useful for subsequent performance assessment).}
@@ -42,7 +42,7 @@ with 70:30 allocation, setting the decision threshold to 0.7
 gives a better balance of sensitivity and specificity
 without requiring threshold tuning (as in AUC optimal threshold).}
 
-\item{...}{passed to \code{\link{predict.glmnet}}}
+\item{...}{passed to \code{\link[glmnet:predict.glmnet]{glmnet::predict.glmnet()}}}
 }
 \description{
 return a dataframe of glmnet predictions associated with outcomes (when these

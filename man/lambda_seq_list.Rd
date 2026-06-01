@@ -8,7 +8,7 @@ lambda_seq_list(maxlambdas, nlambda, lambda_min_ratio)
 }
 \arguments{
 \item{maxlambdas}{max lambdas vector,
-output by \code{\link{lambda_rangefinder}}}
+output by \link{lambda_rangefinder}}
 
 \item{nlambda}{how many steps to take}
 

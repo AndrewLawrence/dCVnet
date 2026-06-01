@@ -50,9 +50,9 @@ that random folds are checked for uniqueness in inner and outer loops.
 Currently it warns if non-unique values are found.}
 
 \item{return_summary}{bool. return summarised performance (default), or
-\code{\link{performance}} objects for further analysis (set to FALSE)}
+\link{performance} objects for further analysis (set to FALSE)}
 
-\item{offset}{optional model offset (see \code{\link{glmnet}})}
+\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}})}
 
 \item{...}{other arguments}
 }
@@ -73,7 +73,7 @@ repeated k-fold cross-validation.
 }
 \details{
 This function is nothing revolutionary. The idea is to
-extend \code{\link{boot}{cv.glm}} with an interface that better matches
+extend \code{\link[boot:cv.glm]{boot::cv.glm()}} with an interface that better matches
 the other functions in this package.
 
 The additions are:
@@ -81,9 +81,9 @@ The additions are:
 \item{Repeated k-fold rather than single k-fold}
 \item{Option to provide the fold membership}
 \item{Default use of stratified sampling by outcome class}
-\item{Performance assessed with \code{\link{summary.performance}}}
+\item{Performance assessed with \code{\link[=summary.performance]{summary.performance()}}}
 }
 }
 \seealso{
-\code{\link[boot]{cv.glm}}, \code{\link{performance}}
+\code{\link[boot:cv.glm]{boot::cv.glm()}} \code{\link[=performance]{performance()}}
 }

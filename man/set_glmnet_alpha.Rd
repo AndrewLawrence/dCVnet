@@ -7,8 +7,7 @@
 set_glmnet_alpha(mod, setalpha = NULL)
 }
 \arguments{
-\item{mod}{a \code{\link[glmnet]{glmnet}} or \code{\link[glmnet]{cv.glmnet}}
-model}
+\item{mod}{a \link[glmnet:glmnet]{glmnet::glmnet} or \link[glmnet:cv.glmnet]{glmnet::cv.glmnet} model}
 
 \item{setalpha}{Specify an alpha value}
 }
@@ -16,11 +15,11 @@ model}
 glmnet model objects do not explicitly include the alpha value which was
 used when the model was fit. This utility function extends the glmnet S3
 class by adding a slot for 'alpha'. This can be manually specified (setalpha)
-or extracted from the model object (\code{\link{extract_glmnet_alpha}}).
+or extracted from the model object (\code{\link[=extract_glmnet_alpha]{extract_glmnet_alpha()}}).
 }
 \details{
 Note: This extension of the (cv.)glmnet S3 class is very basic.
 }
 \seealso{
-\code{\link{extract_glmnet_alpha}}, \code{\link[glmnet]{glmnet}}
+[extract_glmnet_alpha(), \code{\link[glmnet:glmnet]{glmnet::glmnet()}}
 }

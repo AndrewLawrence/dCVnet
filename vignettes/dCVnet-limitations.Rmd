@@ -40,7 +40,7 @@ of GLM are not relaxes.
 - ***Independence of observations*** - Related observations (e.g. repeated observations from the same experimental unit, or observations from pupils within schools) need to be considered carefully. dCVnet does not use a hierarchical version of elastic-net.
 - ***Representative data*** - The cross-validated predictive performance is unlikely to transfer to a different setting if the dataset used for training is 
 not representative of that setting.
-- ***Adequate sample size*** - regularised models allow fitting on small samples, but this does not 
+- ***Adequate sample size*** - regularised models allow fitting on small samples, but this does not guarantee sensible results for a given problem.
 
 ## Cross-validation Assumptions
 

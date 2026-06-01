@@ -82,9 +82,9 @@ type (above).}
 \item{...}{arguments passed to \code{\link[glmnet]{cv.glmnet}}}
 }
 \value{
-an object of class \code{\link{multialpha.repeated.cv.glmnet}}.
+an object of class \link{multialpha.repeated.cv.glmnet}.
 Containing: \itemize{
-\item{results - merged \code{\link{repeated.cv.glmnet}} with
+\item{results - merged \link{repeated.cv.glmnet} with
 additional columns indicating \emph{alpha} and logical for \emph{best} overall}
 \item{best - best selected row from results}
 \item{folds - record of folds used}
@@ -94,7 +94,7 @@ additional columns indicating \emph{alpha} and logical for \emph{best} overall}
 }
 }
 \description{
-Runs \code{\link{repeated.cv.glmnet}} for a list of alpha values and
+Runs \link{repeated.cv.glmnet} for a list of alpha values and
 returns averaged results, selects the 'best' alpha.
 One key difference between (repeated.)cv.glmnet and this function is
 that a single 'best' lambda/alpha combination is identified
@@ -102,5 +102,5 @@ based on opt.lambda.type.
 \emph{This is intended to be a dCVnet internal function}
 }
 \seealso{
-\code{\link{repeated.cv.glmnet}}
+\code{\link[=repeated.cv.glmnet]{repeated.cv.glmnet()}}
 }

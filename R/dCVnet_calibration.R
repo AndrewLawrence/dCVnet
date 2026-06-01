@@ -12,7 +12,7 @@
 #'     that accompanies Frank Harrell's Regression Modelling Strategies book.
 #'
 #' Calibration for binomial families is not returned by default
-#'     for \code{\link{performance}} because of its computational overhead.
+#'     for [performance] because of its computational overhead.
 #'
 #' @name calibration
 #'
@@ -108,7 +108,7 @@ calibration.default <- function(x,
 }
 
 #' @describeIn calibration binomial calibration for
-#'     \code{\link{performance}} objects
+#'     [performance] objects
 #' @export
 calibration.performance <- function(x, ...) {
   f <- family(x)
@@ -121,7 +121,7 @@ calibration.performance <- function(x, ...) {
 }
 
 #' @describeIn calibration binomial calibration for
-#'     \code{\link{dCVnet}} performance
+#'     [dCVnet::dCVnet] performance
 #' @export
 calibration.dCVnet <- function(x, ...) {
   if ( family(x) == "binomial") {

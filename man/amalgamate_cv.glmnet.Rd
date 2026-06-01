@@ -37,7 +37,7 @@ for each of the mixed fits. In particular it also selects \code{lambda,
 gamma} pairs corresponding to the 1se rule, as well as the minimum error. It also has a component \code{index}, a two-column matrix  which contains the \code{lambda} and \code{gamma} indices corresponding to the "min" and "1se" solutions.}
 }
 \description{
-Gathers results from a list of \code{\link[glmnet]{cv.glmnet}} objects
+Gathers results from a list of \code{\link[glmnet:cv.glmnet]{glmnet::cv.glmnet()}} objects
 and returns a merged, averaged object.
 }
 \details{
@@ -103,5 +103,5 @@ plot(mod, main = "averaged")
 }
 }
 \seealso{
-\code{\link[glmnet]{cv.glmnet}}
+\code{\link[glmnet:cv.glmnet]{glmnet::cv.glmnet()}}
 }

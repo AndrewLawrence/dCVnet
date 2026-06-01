@@ -7,7 +7,7 @@
 \method{coef}{multialpha.repeated.cv.glmnet}(object, newx = NULL, alpha = NULL, s = NULL, ...)
 }
 \arguments{
-\item{object}{a a \code{\link{multialpha.repeated.cv.glmnet}} object.}
+\item{object}{a a \link{multialpha.repeated.cv.glmnet} object.}
 
 \item{newx}{matrix of new values for x at which predictions are required.
 Note: no impact when type is "coefficients", "class" or "nonzero".}
@@ -22,7 +22,7 @@ Leave NULL to use the cv-optimised value.}
 }
 \description{
 obtain coefficients from a
-\code{\link{multialpha.repeated.cv.glmnet}} object.
+\link{multialpha.repeated.cv.glmnet} object.
 This is a wrapper for \code{\link{predict.multialpha.repeated.cv.glmnet}}
 }
 \seealso{

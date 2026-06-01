@@ -7,9 +7,9 @@
 lambda_rangefinder(y, x, alphalist, prop, niter = 10000)
 }
 \arguments{
-\item{y}{binary outcome (from \code{\link{parse_dCVnet_input}})}
+\item{y}{binary outcome (from \link{parse_dCVnet_input})}
 
-\item{x}{predictor matrix (from \code{\link{parse_dCVnet_input}})}
+\item{x}{predictor matrix (from \link{parse_dCVnet_input})}
 
 \item{alphalist}{alphas to consider, e.g. \code{c(0.2, 0.5, 0.8)}}
 

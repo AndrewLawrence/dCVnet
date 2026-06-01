@@ -13,6 +13,6 @@ tidy_confusionmatrix(mat)
 a one column data.frame
 }
 \description{
-return contents of a \code{\link[caret]{confusionMatrix}} as a
+return contents of a \code{\link[caret:confusionMatrix]{caret::confusionMatrix()}} as a
 'tidy' one column data.frame.
 }

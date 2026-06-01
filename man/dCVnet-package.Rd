@@ -39,4 +39,9 @@ Useful links:
 \author{
 \strong{Maintainer}: Andrew J. Lawrence \email{lawrenceajl@gmail.com}
 
+Authors:
+\itemize{
+  \item Andrew J. Lawrence \email{lawrenceajl@gmail.com}
+}
+
 }

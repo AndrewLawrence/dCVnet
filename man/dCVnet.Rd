@@ -37,13 +37,13 @@ For factors see Factor Outcomes section below.}
 
 \item{f}{a one sided formula.
 The RHS must refer to columns in \code{data} and may include
-interactions, transformations or expansions (like \code{\link{poly}}, or
-\code{\link{log}}).
+interactions, transformations or expansions (like \code{\link[stats:poly]{stats::poly()}}, or
+\code{\link[base:log]{base::log()}}).
 The formula \emph{must} include an intercept.}
 
-\item{family}{the model family (see \code{\link{glmnet}})}
+\item{family}{the model family (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}})}
 
-\item{offset}{optional model offset (see \code{\link{glmnet}})}
+\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}})}
 
 \item{nrep_outer}{an integer, the number of repetitions (k-fold outer CV)}
 

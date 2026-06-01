@@ -65,7 +65,7 @@ type (above).}
 \item{debug}{return an unmerged list.}
 }
 \value{
-a \code{\link{cv.glmnet}} object with cv performance averaged.
+a \link[glmnet:cv.glmnet]{glmnet::cv.glmnet} object with cv performance averaged.
 }
 \description{
 Repeatedly runs a \code{\link[glmnet]{cv.glmnet}} and returns averaged
@@ -82,5 +82,5 @@ mod <- repeated.cv.glmnet(x = CoxExample$x, y = CoxExample$y, family = "cox")
 }
 }
 \seealso{
-\code{\link{amalgamate_cv.glmnet}}
+\code{\link[=amalgamate_cv.glmnet]{amalgamate_cv.glmnet()}}
 }

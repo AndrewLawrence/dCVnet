@@ -41,10 +41,10 @@ with 70:30 allocation, setting the decision threshold to 0.7
 gives a better balance of sensitivity and specificity
 without requiring threshold tuning (as in AUC optimal threshold).}
 
-\item{...}{passed to \code{\link{predict.glmnet}}}
+\item{...}{passed to \code{\link[glmnet:predict.glmnet]{glmnet::predict.glmnet()}}}
 }
 \value{
-a \code{\link{data.frame}} containing column(s) for:
+a \link{data.frame} containing column(s) for:
 \itemize{
 \item{'prediction' - result of
 \code{predict.glmnet(.., type = "response")}.

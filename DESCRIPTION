@@ -31,7 +31,6 @@ Imports:
     methods,
     stats
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Suggests:
     knitr,
     rmarkdown,
@@ -46,3 +45,4 @@ Suggests:
     missForestPredict
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

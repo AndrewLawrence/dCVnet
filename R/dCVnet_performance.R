@@ -562,7 +562,7 @@ perf_mgaussian <- function(object,
 
   keep_cols <- cn[!cn %in% c(rcols, pcols)]
 
-  R <- lapply(seq_len(length(pcols)),
+  R <- lapply(seq_along(pcols),
               function(i) {
                 obj <- object[, c(pcols[i], rcols[i], keep_cols)]
                 colnames(obj) <-
@@ -580,7 +580,7 @@ perf_mgaussian <- function(object,
 
   RR$Measure <- paste0("mean ", RR$Measure)
 
-  R <- lapply(seq_len(length(pcols)),
+  R <- lapply(seq_along(pcols),
               function(i) {
                 x <- R[[i]]
                 x$Measure <- paste0(vlabs[[i]], " ", x$Measure)

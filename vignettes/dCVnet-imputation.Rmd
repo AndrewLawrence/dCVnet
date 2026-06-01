@@ -371,7 +371,7 @@ imputed_values %>%
 
 ```
 
-We can see agreement between the imputed values and the true missing values is not ideal with any method, but as expected the mean imputation is way off. This is by construction, the removed values were unusually high, so the mean in the rest of the sample is not a close replacement. The conditional methods are a bit closer. Particularly the knn method (with and without y) probably does the best job of approximating the true distribution of the missing values.
+We can see agreement between the imputed values and the true missing values is not ideal with any method, but as expected the mean imputation is way off. In a sense, this occurs *by construction*: because the removed values were unusually high, so the mean in the rest of the sample is not a close replacement for the missing values. The conditional methods are a bit closer. Particularly the knn method (with and without y) probably does the best job of approximating the true distribution of the missing values.
 
 On to the main result: how were the cross-validated results affected?
 
@@ -395,7 +395,7 @@ cv_rmse_results %>%
   theme(axis.text.x = element_text(angle = 45))
 ```
 
-First, as expected given the reduced sample size and induced bias, relative to the non-missing data (`"orig"`), the complete-cases (`"cc")` model has a worse CV prediction performance (RMSE) with greater variability of CV-RMSE over CV-repetitions (indicated by error bars).
+First, (as expected given the reduced sample size and induced bias) relative to the non-missing data (`"orig"`), the complete-cases (`"cc")` model has a worse CV prediction performance (RMSE) with greater variability of CV-RMSE over CV-repetitions (indicated by error bars).
 
 The first imputation method (unconditional mean imputation; `"meanimp"`) does not "de-bias" performance back towards the "true" model (`"orig"`).
 
@@ -463,4 +463,4 @@ This contrasts with *ideal* performance which does use `y` in the imputation mod
 
 ### Imputation: Single vs. Multiple
 
-Multiple imputation is not yet supported by dCVnet. It is not yet established how important multiple imputation is for prediction modelling. This is in contrast to inference settings where it is recommended to avoid narrowing standard errors.
+Multiple imputation is not yet supported by dCVnet. My reading is that it is not yet widely established how important multiple imputation is for validity in estimation of cross-validated prediction performance, further it is not clear  how practically MI should best be combined with these steps. In inferential settings there is a much more developed literature and practical guidelines with  a key motivation for multiple imputation to avoid narrowing standard errors.

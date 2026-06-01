@@ -4,5 +4,6 @@ linters: linters_with_defaults(
     spaces_inside_linter = NULL,
     object_length_linter = NULL,
     return_linter = NULL,
+    pipe_consistency_linter = pipe_consistency_linter(pipe = "%>%"),
     cyclocomp_linter = cyclocomp_linter(complexity_limit = 30L)
   )

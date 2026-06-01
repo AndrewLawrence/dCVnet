@@ -7,7 +7,7 @@
 \method{predict}{dCVnet}(object, newx, newy = NULL, ...)
 }
 \arguments{
-\item{object}{a a \code{\link{dCVnet}} object.}
+\item{object}{a a \link{dCVnet} object.}
 
 \item{newx}{matrix of new values for x at which predictions are required.
 Note: no impact when type is "coefficients", "class" or "nonzero".}
@@ -22,7 +22,7 @@ then \code{\link[glmnet]{predict.glmnet}}}
 predictions of the requested type.
 }
 \description{
-predict method for a \code{\link{dCVnet}} object.
+predict method for a \link{dCVnet} object.
 predictions come from the "production" model fitted to the full data.
 As a result they do not reflect cross-validated/out-of-sample
 performance.

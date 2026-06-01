@@ -5,10 +5,10 @@
 
 #' log_results_to_excel
 #'
-#' write the results of a \code{\link{dCVnet}} model to a multi-worksheet
+#' write the results of a [dCVnet::dCVnet] model to a multi-worksheet
 #'     xlsx format excel file.
 #'
-#' @param object a \code{\link{dCVnet}} object.
+#' @param object a [dCVnet::dCVnet] object.
 #' @param file path to a writable excel file (i.e. must not be open/locked).
 #' @param referencemodel either set to \code{TRUE} to calculate
 #'      reference models, or pass a pre-calculated \code{\link{refunreg}}

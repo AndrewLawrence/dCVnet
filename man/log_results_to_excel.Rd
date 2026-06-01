@@ -7,7 +7,7 @@
 log_results_to_excel(object, file, referencemodel = FALSE)
 }
 \arguments{
-\item{object}{a \code{\link{dCVnet}} object.}
+\item{object}{a \link{dCVnet} object.}
 
 \item{file}{path to a writable excel file (i.e. must not be open/locked).}
 
@@ -21,6 +21,6 @@ reference model calculations.}
 No return value.
 }
 \description{
-write the results of a \code{\link{dCVnet}} model to a multi-worksheet
+write the results of a \link{dCVnet} model to a multi-worksheet
 xlsx format excel file.
 }

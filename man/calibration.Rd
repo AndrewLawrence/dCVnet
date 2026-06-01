@@ -44,14 +44,14 @@ list/data.frame with required vectors as elements.
 }
 \details{
 Calibration for binomial families is not returned by default
-for \code{\link{performance}} because of its computational overhead.
+for \link{performance} because of its computational overhead.
 }
 \section{Methods (by class)}{
 \itemize{
 \item \code{calibration(performance)}: binomial calibration for
-\code{\link{performance}} objects
+\link{performance} objects
 
 \item \code{calibration(dCVnet)}: binomial calibration for
-\code{\link{dCVnet}} performance
+\link{dCVnet} performance
 
 }}

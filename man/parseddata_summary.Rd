@@ -7,8 +7,8 @@
 parseddata_summary(object)
 }
 \arguments{
-\item{object}{either a \code{\link{dCVnet}} object, or a parsed dataset
-output from \code{\link{parse_dCVnet_input}}}
+\item{object}{either a \code{\link[=dCVnet]{dCVnet()}} object, or a parsed dataset
+output from \code{\link[=parse_dCVnet_input]{parse_dCVnet_input()}}}
 }
 \value{
 a list containing: \itemize{

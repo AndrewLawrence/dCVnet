@@ -67,11 +67,11 @@ check_categorical_outcome <- function(cat) {
 #'      For factors see Factor Outcomes section below.
 #' @param f a one sided formula.
 #'     The RHS must refer to columns in \code{data} and may include
-#'     interactions, transformations or expansions (like \code{\link{poly}}, or
-#'     \code{\link{log}}).
+#'     interactions, transformations or expansions (like [stats::poly()], or
+#'     [base::log()]).
 #'     The formula *must* include an intercept.
-#' @param family the model family (see \code{\link{glmnet}})
-#' @param offset optional model offset (see \code{\link{glmnet}})
+#' @param family the model family (see [glmnet::glmnet()])
+#' @param offset optional model offset (see [glmnet::glmnet()])
 #' @param yname an optional label for the outcome / y variable.
 #' @param passNA should NA values in data be excluded (FALSE)
 #'                   or passed through (TRUE)?
@@ -192,8 +192,8 @@ parse_dCVnet_input <- function(data,
 #'     nnz should be informative for such variables.
 #'
 #' @name parseddata_summary
-#' @param object either a \code{\link{dCVnet}} object, or a parsed dataset
-#'      output from \code{\link{parse_dCVnet_input}}
+#' @param object either a [dCVnet()] object, or a parsed dataset
+#'      output from [parse_dCVnet_input()]
 #'
 #' @return a list containing: \itemize{
 #'     \item{ \code{OutcomeData} - frequencies, proportions and level names
@@ -359,8 +359,8 @@ cvlambdafinder <- function(lambda, cvm, cvsd,
 #'     the calculation of max-lambda for subsets of the input data.
 #'
 #' @name lambda_rangefinder
-#' @param y binary outcome (from \code{\link{parse_dCVnet_input}})
-#' @param x predictor matrix (from \code{\link{parse_dCVnet_input}})
+#' @param y binary outcome (from [parse_dCVnet_input])
+#' @param x predictor matrix (from [parse_dCVnet_input])
 #' @param alphalist alphas to consider, e.g. \code{c(0.2, 0.5, 0.8)}
 #' @param prop proportion of the input to bootstrap. This should be the
 #'     fraction of observations remaining in the inner loop CV.
@@ -434,7 +434,7 @@ lambda_rangefinder <- function(y, x,
 #' @name lambda_seq_list
 #'
 #' @param maxlambdas max lambdas vector,
-#'     output by \code{\link{lambda_rangefinder}}
+#'     output by [lambda_rangefinder]
 #' @param nlambda how many steps to take
 #' @param lambda_min_ratio what fraction of the maximum to take as the minimum.
 #'     no default is set, glmnet recommends
@@ -536,15 +536,14 @@ cv.glmnet.modelsummary <- function(mod,
 #'
 #' Note: dCVnet will quietly extend the glmnet models it fits to include
 #'    additional information. This information includes the alpha value
-#'    (see \code{\link{set_glmnet_alpha}}). This dCVnet specified
+#'    (see [set_glmnet_alpha]). This dCVnet specified
 #'    alpha value will be extracted with priority over alpha values implied
 #'    in the model without checking.
 #'    The dCVnet extension of the (cv.)glmnet S3 class is very basic.
 #'
-#' @param mod a \code{\link[glmnet]{glmnet}} or \code{\link[glmnet]{cv.glmnet}}
-#'     model
+#' @param mod a [glmnet::glmnet] or [glmnet::cv.glmnet] model
 #' @export
-#' @seealso \code{\link{set_glmnet_alpha}}
+#' @seealso [set_glmnet_alpha()]
 extract_glmnet_alpha <- function(mod) {
   if ( "cv.glmnet" %in% class(mod) ) mod <- mod$glmnet.fit
   # If alpha has been set by dCVnet then use this value:
@@ -580,7 +579,7 @@ extract_glmnet_alpha <- function(mod) {
 #' glmnet model objects do not explicitly include the alpha value which was
 #' used when the model was fit. This utility function extends the glmnet S3
 #' class by adding a slot for 'alpha'. This can be manually specified (setalpha)
-#' or extracted from the model object (\code{\link{extract_glmnet_alpha}}).
+#' or extracted from the model object ([extract_glmnet_alpha()]).
 #'
 #' Note: This extension of the (cv.)glmnet S3 class is very basic.
 #'
@@ -588,7 +587,7 @@ extract_glmnet_alpha <- function(mod) {
 #' @param setalpha Specify an alpha value
 #'
 #' @export
-#' @seealso \code{\link{extract_glmnet_alpha}}, \code{\link[glmnet]{glmnet}}
+#' @seealso [extract_glmnet_alpha(), [glmnet::glmnet()]
 set_glmnet_alpha <- function(mod, setalpha = NULL) {
   if ( "cv.glmnet" %in% class(mod) ) {
     if ( missing(setalpha) ) setalpha <- extract_glmnet_alpha(mod$glmnet.fit)
@@ -603,7 +602,7 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 
 #' amalgamate_cv.glmnet
 #'
-#' Gathers results from a list of \code{\link[glmnet]{cv.glmnet}} objects
+#' Gathers results from a list of [glmnet::cv.glmnet()] objects
 #'     and returns a merged, averaged object.
 #'
 #' The arithmetic mean k-fold cross-validated loss (i.e. type.measure) is taken
@@ -669,7 +668,7 @@ set_glmnet_alpha <- function(mod, setalpha = NULL) {
 #' # mean:
 #' plot(mod, main = "averaged")
 #' }
-#' @seealso \code{\link[glmnet]{cv.glmnet}}
+#' @seealso [glmnet::cv.glmnet()]
 #' @export
 amalgamate_cv.glmnet <- function(cvglmlist,
                                  checks = list(alpha = TRUE,
@@ -787,9 +786,9 @@ amalgamate_cv.glmnet <- function(cvglmlist,
 #'     with 70:30 allocation, setting the decision threshold to 0.7
 #'     gives a better balance of sensitivity and specificity
 #'     without requiring threshold tuning (as in AUC optimal threshold).
-#' @param ... passed to \code{\link{predict.glmnet}}
+#' @param ... passed to [glmnet::predict.glmnet()]
 #'
-#' @return a \code{\link{data.frame}} containing column(s) for:
+#' @return a [data.frame] containing column(s) for:
 #'     \itemize{
 #'     \item{'prediction' - result of
 #'         \code{predict.glmnet(.., type = "response")}.
@@ -914,9 +913,9 @@ tidy_predict.glmnet <- function(mod,
 #'     are provided). Standardises return over different model families.
 #'
 #' @param alpha specify an alpha, or leave NULL to use the optimal alpha
-#'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
+#'     identified by [multialpha.repeated.cv.glmnet()].
 #' @param s specify a lambda, or leave NULL to use the optimal lambda
-#'     identified by \code{\link{multialpha.repeated.cv.glmnet}}.
+#'     identified by [multialpha.repeated.cv.glmnet()].
 #'
 #' @inheritParams tidy_predict.glmnet
 #'
@@ -1071,7 +1070,7 @@ tidy_coef.multialpha.repeated.cv.glmnet <- function(mod,
 
 #' tidy_confusionmatrix
 #'
-#' return contents of a \code{\link[caret]{confusionMatrix}} as a
+#' return contents of a [caret::confusionMatrix()] as a
 #'    'tidy' one column data.frame.
 #'
 #' @param mat output from \code{confusionMatrix.default}.
@@ -1148,7 +1147,7 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #' repeated k-fold cross-validation.
 #'
 #' This function is nothing revolutionary. The idea is to
-#' extend \code{\link{boot}{cv.glm}} with an interface that better matches
+#' extend [boot::cv.glm()] with an interface that better matches
 #' the other functions in this package.
 #'
 #' The additions are:
@@ -1156,14 +1155,14 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #' \item{Repeated k-fold rather than single k-fold}
 #' \item{Option to provide the fold membership}
 #' \item{Default use of stratified sampling by outcome class}
-#' \item{Performance assessed with \code{\link{summary.performance}}}
+#' \item{Performance assessed with [summary.performance()]}
 #' }
 #'
 #' @param y outcome vector (numeric or factor)
 #' @param data predictors in a data.frame
 #' @param f a formula to apply to x
 #' @param return_summary bool. return summarised performance (default), or
-#'     \code{\link{performance}} objects for further analysis (set to FALSE)
+#'     [performance] objects for further analysis (set to FALSE)
 #' @param ... other arguments
 #' @inheritParams multialpha.repeated.cv.glmnet
 #' @inheritParams repeated.cv.glmnet
@@ -1177,7 +1176,7 @@ predict_cat.glm <- function(glm, threshold = 0.5) {
 #'     \item{folds - the folds used in cross-validation}
 #'     \item{call - the function call}
 #'     }
-#' @seealso \code{\link[boot]{cv.glm}}, \code{\link{performance}}
+#' @seealso [boot::cv.glm()] [performance()]
 #' @export
 cv_performance_glm <- function(y,
                                data,

@@ -14,7 +14,7 @@
 \method{family}{performance}(object, ...)
 }
 \arguments{
-\item{object}{a a \code{\link{dCVnet}} object.}
+\item{object}{a a \link{dCVnet} object.}
 
 \item{...}{further arguments passed to methods}
 }

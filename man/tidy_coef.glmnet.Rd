@@ -23,7 +23,7 @@ required.}
 \item{label}{an optional label (value is added in column "label")}
 
 \item{alpha}{specify an alpha, or leave NULL to use the optimal alpha
-identified by \code{\link{multialpha.repeated.cv.glmnet}}.}
+identified by \code{\link[=multialpha.repeated.cv.glmnet]{multialpha.repeated.cv.glmnet()}}.}
 }
 \description{
 return a dataframe of glmnet coefficients
