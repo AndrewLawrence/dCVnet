@@ -49,7 +49,7 @@ plot.multialpha.repeated.cv.glmnet <- function(x,
                          x = .data[[xvar]],
                          colour = .data$alpha,
                          fill = .data$alpha
-                       ))+
+                       )) +
     ggplot2::geom_line()
 
   # error-bars?

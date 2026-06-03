@@ -14,7 +14,7 @@
 )
 }
 \arguments{
-\item{object}{a \code{\link{performance}} object.}
+\item{object}{a \link{performance} object.}
 
 \item{label}{a label can be assigned here.
 (Warning - setting a length 1 vector will concatenate multiple reps.)}
@@ -35,5 +35,5 @@ certain families (gaussian, poisson)}
 \description{
 Calculates classification performance table and
 two-class classification metrics for a
-\code{\link{performance}} object.
+\link{performance} object.
 }

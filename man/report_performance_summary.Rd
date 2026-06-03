@@ -12,7 +12,7 @@ report_performance_summary(
 )
 }
 \arguments{
-\item{dCVnet_object}{result from a call to \code{\link{dCVnet}}}
+\item{dCVnet_object}{result from a call to \link{dCVnet}}
 
 \item{short}{(bool) return a core set of performance measures.}
 
@@ -32,7 +32,7 @@ a data.frame of summarised and raw performance statistics.
 extracts performance from a dCVnet object
 calculates classification statistics and
 provides a summary of
-\code{\link[base]{mean}},
-\code{\link[stats]{sd}},
+\link{mean},
+\link{sd},
 \code{\link[base:Extremes]{min}}, and \code{\link[base:Extremes]{max}}
 }

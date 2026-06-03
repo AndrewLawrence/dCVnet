@@ -34,7 +34,7 @@ performance(x, ...)
 \item{...}{arguments to pass on}
 
 \item{as.data.frame}{return a data.frame instead of a list of
-\code{\link{performance}} objects.}
+\link{performance} objects.}
 
 \item{label}{specify a label for the output}
 
@@ -62,10 +62,11 @@ one source, e.g. multiple reps}
 Extracts the elements needed to calculate prediction performance
 for an object. These elements are returned with a standardised
 format, and the prediction performance measures can be calculated
-by calling the generic \code{summary()} function on the result.
+by calling the generic \code{summary()} function on the result
+(see: \code{\link[=summary.performance]{summary.performance()}}).
 
 Default function behaviour assumes input is a
-\code{\link{dCVnet}} object (and fails if this is not reasonable).
+\link{dCVnet} object (and fails if this is not reasonable).
 
 For a dCVnet object the outer-loop cross-validated performance
 is returned.
@@ -73,15 +74,21 @@ is returned.
 Applying performance to a performance object
 allows conversion between list and dataframe format.
 
-For glm objects performance wraps \link{predict.glm} if newdata is specified.
+For glm objects performance wraps \code{\link[stats:predict.glm]{stats::predict.glm()}} if newdata is
+specified.
 }
 \details{
-Prediction performance measures differ for each model family.
+Applying \link{summary} to a performance object produces prediction
+performance measures. These differ depending on the model family.
 See \link{InternalPerformanceSummaryFunctions}.
 
-Performance is \emph{always} calculated at the level of CV-repeats.
-dCVnet does not report the fold-to-fold variability
+Note: Performance is \emph{always} calculated at the level of CV-repeats.
+dCVnet does not extract or report the fold-to-fold variability
 in CV performance.
+
+Note: prior to 1.5.0 dCVnet used the caret \code{cor(obs, pred)} method of
+calculating R2. More recent versions use the traditional \code{1 - (RSS / TSS)}
+method.
 }
 \examples{
 \dontrun{
@@ -101,4 +108,7 @@ p <- report_performance_summary(m)
 subset(p, select = c("Measure", "mean"))
 
 }
+}
+\seealso{
+\link{InternalPerformanceSummaryFunctions} \code{\link[=summary.performance]{summary.performance()}}
 }

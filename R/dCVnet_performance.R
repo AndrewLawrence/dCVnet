@@ -58,14 +58,20 @@
 #' Extracts the elements needed to calculate prediction performance
 #'    for an object. These elements are returned with a standardised
 #'    format, and the prediction performance measures can be calculated
-#'    by calling the generic `summary()` function on the result.
+#'    by calling the generic `summary()` function on the result
+#'    (see: [summary.performance()]).
 #'
-#'    Prediction performance measures differ for each model family.
+#'    Applying [summary] to a performance object produces prediction
+#'    performance measures. These differ depending on the model family.
 #'    See [InternalPerformanceSummaryFunctions].
 #'
-#'    Performance is *always* calculated at the level of CV-repeats.
-#'    dCVnet does not report the fold-to-fold variability
+#'    Note: Performance is *always* calculated at the level of CV-repeats.
+#'    dCVnet does not extract or report the fold-to-fold variability
 #'    in CV performance.
+#'
+#'    Note: prior to 1.5.0 dCVnet used the caret `cor(obs, pred)` method of
+#'    calculating R2. More recent versions use the traditional `1 - (RSS / TSS)`
+#'    method.
 #'
 #' @name performance
 #'
@@ -86,6 +92,7 @@
 #'        one source, e.g. multiple reps}
 #'    }
 #'
+#' @seealso [InternalPerformanceSummaryFunctions] [summary.performance()]
 #' @examples
 #' \dontrun{
 #'
@@ -113,7 +120,7 @@ performance <- function(x, ...) {
 #'
 #' @rdname performance
 #' @description Default function behaviour assumes input is a
-#'     \code{\link{dCVnet}} object (and fails if this is not reasonable).
+#'     [dCVnet] object (and fails if this is not reasonable).
 #' @export
 performance.default <- function(x, ...) {
   # if we are given a list, lets assume it is a dCVnet style object
@@ -142,9 +149,11 @@ performance.default <- function(x, ...) {
 #' @description For a dCVnet object the outer-loop cross-validated performance
 #'              is returned.
 #' @param as.data.frame return a data.frame instead of a list of
-#'     \code{\link{performance}} objects.
+#'     [performance] objects.
 #' @export
 performance.dCVnet <- function(x, as.data.frame = TRUE, ...) {
+  # This is a simple accessor function because dCVnet objects store
+  #   their own performance information in a slot.
   if ( identical(as.data.frame, TRUE) ) {
     R <- x$performance
   } else {
@@ -180,7 +189,8 @@ performance.performance <- function(x, as.data.frame = TRUE, ...) {
 
 #' performance.glm
 #'
-#' For glm objects performance wraps \link{predict.glm} if newdata is specified.
+#' For glm objects performance wraps [stats::predict.glm()] if newdata is
+#'    specified.
 #'
 #' @rdname performance
 #' @param label specify a label for the output
@@ -325,9 +335,9 @@ NULL
 #'     Used for binomial and multinomial families
 #' @inheritParams summary.performance
 #' @description For **binomial and multinomial** family models:
-#'    Various performance metrics from \code{\link[caret]{confusionMatrix}};
-#'    AUC (or mAUC) (\code{\link[ModelMetrics]{auc}});
-#'    Brier Score (\code{\link[ModelMetrics]{brier}})
+#'    Various performance metrics from [caret::confusionMatrix()];
+#'    AUC (or mAUC; [ModelMetrics::auc()]);
+#'    and Brier Score ([ModelMetrics::brier()])
 perf_nomial <- function(object,
                         short = FALSE,
                         somersD = FALSE,
@@ -421,19 +431,24 @@ perf_nomial <- function(object,
 
 #' @describeIn InternalPerformanceSummaryFunctions
 #'     Used for gaussian and poisson families
-#' @importFrom ModelMetrics rmse mae rmsle
-#' @importFrom stats lm cor
+#' @importFrom ModelMetrics rmse mse mae rmsle
+#' @importFrom stats lm cor poisson
 #' @description For **Gaussian/Poisson** family models:
-#'    Root Mean Square Error (RMSE; \code{\link[ModelMetrics]{rmse}});
-#'    Mean Absolute Error (MAE; \code{\link[ModelMetrics]{mae}});
-#'    Pearson's correlation r and r^2 between observed and predicted (R, R2);
+#'    Root Mean Square Error (RMSE; [ModelMetrics::rmse()]);
+#'    Mean Absolute Error (MAE; [ModelMetrics::mae()]);
+#'    Model R2, traditional method (R2; `1 - (SSResid / SSTotal)`);
 #'    simple linear calibration intercept and slope (cal_Intercept, cal_Slope).
 #'    Brier score, which in this context is the Mean Square Error == RMSE^2;
 #'    RMSE and MSE scaled by the S.D. of y (SDScaledRMSE, SDScaledMAE);
 #'    Optionally Somer's Dxy can be returned (SomersDxy;
-#'    \code{\link[DescTools]{SomersDelta}}).
-#'    For the Poisson family performance measures above but calculated
-#'    from \code{\link{log1p}} transformed data are also returned.
+#'    [DescTools::SomersDelta()]).
+#'    For the Poisson family, standard "gaussian" performance measures
+#'    (as above) are returned, along with some specialised poisson metrics:
+#'    poisson_r2 (deviance-based McFadden R2),
+#'    RMSLE (RMS of Logged errors; see [ModelMetrics::rmsle()]),
+#'    calibration slope and intercept from a poisson model
+#'    (rather than gaussian).
+#'
 #'
 perf_cont <- function(object,
                       short = FALSE,
@@ -441,22 +456,48 @@ perf_cont <- function(object,
                       pvprevalence = "observed") {
 
   f <- family(object)
+  n <- NROW(object)
 
   ysd <- stats::sd(object$reference)
-
-  cval <- stats::cor(object$reference,
-                     object$prediction)
+  xsd <- stats::sd(object$prediction)
 
   # used for centering:
-  ref_mean <- mean(object$reference) #nolint
+  ref_mean <- mean(object$reference)
 
-  mod <- stats::coef(
-    stats::lm(
-      formula = I(reference - ref_mean) ~ I(prediction - ref_mean),
-      data = as.data.frame(object)
-    )
-  )
+  model_mse <- ModelMetrics::mse(actual = object$reference,
+                                 predicted = object$prediction)
+  null_mse <- ModelMetrics::mse(actual = object$reference,
+                                predicted = rep(ref_mean, times = n))
 
+  ssresid <- model_mse * (n - 1)
+  sstotal <- null_mse * (n - 1)
+
+  r2val <- 1 - (ssresid / sstotal)
+
+  # calibration (linear):
+  if ( any(!is.finite(xsd)) ) {
+    # the SD of the predicted values is missing (or nonfinite):
+    cal_Intercept <- NA
+    cal_Slope <- NA
+  } else {
+    if ( xsd < .Machine$double.eps ) {
+      # if sd(predictions) is zero then we can only calculate calibration
+      #     in the large.
+      cal_Slope <- NA
+      cal_Intercept <- ref_mean - mean(object$prediction)
+    } else {
+
+      mod <- stats::coef(
+        stats::lm(
+          formula = I(reference - ref_mean) ~ I(prediction - ref_mean),
+          data = as.data.frame(object)
+        )
+      )
+
+      cal_Intercept <- mod[[1]]
+      cal_Slope <- mod[[2]]
+    }
+  }
   # Using ModelMetrics:
   R <- c(
     RMSE = ModelMetrics::rmse(
@@ -467,10 +508,9 @@ perf_cont <- function(object,
       actual = object$reference,
       predicted = object$prediction
     ),
-    r = cval,
-    r2 = cval ^ 2,
-    cal_Intercept = mod[[1]],
-    cal_Slope = mod[[2]]
+    r2 = r2val,
+    cal_Intercept = cal_Intercept,
+    cal_Slope = cal_Slope
   )
 
   # Add brier score:
@@ -491,21 +531,57 @@ perf_cont <- function(object,
     }
   }
 
+  # additional poisson-adapted metrics:
   if ( f == "poisson" ) {
-    log_dat <- data.frame(reference = log1p(object$reference),
-                          prediction = log1p(object$prediction))
 
-    log_cval <- stats::cor(log_dat$reference,
-                           log_dat$prediction)
-    log_mod <- stats::coef(stats::lm(reference ~ prediction,
-                                     data = log_dat))
+    # poisson deviance R2 (McFadden)
+    pdevfn <- poisson()$dev.resids
 
-    R <- append(R, c(logged_r = log_cval,
-                     logged_r2 = log_cval^2,
+    pdev_model <- pdevfn(y = object$reference,
+                         mu = object$prediction,
+                         wt = rep(1, n))
+
+    pdev_null <- pdevfn(y = object$reference,
+                        mu = rep(mean(object$reference), times = n),
+                        wt = rep(1, n))
+
+    pdev_r2 <- 1 - ( sum(pdev_model) / sum(pdev_null) )
+
+    # calibration (poisson):
+    if ( any(!is.finite(xsd)) ) {
+      # the SD of the predicted values is missing (or nonfinite):
+      poisson_cal_Intercept <- NA
+      poisson_cal_Slope <- NA
+    } else {
+      if ( xsd < .Machine$double.eps ) {
+        # if sd(predictions) is zero then we can only calculate calibration
+        #     in the large.
+        poisson_cal_Slope <- NA
+        mod <- stats::glm(reference ~ 1 + offset(log(prediction)),
+                          data = as.data.frame(object),
+                          family = "poisson")
+
+        poisson_cal_Intercept <- coef(mod)[[1]]
+      } else {
+
+        mod <- stats::coef(
+          stats::glm(
+            formula = reference ~ log(prediction),
+            data = as.data.frame(object),
+            family = "poisson"
+          )
+        )
+
+        poisson_cal_Intercept <- mod[[1]]
+        poisson_cal_Slope <- mod[[2]]
+      }
+    }
+
+    R <- append(R, c(poisson_r2 = pdev_r2,
                      RMSLE = ModelMetrics::rmsle(actual = object$reference,
                                                  predicted = object$prediction),
-                     logged_cal_Intercept = log_mod[[1]],
-                     logged_cal_Slope = log_mod[[2]]))
+                     poisson_cal_Intercept = poisson_cal_Intercept,
+                     poisson_cal_Slope = poisson_cal_Slope))
   }
 
   R <- data.frame(Measure = names(R), Value = R, label = object$label[[1]])
@@ -519,7 +595,7 @@ perf_cont <- function(object,
 #' @importFrom Hmisc rcorr.cens
 #' @importFrom survival Surv is.Surv
 #' @description For **Cox** family models:
-#'     Harrell's C-index and Dxy using the \code{\link[Hmisc]{rcorr.cens}}
+#'     Harrell's C-index and Dxy using the [Hmisc::rcorr.cens()]
 #'     function.
 perf_cox <- function(object,
                      short = FALSE,
@@ -605,9 +681,9 @@ perf_mgaussian <- function(object,
 #'
 #' Calculates classification performance table and
 #'     two-class classification metrics for a
-#'     \code{\link{performance}} object.
+#'     [performance] object.
 #'
-#' @param object a \code{\link{performance}} object.
+#' @param object a [performance] object.
 #' @param label a label can be assigned here.
 #'      (Warning - setting a length 1 vector will concatenate multiple reps.)
 #' @param short (bool) return a core set of performance measures.
@@ -724,13 +800,13 @@ family.performance <- function(object, ...) {
 #' extracts performance from a dCVnet object
 #'     calculates classification statistics and
 #'     provides a summary of
-#'     \code{\link[base]{mean}},
-#'     \code{\link[stats]{sd}},
+#'     [mean],
+#'     [sd],
 #'     \code{\link[base:Extremes]{min}}, and \code{\link[base:Extremes]{max}}
 #'
 #' @name report_performance_summary
 #'
-#' @param dCVnet_object result from a call to \code{\link{dCVnet}}
+#' @param dCVnet_object result from a call to [dCVnet]
 #' @param short (bool) return a core set of performance measures.
 #' @param somersD (bool) calculate the computationally expensive Somers' D for
 #'     certain families (gaussian, poisson)
@@ -823,9 +899,9 @@ report_performance_summary <- function(dCVnet_object,
 
 #' casesummary.performance
 #'
-#' What proportion of the time were subjects correctly classified in a
-#'     \code{\link{performance}} object.
-#' @param object a \code{\link{performance}} object?
+#' Given a [performance] object, for what proportion of CV repeats were
+#'    subjects correctly classified?
+#' @param object a [performance] object
 #' @param type What should be returned?
 #'                 \itemize{
 #'                 \item{\code{data} - The true and estimated classifications.}

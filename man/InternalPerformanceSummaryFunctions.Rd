@@ -23,7 +23,7 @@ perf_mgaussian(
 )
 }
 \arguments{
-\item{object}{a \code{\link{performance}} object.}
+\item{object}{a \link{performance} object.}
 
 \item{short}{(bool) return a core set of performance measures.}
 
@@ -38,24 +38,28 @@ in \code{[0,1]}.}
 }
 \description{
 For \strong{binomial and multinomial} family models:
-Various performance metrics from \code{\link[caret]{confusionMatrix}};
-AUC (or mAUC) (\code{\link[ModelMetrics]{auc}});
-Brier Score (\code{\link[ModelMetrics]{brier}})
+Various performance metrics from \code{\link[caret:confusionMatrix]{caret::confusionMatrix()}};
+AUC (or mAUC; \code{\link[ModelMetrics:auc]{ModelMetrics::auc()}});
+and Brier Score (\code{\link[ModelMetrics:brier]{ModelMetrics::brier()}})
 
 For \strong{Gaussian/Poisson} family models:
-Root Mean Square Error (RMSE; \code{\link[ModelMetrics]{rmse}});
-Mean Absolute Error (MAE; \code{\link[ModelMetrics]{mae}});
-Pearson's correlation r and r^2 between observed and predicted (R, R2);
+Root Mean Square Error (RMSE; \code{\link[ModelMetrics:rmse]{ModelMetrics::rmse()}});
+Mean Absolute Error (MAE; \code{\link[ModelMetrics:mae]{ModelMetrics::mae()}});
+Model R2, traditional method (R2; \code{1 - (SSResid / SSTotal)});
 simple linear calibration intercept and slope (cal_Intercept, cal_Slope).
 Brier score, which in this context is the Mean Square Error == RMSE^2;
 RMSE and MSE scaled by the S.D. of y (SDScaledRMSE, SDScaledMAE);
 Optionally Somer's Dxy can be returned (SomersDxy;
-\code{\link[DescTools]{SomersDelta}}).
-For the Poisson family performance measures above but calculated
-from \code{\link{log1p}} transformed data are also returned.
+\code{\link[DescTools:SomersDelta]{DescTools::SomersDelta()}}).
+For the Poisson family, standard "gaussian" performance measures
+(as above) are returned, along with some specialised poisson metrics:
+poisson_r2 (deviance-based McFadden R2),
+RMSLE (RMS of Logged errors; see \code{\link[ModelMetrics:rmsle]{ModelMetrics::rmsle()}}),
+calibration slope and intercept from a poisson model
+(rather than gaussian).
 
 For \strong{Cox} family models:
-Harrell's C-index and Dxy using the \code{\link[Hmisc]{rcorr.cens}}
+Harrell's C-index and Dxy using the \code{\link[Hmisc:rcorr.cens]{Hmisc::rcorr.cens()}}
 function.
 
 For \strong{multivariate Gaussian} family models:

@@ -3,7 +3,7 @@
 
 library(dCVnet)
 make_dCVnet <- function() {
-  data(BinomialExample, package = "glmnet")
+  data(BinomialExample, package = "glmnet") #nolint
   dCVnet(y = BinomialExample$y,    #nolint
          data = BinomialExample$x, #nolint
          family = "binomial",

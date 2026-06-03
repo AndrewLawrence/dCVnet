@@ -7,7 +7,7 @@
 casesummary.performance(object, type = c("both", "data", "summary"), ...)
 }
 \arguments{
-\item{object}{a \code{\link{performance}} object?}
+\item{object}{a \link{performance} object}
 
 \item{type}{What should be returned?
 \itemize{
@@ -18,6 +18,6 @@ casesummary.performance(object, type = c("both", "data", "summary"), ...)
 \item{...}{additional arguments (not currently used)}
 }
 \description{
-What proportion of the time were subjects correctly classified in a
-\code{\link{performance}} object.
+Given a \link{performance} object, for what proportion of CV repeats were
+subjects correctly classified?
 }
