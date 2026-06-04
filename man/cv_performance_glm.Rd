@@ -52,7 +52,10 @@ Currently it warns if non-unique values are found.}
 \item{return_summary}{bool. return summarised performance (default), or
 \link{performance} objects for further analysis (set to FALSE)}
 
-\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}})}
+\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}}). \cr
+\emph{Note: use this with caution - this argument will be passed to
+internal fitting functions, but is only minimally tested. Inspect results
+carefully and send a report to the developer if they are not as expected.}}
 
 \item{...}{other arguments}
 }

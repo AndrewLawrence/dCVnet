@@ -43,7 +43,10 @@ The formula \emph{must} include an intercept.}
 
 \item{family}{the model family (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}})}
 
-\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}})}
+\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}}). \cr
+\emph{Note: use this with caution - this argument will be passed to
+internal fitting functions, but is only minimally tested. Inspect results
+carefully and send a report to the developer if they are not as expected.}}
 
 \item{nrep_outer}{an integer, the number of repetitions (k-fold outer CV)}
 
@@ -145,27 +148,30 @@ Currently all coefficients reported / used by dCVnet are
 \emph{semi-standardised} for x, but not y. In other words, the predictor matrix x
 is mean-centered and scaled by the standard deviation prior to calculations.
 
-The predict method for dCVnet stores these means/SDs, and will apply the same
-standardisation to x on predicting new values.
+The predict method for dCVnet uses stored means/SDs from the training data,
+and will apply the same standardisation to x on predicting new values.
+Thus, if using dCVnet to predict new data, ensure that predictors are
+on the same scale as the original input to dCVnet.
 
-As a result the reported coefficients for dCVnet can be interpreted as
-(semi-)standardised effect sizes. A coefficient of 0.5 is the effect of a 1SD
-difference in that x matrix element. Note this is the same for all elements
-of x, even factors, and so if coefficients for binary variables are
-interpreted as an effect size this will include the impact of prevalence.
+This means that the coefficients reported by dCVnet can always be interpreted
+as (semi-)standardised effect sizes. A coefficient of 0.5 is the effect of a
+1SD difference in that x matrix element. Note this is the same for all
+elements of x, even indicator variables for factors. Importantly if factors
+are included coefficients will include the impact of category prevalence as
+well as effect size.
 
 When running cross-validation, standardisation is based on the means
 and standard deviations of the training dataset, not the held-out test data.
 This prevents leakage from train to test data.
 
-This approach can be contrasted with glmnet which internally standardises,
-and then back-transforms, coefficients to the original scale. In contrast
+The approach of dCVnet fundamentally differs from glmnet which internally
+standardises, and then back-transforms, coefficients to the original scale.
 dCVnet model coefficients are \emph{always} presented as (semi-)standardised.
 
 Coefficients in the original scale can be recovered using the
 standard deviations and means employed in the standardisation
 (see: \url{https://stats.stackexchange.com/a/75025})
-These means and standard deviations are retained for the production model
+The means and standard deviations used for the production model are retained
 in the \code{preprocess} slots of the dCVnet object: \code{my_model$prod$preprocess}.
 }
 
@@ -180,24 +186,27 @@ For categorical families (binomial, multinomial) input can be:
 }
 These are treated differently.
 
-Numeric data is used as provided.
-Character data will be coerced to a factor:
+Numeric format data is used as provided.
+Character format data will be coerced to a factor:
 \code{factor(x, levels = sort(unique(x)))}.
-Factor data will be used as provided, but \emph{must} have levels in
-alphabetical order.
+Factor format data will be used as provided, but \emph{must} have its
+\strong{levels in alphabetical order}.
 
-In all cases \emph{the reference category must be ordered first},
-this means for the binomial family the 'positive' category is second.
+In all cases \emph{the reference category will be the first},
+this means for the binomial family the 'positive' category is the second
+level and so model probabilities should be interpreted as the
+probability of being an instance of the second category level.
 
-Why alphabetical? Previously bugs arose due to different handling
-of factor levels between functions called by dCVnet. These appear to be
-resolved in the latest versions of the packages, but this restriction will
-stay until I can verify.
+\emph{Why these restrictions to factor levels?} \cr
+\emph{It's not ideal, but because dCVnet wraps functions from a variety
+of packages which rigidly follow differing standards,
+allowing flexibly specified factors resulted in downstream errors
+and hard to detect bugs related to edge cases.}
 }
 
 \section{Notes}{
 
-Sparse matrices are not supported by dCVnet.
+In contrast to glmnet, sparse matrices are not supported by dCVnet.
 }
 
 \examples{

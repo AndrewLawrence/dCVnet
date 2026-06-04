@@ -26,27 +26,30 @@
 #' *semi-standardised* for x, but not y. In other words, the predictor matrix x
 #' is mean-centered and scaled by the standard deviation prior to calculations.
 #'
-#' The predict method for dCVnet stores these means/SDs, and will apply the same
-#' standardisation to x on predicting new values.
+#' The predict method for dCVnet uses stored means/SDs from the training data,
+#' and will apply the same standardisation to x on predicting new values.
+#' Thus, if using dCVnet to predict new data, ensure that predictors are
+#' on the same scale as the original input to dCVnet.
 #'
-#' As a result the reported coefficients for dCVnet can be interpreted as
-#' (semi-)standardised effect sizes. A coefficient of 0.5 is the effect of a 1SD
-#' difference in that x matrix element. Note this is the same for all elements
-#' of x, even factors, and so if coefficients for binary variables are
-#' interpreted as an effect size this will include the impact of prevalence.
+#' This means that the coefficients reported by dCVnet can always be interpreted
+#' as (semi-)standardised effect sizes. A coefficient of 0.5 is the effect of a
+#' 1SD difference in that x matrix element. Note this is the same for all
+#' elements of x, even indicator variables for factors. Importantly if factors
+#' are included coefficients will include the impact of category prevalence as
+#' well as effect size.
 #'
 #' When running cross-validation, standardisation is based on the means
 #' and standard deviations of the training dataset, not the held-out test data.
 #' This prevents leakage from train to test data.
 #'
-#' This approach can be contrasted with glmnet which internally standardises,
-#' and then back-transforms, coefficients to the original scale. In contrast
+#' The approach of dCVnet fundamentally differs from glmnet which internally
+#' standardises, and then back-transforms, coefficients to the original scale.
 #' dCVnet model coefficients are *always* presented as (semi-)standardised.
 #'
 #' Coefficients in the original scale can be recovered using the
 #' standard deviations and means employed in the standardisation
 #' (see: \url{https://stats.stackexchange.com/a/75025})
-#' These means and standard deviations are retained for the production model
+#' The means and standard deviations used for the production model are retained
 #' in the `preprocess` slots of the dCVnet object: `my_model$prod$preprocess`.
 #'
 #' @inheritParams parse_dCVnet_input

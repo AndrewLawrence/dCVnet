@@ -764,7 +764,7 @@ summary.performance <- function(object,
   # Processing:
   #   If we lack a label col assign it and return
   #     (for multiclassperf functionality)
-  #   If there is a single label return single, otherwise return mulit.
+  #   If there is a single label return single, otherwise return multi.
   if ( is.null(object$label) ) {
     R <- .single_cpsummary(object, short = short, pvprevalence = pvprevalence)
   } else {

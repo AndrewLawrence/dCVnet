@@ -42,22 +42,25 @@ check_categorical_outcome <- function(cat) {
 #'    }
 #'    These are treated differently.
 #'
-#'    Numeric data is used as provided.
-#'    Character data will be coerced to a factor:
+#'    Numeric format data is used as provided.
+#'    Character format data will be coerced to a factor:
 #'        \code{factor(x, levels = sort(unique(x)))}.
-#'    Factor data will be used as provided, but *must* have levels in
-#'    alphabetical order.
+#'    Factor format data will be used as provided, but *must* have its
+#'    **levels in alphabetical order**.
 #'
-#'    In all cases *the reference category must be ordered first*,
-#'    this means for the binomial family the 'positive' category is second.
+#'    In all cases *the reference category will be the first*,
+#'    this means for the binomial family the 'positive' category is the second
+#'    level and so model probabilities should be interpreted as the
+#'    probability of being an instance of the second category level.
 #'
-#'    Why alphabetical? Previously bugs arose due to different handling
-#'    of factor levels between functions called by dCVnet. These appear to be
-#'    resolved in the latest versions of the packages, but this restriction will
-#'    stay until I can verify.
+#'    *Why these restrictions to factor levels?* \cr
+#'    *It's not ideal, but because dCVnet wraps functions from a variety
+#'    of packages which rigidly follow differing standards,
+#'    allowing flexibly specified factors resulted in downstream errors
+#'    and hard to detect bugs related to edge cases.*
 #'
 #' @section Notes:
-#'    Sparse matrices are not supported by dCVnet.
+#'    In contrast to glmnet, sparse matrices are not supported by dCVnet.
 #'
 #' @name parse_dCVnet_input
 #'
@@ -71,7 +74,10 @@ check_categorical_outcome <- function(cat) {
 #'     [base::log()]).
 #'     The formula *must* include an intercept.
 #' @param family the model family (see [glmnet::glmnet()])
-#' @param offset optional model offset (see [glmnet::glmnet()])
+#' @param offset optional model offset (see [glmnet::glmnet()]). \cr
+#'    *Note: use this with caution - this argument will be passed to
+#'    internal fitting functions, but is only minimally tested. Inspect results
+#'    carefully and send a report to the developer if they are not as expected.*
 #' @param yname an optional label for the outcome / y variable.
 #' @param passNA should NA values in data be excluded (FALSE)
 #'                   or passed through (TRUE)?

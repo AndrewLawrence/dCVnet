@@ -29,7 +29,10 @@ interactions, transformations or expansions (like \code{\link[stats:poly]{stats:
 \code{\link[base:log]{base::log()}}).
 The formula \emph{must} include an intercept.}
 
-\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}})}
+\item{offset}{optional model offset (see \code{\link[glmnet:glmnet]{glmnet::glmnet()}}). \cr
+\emph{Note: use this with caution - this argument will be passed to
+internal fitting functions, but is only minimally tested. Inspect results
+carefully and send a report to the developer if they are not as expected.}}
 
 \item{yname}{an optional label for the outcome / y variable.}
 
@@ -63,23 +66,26 @@ For categorical families (binomial, multinomial) input can be:
 }
 These are treated differently.
 
-Numeric data is used as provided.
-Character data will be coerced to a factor:
+Numeric format data is used as provided.
+Character format data will be coerced to a factor:
 \code{factor(x, levels = sort(unique(x)))}.
-Factor data will be used as provided, but \emph{must} have levels in
-alphabetical order.
+Factor format data will be used as provided, but \emph{must} have its
+\strong{levels in alphabetical order}.
 
-In all cases \emph{the reference category must be ordered first},
-this means for the binomial family the 'positive' category is second.
+In all cases \emph{the reference category will be the first},
+this means for the binomial family the 'positive' category is the second
+level and so model probabilities should be interpreted as the
+probability of being an instance of the second category level.
 
-Why alphabetical? Previously bugs arose due to different handling
-of factor levels between functions called by dCVnet. These appear to be
-resolved in the latest versions of the packages, but this restriction will
-stay until I can verify.
+\emph{Why these restrictions to factor levels?} \cr
+\emph{It's not ideal, but because dCVnet wraps functions from a variety
+of packages which rigidly follow differing standards,
+allowing flexibly specified factors resulted in downstream errors
+and hard to detect bugs related to edge cases.}
 }
 
 \section{Notes}{
 
-Sparse matrices are not supported by dCVnet.
+In contrast to glmnet, sparse matrices are not supported by dCVnet.
 }
 
