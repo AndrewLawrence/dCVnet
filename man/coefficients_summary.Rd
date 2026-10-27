@@ -4,10 +4,14 @@
 \alias{coefficients_summary}
 \title{coefficients_summary}
 \usage{
-coefficients_summary(object, ...)
+coefficients_summary(object, structure_coefficients = TRUE, ...)
 }
 \arguments{
 \item{object}{a dCVnet object}
+
+\item{structure_coefficients}{Flag.
+If \code{TRUE}, include in summary \code{"ProductionSSC"} the squared structure
+coefficients for the production model. See \link{structure_coefficients}}
 
 \item{...}{" "}
 }

@@ -861,6 +861,89 @@ selected_hyperparameters <- function(object,
   }
 }
 
+#' structure_coefficients
+#'
+#' Return squared *structure coefficients* for the production model
+#'     of a stored dCVnet object.
+#'
+#' Structure coefficients are bivariate Pearson correlations between
+#' each predictor and the model predicted outcome. Squared structure
+#' coefficients quantify the *proportion of variance* in the model prediction
+#' associated with a particular predictor. Importantly, wherever predictors
+#' are not independent (e.g. multicollinearity) the total proportion implied
+#' by the sum of squared structure coefficients will exceed one.
+#'
+#' Note: For non-gaussian models correlation with the link-scaled
+#' *"linear predictor"* is used rather than correlation with
+#' the expected response.
+#'
+#' @inheritParams coefficients_summary object
+#' @return a data.frame with columns `"Predictor"` and `"ProductionSSC"`
+#'     (Production Squared Structure Coefficient).
+#' @export
+structure_coefficients <- function(object) {
+  # initialise object using coef(object):
+  sc <- setNames(coef(object, type = "prod"), c("Predictor", "ProductionSSC"))
+  sc$ProductionSSC <- NA
+
+  # extract parsed object:
+  object$input$callenv$passNA <- object$input$callenv$opt.use_imputation
+  parsed_sel <- formalArgs(parse_dCVnet_input)
+  parsed_sel <- parsed_sel[parsed_sel %in% names(object$input$callenv)]
+  parsed <- do.call("parse_dCVnet_input", object$input$callenv[parsed_sel])
+
+  # structure coefficients are bivariate pearson correlations between
+  #   each predictor and the
+  p <- predict(object, newx = as.data.frame(object$input$callenv$data))
+  x <- parsed[["x_mat"]]
+
+  # Idea: make a correlation cdat with naming structure that preserves
+  #   columns in x.
+  #   run cor on the data and reshape elements to the sc object.
+  #   Different behaviour required according to family for y.
+
+  if ( ! parsed$family %in% c("mgaussian", "multinomial")) {
+    cdat <- data.frame(p,
+                       as.data.frame(x))
+    colnames(cdat)[[1]] <- "y"
+    cres <- cor(cdat)
+    sc[["ProductionSSC"]][-1] <- vapply(sc$Predictor[-1],
+                                        \(kk) cres[kk, "y"],
+                                        FUN.VALUE = 0.1)
+  } else {
+    p <- drop(p)
+    yvar <- colnames(p)
+
+    cdat <- data.frame(
+      as.data.frame(p),
+      as.data.frame(x)
+    )
+    colnames(cdat)[seq_along(yvar)] <- yvar
+    cres <- cor(cdat)
+
+    clab <- expand.grid(yv = yvar,
+                        xv = colnames(x))
+    clab$label <- paste0(clab[["yv"]], ".", clab[["xv"]])
+
+    if ( !all(clab$label %in% sc$Predictor) ) {
+      stop("Error. Labelling problem.")
+    }
+
+    for ( i in seq_along(clab[[1]]) ) {
+      # row in sc:
+      sc_i <- which(sc$Predictor == clab[i, "label"])
+      # cols in cor res:
+      cres_col <- which(colnames(cres) == clab[i, "xv"])
+      cres_row <- which(colnames(cres) == clab[i, "yv"])
+      # assign:
+      sc[["ProductionSSC"]][sc_i] <- cres[cres_row, cres_col]
+    }
+  }
+  # cor to r2:
+  sc[["ProductionSSC"]] <- sc[["ProductionSSC"]]^2
+  sc
+}
+
 
 #' coefficients_summary
 #'
@@ -869,6 +952,9 @@ selected_hyperparameters <- function(object,
 #'     cross-validation
 #'
 #' @param object a dCVnet object
+#' @param structure_coefficients Flag.
+#'     If `TRUE`, include in summary `"ProductionSSC"` the squared structure
+#'     coefficients for the production model. See [structure_coefficients]
 #' @param ... " "
 #'
 #' @name coefficients_summary
@@ -886,7 +972,9 @@ selected_hyperparameters <- function(object,
 #' @seealso coef.dCVnet
 #'
 #' @export
-coefficients_summary <- function(object, ...) {
+coefficients_summary <- function(object,
+                                 structure_coefficients = TRUE,
+                                 ...) {
 
   Medians <- setNames(coef(object, type = "median"),
                       c("Predictor", "Median Coef"))
@@ -908,10 +996,16 @@ coefficients_summary <- function(object, ...) {
   ProductionModel <- coef(object, type = "production")
   colnames(ProductionModel)[2] <- "ProductionModel"
 
-  return(data.frame(ProductionModel,
+  res <- data.frame(ProductionModel,
                     OuterMedian = Medians[, 2],
                     Range,
-                    stringsAsFactors = FALSE))
+                    stringsAsFactors = FALSE)
+  if ( structure_coefficients ) {
+    res <- merge(res,
+                 structure_coefficients(object),
+                 by = "Predictor")
+  }
+  res
 }
 
 
