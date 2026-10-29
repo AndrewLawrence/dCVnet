@@ -863,28 +863,31 @@ selected_hyperparameters <- function(object,
 
 #' structure_coefficients
 #'
-#' Return squared *structure coefficients* for the production model
+#' Return *structure coefficients* for the production model
 #'     of a stored dCVnet object.
 #'
 #' Structure coefficients are bivariate Pearson correlations between
-#' each predictor and the model predicted outcome. Squared structure
-#' coefficients quantify the *proportion of variance* in the model prediction
-#' associated with a particular predictor. Importantly, wherever predictors
+#' each predictor and the model predicted outcome. Structure
+#' coefficients quantify the association with the outcome independent
+#' of collinearity. If squared they represent the *proportion of variance*
+#' in the model prediction associated with a particular predictor.
+#' Importantly, wherever predictors
 #' are not independent (e.g. multicollinearity) the total proportion implied
-#' by the sum of squared structure coefficients will exceed one.
+#' by the sum of squared structure coefficients will exceed one - which can be
+#' used to indicate the degree of collinearity.
 #'
-#' Note: For non-gaussian models correlation with the link-scaled
-#' *"linear predictor"* is used rather than correlation with
+#' Note: this implementation uses the correlation
+#' with the link-scaled *"linear predictor"*, rather than correlation with
 #' the expected response.
 #'
 #' @inheritParams coefficients_summary object
-#' @return a data.frame with columns `"Predictor"` and `"ProductionSSC"`
-#'     (Production Squared Structure Coefficient).
+#' @return a data.frame with columns `"Predictor"` and `"ProductionSC"`
+#'     (Production Structure Coefficient).
 #' @export
 structure_coefficients <- function(object) {
   # initialise object using coef(object):
-  sc <- setNames(coef(object, type = "prod"), c("Predictor", "ProductionSSC"))
-  sc$ProductionSSC <- NA
+  sc <- setNames(coef(object, type = "prod"), c("Predictor", "ProductionSC"))
+  sc$ProductionSC <- NA
 
   # extract parsed object:
   object$input$callenv$passNA <- object$input$callenv$opt.use_imputation
@@ -907,9 +910,9 @@ structure_coefficients <- function(object) {
                        as.data.frame(x))
     colnames(cdat)[[1]] <- "y"
     cres <- cor(cdat)
-    sc[["ProductionSSC"]][-1] <- vapply(sc$Predictor[-1],
-                                        \(kk) cres[kk, "y"],
-                                        FUN.VALUE = 0.1)
+    sc[["ProductionSC"]][-1] <- vapply(sc$Predictor[-1],
+                                       \(kk) cres[kk, "y"],
+                                       FUN.VALUE = 0.1)
   } else {
     p <- drop(p)
     yvar <- colnames(p)
@@ -936,11 +939,9 @@ structure_coefficients <- function(object) {
       cres_col <- which(colnames(cres) == clab[i, "xv"])
       cres_row <- which(colnames(cres) == clab[i, "yv"])
       # assign:
-      sc[["ProductionSSC"]][sc_i] <- cres[cres_row, cres_col]
+      sc[["ProductionSC"]][sc_i] <- cres[cres_row, cres_col]
     }
   }
-  # cor to r2:
-  sc[["ProductionSSC"]] <- sc[["ProductionSSC"]]^2
   sc
 }
 
@@ -953,7 +954,7 @@ structure_coefficients <- function(object) {
 #'
 #' @param object a dCVnet object
 #' @param structure_coefficients Flag.
-#'     If `TRUE`, include in summary `"ProductionSSC"` the squared structure
+#'     If `TRUE`, include in summary `"ProductionSC"` the structure
 #'     coefficients for the production model. See [structure_coefficients]
 #' @param ... " "
 #'

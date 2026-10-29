@@ -10,7 +10,7 @@ coefficients_summary(object, structure_coefficients = TRUE, ...)
 \item{object}{a dCVnet object}
 
 \item{structure_coefficients}{Flag.
-If \code{TRUE}, include in summary \code{"ProductionSSC"} the squared structure
+If \code{TRUE}, include in summary \code{"ProductionSC"} the structure
 coefficients for the production model. See \link{structure_coefficients}}
 
 \item{...}{" "}

@@ -10,22 +10,25 @@ structure_coefficients(object)
 \item{object}{a dCVnet object}
 }
 \value{
-a data.frame with columns \code{"Predictor"} and \code{"ProductionSSC"}
-(Production Squared Structure Coefficient).
+a data.frame with columns \code{"Predictor"} and \code{"ProductionSC"}
+(Production Structure Coefficient).
 }
 \description{
-Return squared \emph{structure coefficients} for the production model
+Return \emph{structure coefficients} for the production model
 of a stored dCVnet object.
 }
 \details{
 Structure coefficients are bivariate Pearson correlations between
-each predictor and the model predicted outcome. Squared structure
-coefficients quantify the \emph{proportion of variance} in the model prediction
-associated with a particular predictor. Importantly, wherever predictors
+each predictor and the model predicted outcome. Structure
+coefficients quantify the association with the outcome independent
+of collinearity. If squared they represent the \emph{proportion of variance}
+in the model prediction associated with a particular predictor.
+Importantly, wherever predictors
 are not independent (e.g. multicollinearity) the total proportion implied
-by the sum of squared structure coefficients will exceed one.
+by the sum of squared structure coefficients will exceed one - which can be
+used to indicate the degree of collinearity.
 
-Note: For non-gaussian models correlation with the link-scaled
-\emph{"linear predictor"} is used rather than correlation with
+Note: this implementation uses the correlation
+with the link-scaled \emph{"linear predictor"}, rather than correlation with
 the expected response.
 }
